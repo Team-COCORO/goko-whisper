@@ -1,34 +1,18 @@
 :root {
-  /* 地（経年した紙） */
-  --color-paper: #f5efeb;
-  --color-paper-card: #faf6f0;
-
-  /* 五高の赤レンガと真鍮 */
-  --color-brick: #8b3a2b;
-  --color-brick-dark: #662519;
-  --color-brass: #c5a059;
-  --color-brass-light: #e4cb8f;
-
-  /* 墨と藍 */
-  --color-ink: #2c2623;
-  --color-indigo: #1e2d3d;
-  --color-border-retro: #d8c8b8;
-
-  /* 文字 */
+  --bg: #f5efeb;
+  --card: #faf6f0;
+  --brick: #8b3a2b;
+  --brass: #c5a059;
+  --ink: #2c2623;
+  --nav: #1e2d3d;
+  --out: #e6dcd4;
   --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
-  --font-roman: "Georgia", serif;
-
-  /* レイアウト */
+  --font-roman: Georgia, serif;
   --max-width: 480px;
-  --bottom-nav-height: 4.25rem;
-  --spacing-lg: 3rem;
-  --spacing-md: 2rem;
-  --spacing-sm: 1rem;
-  --sheet-collapsed: 18%;
-  --sheet-half: 45%;
+}
 
-  /* アニメーション時間 */
-  --transition-page: 0.4s;
-  --animation-whisper: 2.5s;
-  --animation-stamp: 1.8s;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --out: #15100e;
+  }
 }
