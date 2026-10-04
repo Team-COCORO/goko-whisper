@@ -1,36 +1,26 @@
-import { RallyImage } from "../components/RallyImage";
-import { PageLayout } from "../components/PageLayout";
-import { useApp } from "../context/AppContext";
-import { FOOD_STALLS, STALL_ZOOM } from "../data/map";
+const STALLS = [
+  { name: "模擬店 A（仮）", color: "#a95a48" },
+  { name: "模擬店 B（仮）", color: "#5b6b7a" },
+];
 
 export function FoodPage() {
-  const { setActiveTab, focusMap } = useApp();
-
   return (
-    <PageLayout variant="top">
-      <h1 className="title-serif title-sm">模擬店の味</h1>
-      <ul className="intro-list">
-        {FOOD_STALLS.map((stall) => (
-          <li key={stall.id}>
-            <button
-              type="button"
-              className="intro-card"
-              onClick={() => {
-                focusMap({
-                  x: stall.x,
-                  y: stall.y,
-                  zoom: STALL_ZOOM,
-                  pinId: "spot2",
-                });
-                setActiveTab("home");
-              }}
-            >
-              <RallyImage src={stall.image} alt="" />
-              <span className="intro-card__name">{stall.name}</span>
-            </button>
-          </li>
-        ))}
-      </ul>
-    </PageLayout>
+    <>
+      <h1>模擬店</h1>
+      <p className="sub">囁きは、この中のどこかに眠っている。</p>
+      {STALLS.map((stall) => (
+        <div className="card row" key={stall.name}>
+          <div className="ph" style={{ background: stall.color }}>
+            画像なし
+          </div>
+          <div>
+            <p>
+              <b>{stall.name}</b>
+            </p>
+            <p style={{ fontSize: 15 }}>紹介文がここに入ります。</p>
+          </div>
+        </div>
+      ))}
+    </>
   );
 }

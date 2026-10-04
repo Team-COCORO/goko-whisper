@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>五高の囁き｜来場者向けデザインプロトタイプ</title>
+<style>
+:root{--bg:#f5efeb;--card:#faf6f0;--brick:#8b3a2b;--brass:#c5a059;--ink:#2c2623;--nav:#1e2d3d;--out:#e6dcd4;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--out:#15100e}}
+:root[data-theme="dark"]{--out:#15100e}
+*{box-sizing:border-box}html,body{height:100%;margin:0}
+body{background:var(--out);font-family:"Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;color:var(--ink);display:flex;justify-content:center}
+#app{width:100%;max-width:480px;height:100vh;height:100dvh;background:var(--bg);display:flex;flex-direction:column;position:relative}
+#dev{background:#3b2a24;color:#f5efeb;font-size:13px;padding:5px 8px;display:flex;gap:6px;align-items:center;font-family:sans-serif}
+#dev select{flex:1;font-size:14px;padding:3px;min-width:0}
+main{flex:1;min-height:0;overflow-y:auto;padding:10px 14px}
+main.home{display:flex;flex-direction:column;overflow:hidden}
+main.home .card{flex:none;margin:10px 0 0;padding:12px 14px}
+main.home h1{font-size:23px}main.home .sub{margin:0 0 8px;font-size:14px}
+main.home .card p{margin:4px 0;font-size:17px;line-height:1.7}
+main.home .whisper{font-size:18px;line-height:1.8;padding:8px 4px}
+main.home .code{font-size:58px;margin:2px 0}
+.btns{display:flex;gap:8px}.btns .b{flex:1;font-size:15px;padding:12px 4px;letter-spacing:0}
+.row{display:flex;gap:12px;align-items:center;padding:10px!important;margin:8px 0!important}.row .ph{width:84px;height:84px;flex:none;margin:0;text-align:center}.row p{margin:2px 0!important}
+h1{font-size:26px;letter-spacing:.25em;color:var(--brick);margin:2px 0 2px;text-align:center}
+.sub{font-size:15px;text-align:center;opacity:.75;margin:0 0 12px}
+.card{background:var(--card);border:1px solid var(--brass);border-radius:6px;padding:16px;margin:10px 0;box-shadow:0 2px 0 rgba(139,58,43,.12)}
+.card h2{font-size:18px;color:var(--brick);margin:0 0 8px;letter-spacing:.1em}
+.card p{margin:6px 0;line-height:1.9;font-size:18px}
+.whisper{font-size:20px;line-height:2;text-align:center;border-top:1px solid var(--brass);border-bottom:1px solid var(--brass);padding:14px 4px}
+.code{font-family:Georgia,serif;font-size:68px;letter-spacing:.2em;text-align:center;color:var(--brick);margin:8px 0}
+.note{font-size:14px;opacity:.75;text-align:center}
+.err{color:var(--brick);font-weight:bold;text-align:center}
+button.b{display:block;width:100%;background:var(--brick);color:#faf6f0;border:0;border-radius:4px;padding:15px;font:inherit;font-size:18px;letter-spacing:.1em;margin-top:10px}
+button.b.alt{background:transparent;color:var(--brick);border:1px solid var(--brick)}
+button.b:disabled{opacity:.4}
+input{width:100%;font:inherit;font-size:18px;padding:10px;border:1px solid var(--brass);background:#fff8;border-radius:4px;color:var(--ink)}
+input.pin{font-family:Georgia,serif;font-size:32px;text-align:center;letter-spacing:.4em}
+.map{border:1px solid var(--brass);border-radius:6px;background:#efe6da;display:block;width:100%}
+.mapw{position:relative;flex:1;min-height:150px;max-width:100%;overflow:hidden;border:1px solid var(--brass);border-radius:6px;background:#efe6da;touch-action:none;user-select:none;-webkit-user-select:none}
+.mapw svg{display:block;width:100%;height:100%}
+.mz{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px}
+.mz button{width:44px;height:44px;border-radius:6px;border:1px solid var(--brass);background:var(--card);color:var(--brick);font-size:24px;line-height:1;padding:0}
+.stamps{display:flex;gap:8px;justify-content:center;margin:6px 0}
+.st{width:40px;height:40px;border-radius:50%;border:2px solid var(--brass);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--brass)}
+.st.on{background:var(--brick);border-color:var(--brick);color:#faf6f0}
+.ph{height:90px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:12px;color:#faf6f0;margin-bottom:8px}
+nav{background:var(--nav);display:flex;padding:6px 0 calc(6px + env(safe-area-inset-bottom,0px));border-top:2px solid var(--brass)}
+nav button{flex:1;background:none;border:0;color:#b8c0c8;font:inherit;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px}
+nav button.on{color:var(--brass)}
+nav svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.6}
+</style></head><body>
+<div id="app">
+<div id="dev"><span>状態</span><select id="sel"></select></div>
+<main id="main"></main>
+<nav id="nav"></nav>
+</div>
+<script>
+const S=[["idle","未参加"],["w1","囁き再生：第一"],["w2","囁き再生：第二"],["only1","片方だけ：①のみ"],["only2","片方だけ：②のみ"],["needname","両方揃い・名前なし"],["goal","ゴール（4桁）"],["issuing","発行中"],["fail","通信失敗"],["expired","5分経過"],["redeem","消込（4桁入力）"],["badpin","暗証番号違い"],["nocode","コード不明"],["done","受取済み"],["ended","配布終了"],["nostorage","保存できない"]];
+let st="idle",tab="home",name="";
+const $=id=>document.getElementById(id);
+$("sel").innerHTML=S.map(s=>`<option value="${s[0]}">${s[1]}</option>`).join("");
+$("sel").onchange=e=>{st=e.target.value;tab="home";render()};
+const ic={home:'<circle cx="13" cy="13" r="9"/><path d="M13 5l3 8-3 8-3-8z"/>',food:'<path d="M9 8h8v12H9zM11 8V5h4v3M13 3v2"/>',gift:'<circle cx="13" cy="13" r="9"/><path d="M13 8l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z"/>'};
+function nav(){const t=[["home","ホーム"],["food","食品"],["gift","プレゼント"]];
+$("nav").innerHTML=t.map(x=>`<button class="${tab==(x[0]=="gift"?"present":x[0])?"on":""}" onclick="go('${x[0]}')"><svg viewBox="0 0 26 26">${ic[x[0]]}</svg>${x[1]}</button>`).join("")}
+function go(k){tab=k=="gift"?"present":k;render()}
+const both=()=>["needname","goal","issuing","fail","expired","redeem","badpin","nocode","done","ended"].includes(st);
+let SH="";const stamps=(a,b)=>{SH=`<div class="st ${a?"on":""}">①</div><div class="st ${b?"on":""}">②</div>`;return""};
+function map(){const pin=(x,y,l)=>`<circle cx="${x}" cy="${y}" r="11" fill="#8b3a2b" stroke="#faf6f0" stroke-width="2"/><text x="${x}" y="${y+28}" font-size="15" font-weight="bold" text-anchor="middle" fill="#2c2623" stroke="#efe6da" stroke-width="3" paint-order="stroke">${l}</text>`;
+return `<div class="mapw" id="mapw"><svg id="msvg"><g id="mg"><rect x="10" y="10" width="300" height="220" fill="#efe6da" stroke="#c5a059" stroke-dasharray="4 3"/><rect x="30" y="30" width="70" height="40" fill="#c9a98f"/><rect x="110" y="140" width="100" height="50" fill="#a95a48"/><rect x="225" y="45" width="60" height="55" fill="#c9a98f"/><rect x="35" y="150" width="50" height="50" fill="#d8cbb9"/><path d="M50 110H280M160 20V210" stroke="#d8cbb9" stroke-width="8"/>${pin(65,50,"第一の囁き")}${pin(255,72,"模擬店")}${pin(160,165,"五高記念館")}</g></svg><div class="stamps" style="position:absolute;left:8px;top:8px">${SH}</div><div class="mz"><button onclick="zoomBy(1.5)" aria-label="拡大">＋</button><button onclick="zoomBy(1/1.5)" aria-label="縮小">－</button><button onclick="fitMap()" aria-label="全体表示" style="font-size:15px">全体</button></div></div>`}
+const WW=320,WH=240;let V=null,fitK=1;
+function clampV(w,h){const m=(o,z,sz)=>{const wd=(o)*z;return wd<=sz?(sz-wd)/2:Math.min(0,Math.max(sz-wd,0))};}
+function applyV(){const e=$("mapw");if(!e)return;const w=e.clientWidth,h=e.clientHeight;
+const ax=(x,k,sz,W)=>W*k<=sz?(sz-W*k)/2:Math.min(0,Math.max(sz-W*k,x));
+V.x=ax(V.x,V.k,w,WW);V.y=ax(V.y,V.k,h,WH);$("mg").setAttribute("transform",`translate(${V.x} ${V.y}) scale(${V.k})`)}
+function fitMap(){const e=$("mapw");const w=e.clientWidth,h=e.clientHeight;fitK=Math.min(w/WW,h/WH);V={k:fitK,x:0,y:0};applyV()}
+function zoomAt(f,cx,cy){const k=Math.min(fitK*5,Math.max(fitK,V.k*f));f=k/V.k;V.x=cx-(cx-V.x)*f;V.y=cy-(cy-V.y)*f;V.k=k;applyV()}
+function zoomBy(f){const e=$("mapw");zoomAt(f,e.clientWidth/2,e.clientHeight/2)}
+function initMap(){const e=$("mapw");if(!e)return;const w=e.clientWidth,h=e.clientHeight;fitK=Math.min(w/WW,h/WH);
+if(!V||V.k<fitK)V={k:fitK,x:0,y:0};applyV();
+const P=new Map();let d0=0;
+const pt=ev=>{const r=e.getBoundingClientRect();return[ev.clientX-r.left,ev.clientY-r.top]};
+e.onpointerdown=ev=>{if(ev.target.closest(".mz"))return;e.setPointerCapture(ev.pointerId);P.set(ev.pointerId,pt(ev));if(P.size==2){const [a,b]=[...P.values()];d0=Math.hypot(a[0]-b[0],a[1]-b[1])}};
+e.onpointermove=ev=>{if(!P.has(ev.pointerId))return;const n=pt(ev),o=P.get(ev.pointerId);
+if(P.size==1){V.x+=n[0]-o[0];V.y+=n[1]-o[1];P.set(ev.pointerId,n);applyV()}
+else{P.set(ev.pointerId,n);const [a,b]=[...P.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(d0>0)zoomAt(d/d0,(a[0]+b[0])/2,(a[1]+b[1])/2);d0=d}};
+const up=ev=>{P.delete(ev.pointerId);d0=0};e.onpointerup=up;e.onpointercancel=up;
+e.onwheel=ev=>{ev.preventDefault();const [x,y]=pt(ev);zoomAt(ev.deltaY<0?1.2:1/1.2,x,y)};
+e.ondblclick=ev=>{const [x,y]=pt(ev);zoomAt(1.8,x,y)}}
+function card(h,body){return `<div class="card">${h?`<h2>${h}</h2>`:""}${body}</div>`}
+function home(){let c="";SH="";
+const nm=name.trim()||"旅人";
+const w=t=>card("囁き",`<div class="whisper">${t}</div><button class="b alt" onclick="st='${st=="w1"?"only1":"only2"}';render()">閉じる</button>`);
+const reset=`<button class="b alt" onclick="st='redeem';render()">スタッフ用：消込</button>`;
+switch(st){
+case"idle":c=card("",`<div class="whisper">耳を澄ませ。百年の声が、まだここに漂っている。</div><p style="font-size:14px!important">お名前（任意・1〜20文字・発行後は変更不可）</p><input maxlength="20" placeholder="旅人" value="${name}" oninput="name=this.value"><div class="btns"><button class="b" onclick="st='w1';render()">第一の囁き（チラシ）</button><button class="b alt" onclick="st='w2';render()">第二の囁き（模擬店）</button></div>`)+stamps(0,0);break;
+case"w1":c=w("耳を澄ませ。この街の風は、まだあの頃の声を運んでいる。");break;
+case"w2":c=w("灯は、消えない。学んだ者の記憶が、石となり、壁となり、今もここに立っている。");break;
+case"only1":c=stamps(1,0)+card("案内",`<p>次の声は、模擬店のどこかに眠っている。</p><button class="b alt" onclick="st='w2';render()">（デモ）模擬店で読み取る</button>`);break;
+case"only2":c=stamps(0,1)+card("案内",`<p>最初の声は、まだ聞こえていない。チラシの QR を読んでください。</p><button class="b alt" onclick="st='w1';render()">（デモ）チラシで読み取る</button>`);break;
+case"needname":c=stamps(1,1)+card("",`<p class="err">二つの声が揃った。名を残してから、記念館へ。</p><input maxlength="20" placeholder="お名前（1〜20文字）" value="${name}" oninput="name=this.value;$('go').disabled=!name.trim()"><button id="go" class="b" ${name.trim()?"":"disabled"} onclick="st='issuing';render();setTimeout(()=>{st='goal';render()},1200)">名を残す</button>`);break;
+case"issuing":c=card("",`<p class="note">発行しています…</p>`);break;
+case"fail":c=card("",`<p class="err">通信が必要です</p><button class="b" onclick="st='issuing';render();setTimeout(()=>{st='goal';render()},1200)">再試行</button>`);break;
+case"goal":c=stamps(1,1)+card(nm+" さん",`<p style="text-align:center">あなたは今、百年前の声が聞こえた場所に立っている。</p><div class="code">4826</div><p class="note">5 分間表示・スタッフに提示してください</p><div class="btns">${reset}<button class="b alt" onclick="st='expired';render()">（デモ）5分経過</button></div>`);break;
+case"expired":c=card("",`<p class="note">5 分が過ぎました。コードは隠されています。</p><button class="b" onclick="st='goal';render()">コードを再表示</button>`);break;
+case"redeem":case"badpin":case"nocode":c=card("スタッフ消込",`<p style="font-size:15px">数字 4 桁の暗証番号を入力</p><input class="pin" id="pin" inputmode="numeric" maxlength="4" placeholder="••••" oninput="this.value=this.value.replace(/\\D/g,'');$('ok').disabled=this.value.length<4">${st=="badpin"?'<p class="err">暗証番号が違います</p>':st=="nocode"?'<p class="err">このコードは見つかりません</p>':""}<button id="ok" class="b" disabled onclick="const v=$('pin').value;st=v=='4826'?'done':v=='0000'?'nocode':'badpin';render()">受け取り完了</button><p class="note">4 桁そろうまで押せません（デモ：4826 で成功）</p>`);break;
+case"done":c=card("",`<p class="err">受取は完了しています</p>`);break;
+case"ended":c=card("",`<p class="err">本日の配布は終了しました</p><p class="note">すでにコードをお持ちの方は、消込できます。</p>${reset}`);break;
+case"nostorage":c=card("",`<p class="err">このブラウザでは記録を残せません。通常のタブで開いてください。</p>`);break}
+return `<h1>五高の囁き</h1><p class="sub">あなたは、五高の声を聞いたことがありますか。</p>${map()}${c}`}
+function food(){return `<h1>模擬店</h1><p class="sub">囁きは、この中のどこかに眠っている。</p>`+[["#a95a48","模擬店 A（仮）"],["#5b6b7a","模擬店 B（仮）"]].map(x=>`<div class="card row"><div class="ph" style="background:${x[0]}">画像なし</div><div><p><b>${x[1]}</b></p><p style="font-size:15px">紹介文がここに入ります。</p></div></div>`).join("")}
+function present(){const ok=both();return `<h1>限定プレゼント</h1><p class="sub">どちらか一つ。受付が手渡します。</p>`+[["#c5a059","限定バルーン","「五高の囁き」限定バルーン"],["#8b3a2b","限定しおり","「五高の囁き」限定しおり"]].map(x=>`<div class="card row"><div class="ph" style="background:${x[0]}">${x[1]}</div><div><p><b>${x[2]}</b></p><p style="font-size:15px">数量限定</p></div></div>`).join("")+`<button class="b" ${ok?"":"disabled"} onclick="st='goal';tab='home';render()">ゴールへ進む</button>`}
+function render(){$("sel").value=st;$("main").className=tab=="home"?"home":"";$("main").innerHTML=tab=="home"?home():tab=="food"?food():present();nav();$("main").scrollTop=0;if(tab=="home")initMap()}
+render();
+addEventListener("resize",()=>{if(tab=="home"&&$("mapw")){const e=$("mapw");fitK=Math.min(e.clientWidth/WW,e.clientHeight/WH);if(!V||V.k<fitK)V={k:fitK,x:0,y:0};applyV()}});
+</script></body></html>
