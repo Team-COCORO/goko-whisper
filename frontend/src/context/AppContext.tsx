@@ -7,8 +7,6 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { MAP_PINS, type PinId } from "../data/map";
-import type { SheetLevel } from "../components/BottomSheet";
 import type { Screen, StampRallyState, Tab, WhisperId } from "../types";
 
 const STORAGE_KEY = "goko-whisper";
@@ -40,13 +38,6 @@ type AppContextValue = {
   markRedeemed: () => void;
   markSoldOut: () => void;
   clearPendingWhisper: () => void;
-  selectedPin: PinId | null;
-  sheetLevel: SheetLevel;
-  focusPoint: { x: number; y: number; zoom?: number };
-  focusToken: number;
-  openPin: (id: PinId) => void;
-  focusMap: (target: { x: number; y: number; zoom?: number; pinId?: PinId }) => void;
-  setSheetLevel: (level: SheetLevel) => void;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -206,14 +197,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(
     () => window.location.hash === "#admin",
   );
-  const [selectedPin, setSelectedPin] = useState<PinId | null>("goko");
-  const [sheetLevel, setSheetLevel] = useState<SheetLevel>("half");
-  const [focus, setFocus] = useState<{
-    x: number;
-    y: number;
-    zoom?: number;
-    token: number;
-  }>({ x: 53, y: 42, token: 0 });
 
   useEffect(() => {
     const sync = () => setIsAdmin(window.location.hash === "#admin");
@@ -275,35 +258,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSoldOut(true);
   }, []);
 
-  const focusMap = useCallback(
-    (target: { x: number; y: number; zoom?: number; pinId?: PinId }) => {
-      if (target.pinId) setSelectedPin(target.pinId);
-      setSheetLevel("half");
-      setFocus((current) => ({
-        x: target.x,
-        y: target.y,
-        zoom: target.zoom,
-        token: current.token + 1,
-      }));
-    },
-    [],
-  );
-
-  const openPin = useCallback(
-    (id: PinId) => {
-      const pin = MAP_PINS.find((item) => item.id === id);
-      if (!pin) return;
-      setSelectedPin(id);
-      setSheetLevel("half");
-      setFocus((current) => ({
-        x: pin.x,
-        y: pin.y,
-        token: current.token + 1,
-      }));
-    },
-    [],
-  );
-
   const value = useMemo(
     () => ({
       storageBlocked,
@@ -323,13 +277,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       markRedeemed,
       markSoldOut,
       clearPendingWhisper,
-      selectedPin,
-      sheetLevel,
-      focusPoint: { x: focus.x, y: focus.y, zoom: focus.zoom },
-      focusToken: focus.token,
-      openPin,
-      focusMap,
-      setSheetLevel,
     }),
     [
       storageBlocked,
@@ -347,12 +294,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       markRedeemed,
       markSoldOut,
       clearPendingWhisper,
-      selectedPin,
-      sheetLevel,
-      focus,
-      openPin,
-      focusMap,
-      setSheetLevel,
     ],
   );
 
