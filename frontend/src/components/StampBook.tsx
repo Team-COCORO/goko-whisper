@@ -12,6 +12,9 @@ const FRAMES: { id: WhisperId; label: string; tilt: number }[] = [
   { id: 3, label: "五高記念館", tilt: -2 },
 ];
 
+type Opening = 0 | 1;
+type TurnDir = "next" | "prev";
+
 type Phase = "press" | "hold" | "wait-close";
 
 type LivePress = {
@@ -65,6 +68,21 @@ function arm() {
   }, remain);
 }
 
+function frameOf(id: WhisperId) {
+  const frame = FRAMES.find((item) => item.id === id);
+  if (!frame) return FRAMES[0];
+  return frame;
+}
+
+function leafId(opening: Opening, side: "left" | "right"): WhisperId {
+  if (opening === 0) return side === "left" ? 1 : 2;
+  return side === "left" ? 2 : 3;
+}
+
+function openingFor(id: WhisperId): Opening {
+  return id === 3 ? 1 : 0;
+}
+
 function Seal({ tilt, pressing }: { tilt: number; pressing: boolean }) {
   const style = { "--tilt": `${tilt}deg` } as CSSProperties;
   return (
@@ -100,6 +118,8 @@ export function StampBook() {
     showWhisper,
   } = useApp();
   const [, bump] = useState(0);
+  const [opening, setOpening] = useState<Opening>(0);
+  const [turning, setTurning] = useState<TurnDir | null>(null);
 
   const done = (id: WhisperId) => {
     if (id === 1) return stamp1Done;
@@ -164,7 +184,20 @@ export function StampBook() {
     setBookLocked,
   ]);
 
+  useEffect(() => {
+    if (!turning) return;
+    const delay = prefersReducedMotion() ? 0 : 620;
+    const turnTimer = window.setTimeout(() => {
+      setOpening(turning === "next" ? 1 : 0);
+      setTurning(null);
+    }, delay);
+    return () => window.clearTimeout(turnTimer);
+  }, [turning]);
+
   if (!bookOpen) return null;
+
+  const displayed: Opening = livePress ? openingFor(livePress.id) : opening;
+  const pressingNow = livePress?.phase === "press";
 
   const locked = livePress?.phase === "press" || livePress?.phase === "hold";
 
@@ -177,30 +210,81 @@ export function StampBook() {
     if (id) showWhisper(id, false);
   };
 
+  const turnTo = (dir: TurnDir) => {
+    if (livePress || turning) return;
+    if (dir === "next" && displayed === 1) return;
+    if (dir === "prev" && displayed === 0) return;
+    if (prefersReducedMotion()) {
+      setOpening(dir === "next" ? 1 : 0);
+      return;
+    }
+    setTurning(dir);
+  };
+
+  const renderLeaf = (side: "left" | "right") => {
+    const id = leafId(displayed, side);
+    const frame = frameOf(id);
+    const pressed = done(id) || livePress?.id === id;
+    const pressing = pressingNow && livePress?.id === id;
+    return (
+      <article
+        key={`${displayed}-${side}`}
+        className={`orihon-leaf orihon-leaf--${side}`}
+        aria-label={`${frame.label}の頁`}
+      >
+        <div className="orihon-paper">
+          <div className="orihon-rule" />
+          <div className="orihon-rule orihon-rule--inner" />
+          <span className="orihon-corner orihon-corner--tl" />
+          <span className="orihon-corner orihon-corner--tr" />
+          <span className="orihon-corner orihon-corner--bl" />
+          <span className="orihon-corner orihon-corner--br" />
+          <p className="orihon-vert">{frame.label}</p>
+          <div className={pressed ? "orihon-well orihon-well--on" : "orihon-well"}>
+            {pressed && <Seal tilt={frame.tilt} pressing={pressing} />}
+          </div>
+        </div>
+      </article>
+    );
+  };
+
   return (
     <div className="stamp-book" role="dialog" aria-label="スタンプ帳">
-      <div className="stamp-book__sheet">
-        <h2>スタンプ帳</h2>
-        <ul className="stamp-book__frames">
-          {FRAMES.map((frame) => {
-            const pressed = done(frame.id) || livePress?.id === frame.id;
-            const pressing = livePress?.phase === "press" && livePress.id === frame.id;
-            return (
-              <li key={frame.id}>
-                <div className={pressed ? "seal-slot seal-slot--on" : "seal-slot"}>
-                  {pressed && <Seal tilt={frame.tilt} pressing={pressing} />}
-                </div>
-                <span>{frame.label}</span>
-              </li>
-            );
-          })}
-        </ul>
-        {!locked && (
-          <button className="b alt" type="button" onClick={finishClose}>
-            閉じる
-          </button>
-        )}
+      <div
+        className={
+          turning === "next"
+            ? "orihon-spread is-turning-next"
+            : turning === "prev"
+              ? "orihon-spread is-turning-prev"
+              : "orihon-spread"
+        }
+      >
+        {renderLeaf("left")}
+        {renderLeaf("right")}
       </div>
+      <div className="orihon-turns">
+        <button
+          className="orihon-turn"
+          type="button"
+          disabled={Boolean(livePress) || Boolean(turning) || displayed === 0}
+          onClick={() => turnTo("prev")}
+        >
+          前の見開き
+        </button>
+        <button
+          className="orihon-turn"
+          type="button"
+          disabled={Boolean(livePress) || Boolean(turning) || displayed === 1}
+          onClick={() => turnTo("next")}
+        >
+          次の見開き
+        </button>
+      </div>
+      {!locked && (
+        <button className="b alt orihon-close" type="button" onClick={finishClose}>
+          閉じる
+        </button>
+      )}
     </div>
   );
 }
@@ -216,10 +300,11 @@ export function StampBookButton() {
       aria-label="スタンプ帳"
       onClick={openBook}
     >
-      <svg viewBox="0 0 26 26" aria-hidden="true">
-        <circle cx="13" cy="13" r="8" />
-        <path d="M13 9v8M9 13h8" />
-      </svg>
+      <span className="stamp-fab__book" aria-hidden="true">
+        <span className="stamp-fab__spine" />
+        <span className="stamp-fab__slip" />
+        <span className="stamp-fab__mark" />
+      </span>
     </button>
   );
 }

@@ -38,7 +38,7 @@ body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 10px 14px 88px;
+  padding: 10px 14px 108px;
 }
 
 .stage--home {
@@ -89,7 +89,7 @@ h1 {
   max-height: 52%;
   overflow-y: auto;
   margin: 10px 0 0;
-  padding: 12px 14px;
+  padding: 12px 14px 70px;
 }
 
 .card h2 {
@@ -312,21 +312,52 @@ input.pin {
   right: 14px;
   bottom: calc(76px + env(safe-area-inset-bottom, 0px));
   width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  border: 1px solid var(--brass);
-  background: var(--card);
-  color: var(--brick);
+  height: 77px;
   padding: 0;
-  box-shadow: 0 2px 0 rgba(139, 58, 43, 0.18);
+  border: 0;
+  background: transparent;
+  color: inherit;
 }
 
-.stamp-fab svg {
-  width: 28px;
-  height: 28px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
+.stamp-fab__book {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #0f172a;
+  border: 1px solid #334155;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.35);
+}
+
+.stamp-fab__spine {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  background: #69512d;
+}
+
+.stamp-fab__slip {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 10px;
+  height: 35px;
+  background: #faf5ec;
+  border: 1px solid #a17e40;
+}
+
+.stamp-fab__mark {
+  position: absolute;
+  left: 18px;
+  bottom: 10px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1.5px dashed #dc2626;
 }
 
 .stamp-book {
@@ -340,113 +371,190 @@ input.pin {
     linear-gradient(180deg, rgba(44, 38, 35, 0.05), rgba(44, 38, 35, 0.14)),
     var(--bg);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-}
-
-.stamp-book__sheet {
-  position: relative;
-  width: 100%;
-  padding: 20px 18px 16px 36px;
-  border-radius: 2px;
-  color: #2b2621;
-  background-color: #ede4c8;
-  background-image:
-    radial-gradient(circle at 9% 16%, rgba(156, 123, 79, 0.7) 0 1.4px, transparent 2px),
-    radial-gradient(circle at 78% 9%, rgba(156, 123, 79, 0.55) 0 1px, transparent 1.7px),
-    radial-gradient(circle at 93% 71%, rgba(140, 109, 70, 0.65) 0 2px, transparent 3px),
-    radial-gradient(circle at 22% 86%, rgba(156, 123, 79, 0.6) 0 2.2px, transparent 3.2px),
-    radial-gradient(circle at 61% 38%, rgba(156, 123, 79, 0.4) 0 1px, transparent 1.6px),
-    radial-gradient(circle at 86% 91%, rgba(140, 109, 70, 0.55) 0 1.6px, transparent 2.6px),
-    radial-gradient(circle at 14% 58%, rgba(156, 123, 79, 0.28) 0 8px, transparent 18px),
-    radial-gradient(circle at 88% 22%, rgba(140, 109, 70, 0.24) 0 10px, transparent 22px),
-    radial-gradient(
-      ellipse at center,
-      rgba(237, 228, 200, 0.15) 42%,
-      rgba(180, 146, 95, 0.62) 100%
-    ),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.45 0 0 0 0 0.32 0 0 0 0 0.16 0 0 0 0.26 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size:
-    auto,
-    auto,
-    auto,
-    auto,
-    auto,
-    auto,
-    auto,
-    auto,
-    auto,
-    140px 140px;
-  box-shadow:
-    inset 0 0 80px rgba(110, 80, 40, 0.45),
-    inset 0 0 0 1px rgba(140, 109, 70, 0.55),
-    0 14px 28px rgba(44, 38, 35, 0.16);
-}
-
-.stamp-book__sheet::before {
-  content: "";
-  position: absolute;
-  left: 16px;
-  top: 12px;
-  bottom: 12px;
-  width: 8px;
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 50% 10px, rgba(156, 123, 79, 0.75) 1.6px, transparent 2.2px),
-    radial-gradient(circle at 50% calc(100% - 10px), rgba(156, 123, 79, 0.75) 1.6px, transparent 2.2px),
-    linear-gradient(90deg, rgba(140, 109, 70, 0.38), transparent 75%);
-  border-right: 1px solid rgba(140, 109, 70, 0.4);
-}
-
-.stamp-book__sheet h2 {
-  font-size: 18px;
-  color: #2b2621;
-  margin: 0 0 8px;
-  letter-spacing: 0.1em;
-  text-align: center;
-}
-
-.stamp-book__frames {
-  list-style: none;
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  margin: 12px 0 16px;
-  padding: 0;
-}
-
-.stamp-book__frames li {
-  flex: 1;
-  display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  font-size: 14px;
-  text-align: center;
+  padding: 10px 8px 8px;
+  overflow: hidden;
 }
 
-.seal-slot {
-  width: 88px;
-  height: 88px;
+.orihon-spread {
+  flex: 1;
+  min-height: 0;
+  width: min(100%, 440px);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  perspective: 1100px;
+}
+
+.orihon-leaf {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.orihon-leaf--left {
+  box-shadow: inset -12px 0 16px -10px rgba(80, 50, 20, 0.4);
+}
+
+.orihon-leaf--right {
+  box-shadow: inset 12px 0 16px -10px rgba(80, 50, 20, 0.4);
+}
+
+.orihon-paper {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 22% 80%, rgba(156, 123, 79, 0.28) 0 4px, transparent 11px),
+    radial-gradient(ellipse at center, #f8f3e4 0%, #e7d7b6 50%, #cbb892 100%);
+}
+
+.orihon-leaf--right .orihon-paper {
+  background:
+    radial-gradient(circle, rgba(59, 107, 122, 0.45) 0.7px, transparent 0.8px),
+    radial-gradient(circle at 80% 18%, rgba(156, 123, 79, 0.26) 0 4px, transparent 12px),
+    radial-gradient(ellipse at center, #f8f3e4 0%, #e7d7b6 50%, #cbb892 100%);
+  background-size: 16px 16px, auto, auto;
+}
+
+.orihon-rule {
+  position: absolute;
+  inset: 6px;
+  border: 1.5px solid #3b6b7a;
+  pointer-events: none;
+}
+
+.orihon-rule--inner {
+  inset: 11px;
+  border-width: 1px;
+  border-style: dashed;
+}
+
+.orihon-corner {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-color: #3b6b7a;
+  border-style: solid;
+  pointer-events: none;
+}
+
+.orihon-corner--tl {
+  top: 4px;
+  left: 4px;
+  border-width: 2px 0 0 2px;
+  border-radius: 10px 0 0 0;
+}
+
+.orihon-corner--tr {
+  top: 4px;
+  right: 4px;
+  border-width: 2px 2px 0 0;
+  border-radius: 0 10px 0 0;
+}
+
+.orihon-corner--bl {
+  bottom: 4px;
+  left: 4px;
+  border-width: 0 0 2px 2px;
+  border-radius: 0 0 0 10px;
+}
+
+.orihon-corner--br {
+  right: 4px;
+  bottom: 4px;
+  border-width: 0 2px 2px 0;
+  border-radius: 0 0 10px 0;
+}
+
+.orihon-leaf--right .orihon-corner {
+  border-radius: 0;
+}
+
+.orihon-vert {
+  position: absolute;
+  top: 16%;
+  bottom: 14%;
+  right: 8%;
+  margin: 0;
+  writing-mode: vertical-rl;
+  letter-spacing: 0.22em;
+  font-size: 13px;
+  color: #3b6b7a;
+}
+
+.orihon-well {
+  position: absolute;
+  left: 42%;
+  top: 48%;
+  width: 58%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  border: 1.5px dashed #3b6b7a;
   border-radius: 50%;
-  border: 1px solid rgba(43, 38, 33, 0.55);
-  box-shadow: 0 0 1px rgba(43, 38, 33, 0.35);
-  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.seal-slot--on {
+.orihon-well--on {
   border-color: transparent;
+}
+
+.orihon-turns {
+  display: flex;
+  gap: 8px;
+  width: min(100%, 440px);
+}
+
+.orihon-turn {
+  flex: 1;
+  min-height: 44px;
+  border: 1px solid #3b6b7a;
+  border-radius: 4px;
   background: transparent;
-  box-shadow: none;
+  color: #3b6b7a;
+  font: inherit;
+  font-size: 15px;
+  letter-spacing: 0.08em;
+}
+
+.orihon-turn:disabled {
+  opacity: 0.35;
+}
+
+.orihon-close {
+  width: min(100%, 440px);
+  margin-top: 0;
+}
+
+.orihon-spread.is-turning-next .orihon-leaf--right {
+  transform-origin: left center;
+  animation: orihon-flip-next 0.6s ease forwards;
+}
+
+.orihon-spread.is-turning-prev .orihon-leaf--left {
+  transform-origin: right center;
+  animation: orihon-flip-prev 0.6s ease forwards;
+}
+
+@keyframes orihon-flip-next {
+  to {
+    transform: rotateY(-86deg);
+  }
+}
+
+@keyframes orihon-flip-prev {
+  to {
+    transform: rotateY(86deg);
+  }
 }
 
 .seal {
-  width: 84px;
-  height: 84px;
+  width: 78%;
+  height: 78%;
   color: #8b3a2b;
   transform: rotate(var(--tilt));
 }
@@ -457,7 +565,7 @@ input.pin {
 
 @keyframes seal-press {
   from {
-    transform: translateY(-36px) rotate(var(--tilt)) scale(1.12);
+    transform: translateY(-42px) rotate(var(--tilt)) scale(1.08);
     opacity: 0;
   }
   to {
@@ -467,7 +575,9 @@ input.pin {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .seal--press {
+  .seal--press,
+  .orihon-spread.is-turning-next .orihon-leaf--right,
+  .orihon-spread.is-turning-prev .orihon-leaf--left {
     animation: none;
   }
 }
