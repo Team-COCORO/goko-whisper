@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { CSSProperties } from "react";
+import type { AnimationEvent, CSSProperties } from "react";
 import type { WhisperId } from "../types";
 import { useApp } from "../context/AppContext";
 
@@ -120,6 +120,7 @@ export function StampBook() {
   const [, bump] = useState(0);
   const [opening, setOpening] = useState<Opening>(0);
   const [turning, setTurning] = useState<TurnDir | null>(null);
+  const [presented, setPresented] = useState(bookOpen);
 
   const done = (id: WhisperId) => {
     if (id === 1) return stamp1Done;
@@ -185,6 +186,14 @@ export function StampBook() {
   ]);
 
   useEffect(() => {
+    if (bookOpen) {
+      setPresented(true);
+      return;
+    }
+    if (prefersReducedMotion()) setPresented(false);
+  }, [bookOpen]);
+
+  useEffect(() => {
     if (!turning) return;
     const delay = prefersReducedMotion() ? 0 : 620;
     const turnTimer = window.setTimeout(() => {
@@ -194,7 +203,12 @@ export function StampBook() {
     return () => window.clearTimeout(turnTimer);
   }, [turning]);
 
-  if (!bookOpen) return null;
+  if (!bookOpen && !presented) return null;
+
+  const onBookAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
+    if (event.target !== event.currentTarget || bookOpen) return;
+    if (event.animationName === "book-out") setPresented(false);
+  };
 
   const displayed: Opening = livePress ? openingFor(livePress.id) : opening;
   const pressingNow = livePress?.phase === "press";
@@ -249,7 +263,12 @@ export function StampBook() {
   };
 
   return (
-    <div className="stamp-book" role="dialog" aria-label="スタンプ帳">
+    <div
+      className={bookOpen ? "stamp-book is-open" : "stamp-book is-closing"}
+      role="dialog"
+      aria-label="スタンプ帳"
+      onAnimationEnd={onBookAnimationEnd}
+    >
       <div
         className={
           turning === "next"
