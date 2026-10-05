@@ -24,6 +24,8 @@ export type StampRallyState = {
   stamp1Done: boolean;
   stamp2Done: boolean;
   stamp3Done: boolean;
+  pendingStamp: WhisperId | null;
+  goalUnlocked: boolean;
   redeemed: boolean;
   rewardCode?: string;
   issuedAt?: number;

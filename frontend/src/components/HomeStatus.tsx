@@ -4,11 +4,11 @@ import { useApp } from "../context/AppContext";
 import { GoalPage } from "../pages/GoalPage";
 
 function NameFields({
-  required,
   prompt,
+  submitLabel,
 }: {
-  required: boolean;
   prompt?: string;
+  submitLabel: string;
 }) {
   const { nickname, nicknameLocked, saveNickname } = useApp();
   const [input, setInput] = useState(nickname);
@@ -18,12 +18,9 @@ function NameFields({
   return (
     <>
       {prompt && <p className="err">{prompt}</p>}
-      {!required && (
-        <p className="field-label">お名前（任意・1〜20文字・発行後は変更不可）</p>
-      )}
       <input
         maxLength={20}
-        placeholder={required ? "お名前（1〜20文字）" : "旅人"}
+        placeholder="旅人"
         value={input}
         disabled={nicknameLocked}
         autoComplete="nickname"
@@ -37,7 +34,7 @@ function NameFields({
           disabled={!ready}
           onClick={() => saveNickname(input)}
         >
-          {required ? "名を残す" : "名前を残す"}
+          {submitLabel}
         </button>
       )}
     </>
@@ -47,20 +44,22 @@ function NameFields({
 export function HomeStatus() {
   const {
     screen,
-    pendingWhisper,
+    nickname,
+    whisperId,
+    pendingStamp,
     stamp1Done,
     stamp2Done,
     stamp3Done,
-    clearPendingWhisper,
+    dismissWhisper,
   } = useApp();
 
-  if (screen === "whisper" && pendingWhisper) {
-    const text = WHISPERS[pendingWhisper].text.replaceAll("\n", "");
+  if (screen === "whisper" && whisperId) {
+    const text = WHISPERS[whisperId].text.replaceAll("\n", "");
     return (
       <div className="card">
         <h2>囁き</h2>
         <div className="whisper">{text}</div>
-        <button className="b alt" type="button" onClick={clearPendingWhisper}>
+        <button className="b alt" type="button" onClick={dismissWhisper}>
           閉じる
         </button>
       </div>
@@ -81,10 +80,24 @@ export function HomeStatus() {
     );
   }
 
+  if (screen === "askName" && pendingStamp) {
+    return (
+      <div className="card">
+        <div className="whisper">
+          耳を澄ませ。百年の声が、まだここに漂っている。
+        </div>
+        <NameFields submitLabel="名前を残す" />
+      </div>
+    );
+  }
+
   if (screen === "askName") {
     return (
       <div className="card">
-        <NameFields required prompt="三つの声が揃った。名を残してから、先へ。" />
+        <NameFields
+          prompt="三つの声が揃った。名を残してから、先へ。"
+          submitLabel="名を残す"
+        />
       </div>
     );
   }
@@ -95,7 +108,7 @@ export function HomeStatus() {
         <div className="whisper">
           耳を澄ませ。百年の声が、まだここに漂っている。
         </div>
-        <NameFields required={false} />
+        {!nickname.trim() && <NameFields submitLabel="名前を残す" />}
       </div>
     );
   }

@@ -5,13 +5,6 @@ const MAP_H = 240;
 
 type View = { k: number; x: number; y: number };
 
-type CampusMapProps = {
-  stamp1: boolean;
-  stamp2: boolean;
-  stamp3: boolean;
-  showStamps: boolean;
-};
-
 type MapApi = {
   zoomIn: () => void;
   zoomOut: () => void;
@@ -46,12 +39,7 @@ function Pin({ x, y, label }: { x: number; y: number; label: string }) {
   );
 }
 
-export function CampusMap({
-  stamp1,
-  stamp2,
-  stamp3,
-  showStamps,
-}: CampusMapProps) {
+export function CampusMap() {
   const wrapRef = useRef<HTMLDivElement>(null);
   const groupRef = useRef<SVGGElement>(null);
   const apiRef = useRef<MapApi>({
@@ -230,13 +218,6 @@ export function CampusMap({
           <Pin x={160} y={165} label="五高記念館" />
         </g>
       </svg>
-      {showStamps && (
-        <div className="stamps">
-          <div className={stamp1 ? "st on" : "st"}>①</div>
-          <div className={stamp2 ? "st on" : "st"}>②</div>
-          <div className={stamp3 ? "st on" : "st"}>③</div>
-        </div>
-      )}
       <div className="mz">
         <button type="button" aria-label="拡大" onClick={() => apiRef.current.zoomIn()}>
           ＋

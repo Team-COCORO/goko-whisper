@@ -1,13 +1,14 @@
 import { BottomNav } from "./components/BottomNav";
 import { CampusMap } from "./components/CampusMap";
 import { HomeStatus } from "./components/HomeStatus";
+import { StampBook, StampBookButton } from "./components/StampBook";
 import { AppProvider, useApp } from "./context/AppContext";
 import { AdminPage } from "./pages/AdminPage";
 import { FoodPage } from "./pages/FoodPage";
 import { PresentPage } from "./pages/PresentPage";
 
 function HomeStage() {
-  const { screen, stamp1Done, stamp2Done, stamp3Done } = useApp();
+  const { screen } = useApp();
 
   if (screen === "admin") {
     return (
@@ -21,12 +22,7 @@ function HomeStage() {
     <main className="stage stage--home">
       <h1>五高の囁き</h1>
       <p className="sub">あなたは、五高の声を聞いたことがありますか。</p>
-      <CampusMap
-        stamp1={stamp1Done}
-        stamp2={stamp2Done}
-        stamp3={stamp3Done}
-        showStamps={screen !== "whisper"}
-      />
+      <CampusMap />
       <HomeStatus />
     </main>
   );
@@ -75,6 +71,8 @@ function AppShell() {
   return (
     <div className="app-shell">
       <TabContent />
+      <StampBookButton />
+      <StampBook />
       <BottomNav />
     </div>
   );
