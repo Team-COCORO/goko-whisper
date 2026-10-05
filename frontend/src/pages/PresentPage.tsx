@@ -14,8 +14,8 @@ const GIFTS = [
 ];
 
 export function PresentPage() {
-  const { stamp1Done, stamp2Done, setActiveTab } = useApp();
-  const both = stamp1Done && stamp2Done;
+  const { stamp1Done, stamp2Done, stamp3Done, setActiveTab } = useApp();
+  const all = stamp1Done && stamp2Done && stamp3Done;
 
   return (
     <>
@@ -37,7 +37,7 @@ export function PresentPage() {
       <button
         className="b"
         type="button"
-        disabled={!both}
+        disabled={!all}
         onClick={() => setActiveTab("home")}
       >
         ゴールへ進む

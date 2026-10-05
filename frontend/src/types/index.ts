@@ -10,7 +10,7 @@ export type Screen =
   | "soldOut"
   | "admin";
 
-export type WhisperId = 1 | 2;
+export type WhisperId = 1 | 2 | 3;
 
 export type WhisperContent = {
   label: string;
@@ -23,6 +23,7 @@ export type StampRallyState = {
   nickname: string;
   stamp1Done: boolean;
   stamp2Done: boolean;
+  stamp3Done: boolean;
   redeemed: boolean;
   rewardCode?: string;
   issuedAt?: number;

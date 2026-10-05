@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { GUIDE_ONLY_STAMP2, WHISPERS } from "../data/whispers";
+import { WHISPERS } from "../data/whispers";
 import { useApp } from "../context/AppContext";
 import { GoalPage } from "../pages/GoalPage";
 
@@ -45,7 +45,14 @@ function NameFields({
 }
 
 export function HomeStatus() {
-  const { screen, pendingWhisper, stamp1Done, clearPendingWhisper } = useApp();
+  const {
+    screen,
+    pendingWhisper,
+    stamp1Done,
+    stamp2Done,
+    stamp3Done,
+    clearPendingWhisper,
+  } = useApp();
 
   if (screen === "whisper" && pendingWhisper) {
     const text = WHISPERS[pendingWhisper].text.replaceAll("\n", "");
@@ -61,11 +68,15 @@ export function HomeStatus() {
   }
 
   if (screen === "guide") {
-    const hint = stamp1Done ? WHISPERS[1].hint : GUIDE_ONLY_STAMP2;
+    const missing = [
+      !stamp1Done ? "チラシの QR" : "",
+      !stamp2Done ? "模擬店の QR" : "",
+      !stamp3Done ? "五高記念館の QR" : "",
+    ].filter(Boolean);
     return (
       <div className="card">
         <h2>案内</h2>
-        <p>{hint}</p>
+        <p>まだ残っている声は、{missing.join("と")}です。</p>
       </div>
     );
   }
@@ -73,7 +84,7 @@ export function HomeStatus() {
   if (screen === "askName") {
     return (
       <div className="card">
-        <NameFields required prompt="二つの声が揃った。名を残してから、記念館へ。" />
+        <NameFields required prompt="三つの声が揃った。名を残してから、先へ。" />
       </div>
     );
   }

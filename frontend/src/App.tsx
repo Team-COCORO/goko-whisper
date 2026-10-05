@@ -7,7 +7,7 @@ import { FoodPage } from "./pages/FoodPage";
 import { PresentPage } from "./pages/PresentPage";
 
 function HomeStage() {
-  const { screen, stamp1Done, stamp2Done } = useApp();
+  const { screen, stamp1Done, stamp2Done, stamp3Done } = useApp();
 
   if (screen === "admin") {
     return (
@@ -24,6 +24,7 @@ function HomeStage() {
       <CampusMap
         stamp1={stamp1Done}
         stamp2={stamp2Done}
+        stamp3={stamp3Done}
         showStamps={screen !== "whisper"}
       />
       <HomeStatus />

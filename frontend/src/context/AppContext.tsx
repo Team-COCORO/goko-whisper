@@ -27,6 +27,7 @@ type AppContextValue = {
   nickname: string;
   stamp1Done: boolean;
   stamp2Done: boolean;
+  stamp3Done: boolean;
   pendingWhisper: WhisperId | null;
   nicknameLocked: boolean;
   clientId: string;
@@ -48,6 +49,7 @@ function emptyRally(clientId: string): StampRallyState {
     nickname: "",
     stamp1Done: false,
     stamp2Done: false,
+    stamp3Done: false,
     redeemed: false,
   };
 }
@@ -95,6 +97,7 @@ function parseRally(raw: string | null): StampRallyState {
     nickname: record.nickname,
     stamp1Done: record.stamp1Done,
     stamp2Done: record.stamp2Done,
+    stamp3Done: record.stamp3Done === true,
     redeemed: record.redeemed,
   };
 
@@ -124,7 +127,15 @@ function applyStampQuery(rally: StampRallyState): {
     return { rally: { ...rally, stamp2Done: true }, pendingWhisper: 2 };
   }
 
+  if (stamp === "spot3" && !rally.stamp3Done) {
+    return { rally: { ...rally, stamp3Done: true }, pendingWhisper: 3 };
+  }
+
   return { rally, pendingWhisper: null };
+}
+
+function allStamps(rally: StampRallyState): boolean {
+  return rally.stamp1Done && rally.stamp2Done && rally.stamp3Done;
 }
 
 function stripStampQuery() {
@@ -145,11 +156,13 @@ function deriveScreen(
 ): Screen {
   if (isAdmin) return "admin";
   if (pendingWhisper) return "whisper";
-  if (!rally.stamp1Done && !rally.stamp2Done) return "top";
-  if (rally.stamp1Done !== rally.stamp2Done) return "guide";
-  if (!rally.nickname.trim()) return "askName";
   if (rally.redeemed) return "redeemed";
-  if (!rally.rewardCode && soldOut) return "soldOut";
+  if (rally.rewardCode) return "goal";
+  const anyStamp = rally.stamp1Done || rally.stamp2Done || rally.stamp3Done;
+  if (!anyStamp) return "top";
+  if (!allStamps(rally)) return "guide";
+  if (!rally.nickname.trim()) return "askName";
+  if (soldOut) return "soldOut";
   return "goal";
 }
 
@@ -266,6 +279,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       nickname: rally.nickname,
       stamp1Done: rally.stamp1Done,
       stamp2Done: rally.stamp2Done,
+      stamp3Done: rally.stamp3Done,
       pendingWhisper,
       nicknameLocked: Boolean(rally.rewardCode),
       clientId: rally.clientId,
@@ -285,6 +299,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rally.nickname,
       rally.stamp1Done,
       rally.stamp2Done,
+      rally.stamp3Done,
       rally.rewardCode,
       rally.issuedAt,
       rally.clientId,

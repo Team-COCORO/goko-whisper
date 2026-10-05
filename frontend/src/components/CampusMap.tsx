@@ -8,6 +8,7 @@ type View = { k: number; x: number; y: number };
 type CampusMapProps = {
   stamp1: boolean;
   stamp2: boolean;
+  stamp3: boolean;
   showStamps: boolean;
 };
 
@@ -45,7 +46,12 @@ function Pin({ x, y, label }: { x: number; y: number; label: string }) {
   );
 }
 
-export function CampusMap({ stamp1, stamp2, showStamps }: CampusMapProps) {
+export function CampusMap({
+  stamp1,
+  stamp2,
+  stamp3,
+  showStamps,
+}: CampusMapProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const groupRef = useRef<SVGGElement>(null);
   const apiRef = useRef<MapApi>({
@@ -228,6 +234,7 @@ export function CampusMap({ stamp1, stamp2, showStamps }: CampusMapProps) {
         <div className="stamps">
           <div className={stamp1 ? "st on" : "st"}>①</div>
           <div className={stamp2 ? "st on" : "st"}>②</div>
+          <div className={stamp3 ? "st on" : "st"}>③</div>
         </div>
       )}
       <div className="mz">
