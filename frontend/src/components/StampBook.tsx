@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import type { AnimationEvent, CSSProperties } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { AnimationEvent, CSSProperties, PointerEvent, TouchEvent, TransitionEvent } from "react";
 import type { WhisperId } from "../types";
 import { useApp } from "../context/AppContext";
 
@@ -83,6 +83,53 @@ function openingFor(id: WhisperId): Opening {
   return id === 3 ? 1 : 0;
 }
 
+function Paper({
+  id,
+  side,
+  pressed,
+  pressing,
+  face,
+}: {
+  id: WhisperId;
+  side: "left" | "right";
+  pressed: boolean;
+  pressing: boolean;
+  face?: "front" | "back";
+}) {
+  const frame = frameOf(id);
+  return (
+    <div className={face ? `orihon-face is-${side} orihon-face--${face}` : `orihon-face is-${side}`}>
+      <div className="orihon-paper">
+        <div className="orihon-rule" />
+        <div className="orihon-rule orihon-rule--inner" />
+        <span className="orihon-corner orihon-corner--tl" />
+        <span className="orihon-corner orihon-corner--tr" />
+        <span className="orihon-corner orihon-corner--bl" />
+        <span className="orihon-corner orihon-corner--br" />
+        <p className="orihon-vert">{frame.label}</p>
+        <div className={pressed ? "orihon-well orihon-well--on" : "orihon-well"}>
+          {pressed && <Seal tilt={frame.tilt} pressing={pressing} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Chevron({ dir }: { dir: "prev" | "next" }) {
+  return (
+    <svg className="orihon-nudge__icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path
+        d={dir === "prev" ? "M14 5 L8 12 L14 19" : "M10 5 L16 12 L10 19"}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 function Seal({ tilt, pressing }: { tilt: number; pressing: boolean }) {
   const style = { "--tilt": `${tilt}deg` } as CSSProperties;
   return (
@@ -120,7 +167,10 @@ export function StampBook() {
   const [, bump] = useState(0);
   const [opening, setOpening] = useState<Opening>(0);
   const [turning, setTurning] = useState<TurnDir | null>(null);
+  const [flipped, setFlipped] = useState(false);
   const [presented, setPresented] = useState(bookOpen);
+  const gesture = useRef<{ x: number; y: number; kind: "touch" | "pointer" } | null>(null);
+  const swallowClick = useRef(false);
 
   const done = (id: WhisperId) => {
     if (id === 1) return stamp1Done;
@@ -195,15 +245,27 @@ export function StampBook() {
 
   useEffect(() => {
     if (!turning) return;
-    const delay = prefersReducedMotion() ? 0 : 620;
-    const turnTimer = window.setTimeout(() => {
-      setOpening(turning === "next" ? 1 : 0);
-      setTurning(null);
-    }, delay);
-    return () => window.clearTimeout(turnTimer);
+    let inner = 0;
+    const outer = window.requestAnimationFrame(() => {
+      inner = window.requestAnimationFrame(() => setFlipped(true));
+    });
+    return () => {
+      window.cancelAnimationFrame(outer);
+      window.cancelAnimationFrame(inner);
+    };
   }, [turning]);
 
   if (!bookOpen && !presented) return null;
+
+  const finishTurn = (event: TransitionEvent<HTMLElement>) => {
+    if (event.target !== event.currentTarget || !turning || !flipped) return;
+    if (event.propertyName !== "transform" && event.propertyName !== "-webkit-transform") {
+      return;
+    }
+    setOpening(turning === "next" ? 1 : 0);
+    setFlipped(false);
+    setTurning(null);
+  };
 
   const onBookAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget || bookOpen) return;
@@ -235,32 +297,88 @@ export function StampBook() {
     setTurning(dir);
   };
 
-  const renderLeaf = (side: "left" | "right") => {
-    const id = leafId(displayed, side);
-    const frame = frameOf(id);
-    const pressed = done(id) || livePress?.id === id;
-    const pressing = pressingNow && livePress?.id === id;
-    return (
-      <article
-        key={`${displayed}-${side}`}
-        className={`orihon-leaf orihon-leaf--${side}`}
-        aria-label={`${frame.label}の頁`}
-      >
-        <div className="orihon-paper">
-          <div className="orihon-rule" />
-          <div className="orihon-rule orihon-rule--inner" />
-          <span className="orihon-corner orihon-corner--tl" />
-          <span className="orihon-corner orihon-corner--tr" />
-          <span className="orihon-corner orihon-corner--bl" />
-          <span className="orihon-corner orihon-corner--br" />
-          <p className="orihon-vert">{frame.label}</p>
-          <div className={pressed ? "orihon-well orihon-well--on" : "orihon-well"}>
-            {pressed && <Seal tilt={frame.tilt} pressing={pressing} />}
-          </div>
-        </div>
-      </article>
-    );
+  const requestClose = () => {
+    if (locked) return;
+    finishClose();
   };
+
+  const settleGesture = (
+    x0: number,
+    y0: number,
+    x1: number,
+    y1: number,
+    spread: HTMLDivElement,
+  ) => {
+    swallowClick.current = true;
+    const dx = x1 - x0;
+    const dy = y1 - y0;
+    const absX = Math.abs(dx);
+    const absY = Math.abs(dy);
+    if (absX < 18 && absY < 18) {
+      const rect = spread.getBoundingClientRect();
+      turnTo(x1 < rect.left + rect.width / 2 ? "prev" : "next");
+      return;
+    }
+    if (dy > 72 && dy > absX) {
+      requestClose();
+      return;
+    }
+    if (absX > 36 && absX > absY) turnTo(dx < 0 ? "next" : "prev");
+  };
+
+  const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
+    if (locked || turning || livePress || event.touches.length !== 1) {
+      gesture.current = null;
+      return;
+    }
+    const touch = event.touches[0];
+    gesture.current = { x: touch.clientX, y: touch.clientY, kind: "touch" };
+  };
+
+  const onTouchEnd = (event: TouchEvent<HTMLDivElement>) => {
+    const start = gesture.current;
+    gesture.current = null;
+    if (!start || start.kind !== "touch") return;
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+    event.preventDefault();
+    settleGesture(start.x, start.y, touch.clientX, touch.clientY, event.currentTarget);
+  };
+
+  const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === "touch" || event.button !== 0) return;
+    if (locked || turning || livePress) return;
+    gesture.current = { x: event.clientX, y: event.clientY, kind: "pointer" };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+
+  const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    const start = gesture.current;
+    gesture.current = null;
+    if (!start || start.kind !== "pointer") return;
+    settleGesture(start.x, start.y, event.clientX, event.clientY, event.currentTarget);
+  };
+
+  const sheet = (id: WhisperId, side: "left" | "right", face?: "front" | "back") => (
+    <Paper
+      id={id}
+      side={side}
+      face={face}
+      pressed={done(id) || livePress?.id === id}
+      pressing={pressingNow && livePress?.id === id}
+    />
+  );
+
+  const destination: Opening = turning === "next" ? 1 : turning === "prev" ? 0 : displayed;
+  const underLeft = leafId(turning === "prev" ? destination : displayed, "left");
+  const underRight = leafId(turning === "next" ? destination : displayed, "right");
+  const flipSide = turning === "next" ? "right" : "left";
+  const frontId = leafId(displayed, flipSide);
+  const backSide = flipSide === "right" ? "left" : "right";
+  const backId = leafId(destination, backSide);
+
+  const canPrev = !livePress && !turning && displayed === 1;
+  const canNext = !livePress && !turning && displayed === 0;
 
   return (
     <div
@@ -268,42 +386,81 @@ export function StampBook() {
       role="dialog"
       aria-label="スタンプ帳"
       onAnimationEnd={onBookAnimationEnd}
-    >
-      <div
-        className={
-          turning === "next"
-            ? "orihon-spread is-turning-next"
-            : turning === "prev"
-              ? "orihon-spread is-turning-prev"
-              : "orihon-spread"
+      onClick={(event) => {
+        if (swallowClick.current) {
+          swallowClick.current = false;
+          return;
         }
-      >
-        {renderLeaf("left")}
-        {renderLeaf("right")}
-      </div>
-      <div className="orihon-turns">
-        <button
-          className="orihon-turn"
-          type="button"
-          disabled={Boolean(livePress) || Boolean(turning) || displayed === 0}
-          onClick={() => turnTo("prev")}
-        >
-          前の見開き
-        </button>
-        <button
-          className="orihon-turn"
-          type="button"
-          disabled={Boolean(livePress) || Boolean(turning) || displayed === 1}
-          onClick={() => turnTo("next")}
-        >
-          次の見開き
-        </button>
-      </div>
+        if (event.target === event.currentTarget) requestClose();
+      }}
+    >
       {!locked && (
-        <button className="b alt orihon-close" type="button" onClick={finishClose}>
-          閉じる
+        <button className="orihon-dismiss" type="button" aria-label="閉じる" onClick={requestClose}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M6 6 L18 18 M18 6 L6 18"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+            />
+          </svg>
         </button>
       )}
+      {canPrev && (
+        <button
+          className="orihon-nudge orihon-nudge--prev"
+          type="button"
+          aria-label="前の見開き"
+          onClick={() => turnTo("prev")}
+        >
+          <Chevron dir="prev" />
+        </button>
+      )}
+      {canNext && (
+        <button
+          className="orihon-nudge orihon-nudge--next"
+          type="button"
+          aria-label="次の見開き"
+          onClick={() => turnTo("next")}
+        >
+          <Chevron dir="next" />
+        </button>
+      )}
+      <div
+        className="orihon-spread"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={() => {
+          gesture.current = null;
+        }}
+        onPointerDown={onPointerDown}
+        onPointerUp={onPointerUp}
+        onPointerCancel={() => {
+          gesture.current = null;
+        }}
+      >
+        <article className="orihon-page" aria-label={`${frameOf(underLeft).label}の頁`}>
+          {sheet(underLeft, "left")}
+        </article>
+        <article className="orihon-page" aria-label={`${frameOf(underRight).label}の頁`}>
+          {sheet(underRight, "right")}
+        </article>
+        {turning && (
+          <article
+            className={
+              flipped
+                ? `orihon-leaf orihon-leaf--flip orihon-leaf--${flipSide} is-flipped`
+                : `orihon-leaf orihon-leaf--flip orihon-leaf--${flipSide}`
+            }
+            aria-hidden="true"
+            onTransitionEnd={finishTurn}
+          >
+            {sheet(frontId, flipSide, "front")}
+            {sheet(backId, backSide, "back")}
+          </article>
+        )}
+      </div>
     </div>
   );
 }

@@ -53,23 +53,28 @@ body {
 
 .map-layer {
   position: absolute;
+  z-index: 1;
   inset: 0;
 }
 
-.map-chrome {
+.float-header {
   position: absolute;
-  z-index: 1;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: calc(8px + env(safe-area-inset-top, 0px)) 84px 32px;
+  z-index: 2;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  left: 12px;
+  right: 88px;
   pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgba(245, 239, 235, 0.94) 0%,
-    rgba(245, 239, 235, 0.78) 52%,
-    rgba(245, 239, 235, 0) 100%
-  );
+}
+
+.float-header h1 {
+  display: inline-block;
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(245, 239, 235, 0.85);
+  backdrop-filter: blur(4px);
+  text-align: left;
+  letter-spacing: 0.18em;
 }
 
 .sheet {
@@ -133,6 +138,7 @@ body {
 }
 
 .sheet__pane {
+  padding: 0 16px 16px;
   animation: sheet-pane-in 0.32s ease;
 }
 
@@ -186,7 +192,7 @@ h1 {
   max-height: none;
   overflow: visible;
   margin: 0;
-  padding: 8px 16px 16px;
+  padding: 4px 0 8px;
   border: 0;
   border-radius: 0;
   background: transparent;
@@ -481,16 +487,13 @@ input.pin {
   right: 0;
   top: 0;
   bottom: calc(76px + env(safe-area-inset-bottom, 0px));
-  background:
-    linear-gradient(180deg, rgba(44, 38, 35, 0.05), rgba(44, 38, 35, 0.14)),
-    var(--bg);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 10px 8px 8px;
-  overflow: hidden;
+  background: rgba(22, 16, 12, 0.58);
+  display: grid;
+  grid-template-rows: 1fr;
+  justify-items: center;
+  align-items: stretch;
+  padding: calc(64px + env(safe-area-inset-top, 0px)) 18px 28px;
+  overflow: visible;
 }
 
 .stamp-book.is-open {
@@ -502,27 +505,82 @@ input.pin {
 }
 
 .orihon-spread {
-  flex: 1;
+  position: relative;
   min-height: 0;
+  height: 100%;
   width: min(100%, 440px);
   display: grid;
   grid-template-columns: 1fr 1fr;
-  perspective: 1100px;
+  perspective: 1400px;
+  transform-style: preserve-3d;
+  touch-action: none;
+  user-select: none;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.38);
 }
 
-.orihon-leaf {
+.orihon-page {
   position: relative;
   min-width: 0;
   min-height: 0;
   height: 100%;
 }
 
-.orihon-leaf--left {
+.orihon-face {
+  position: absolute;
+  inset: 0;
+  background: #e7d7b6;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.orihon-face.is-left {
   box-shadow: inset -12px 0 16px -10px rgba(80, 50, 20, 0.4);
 }
 
-.orihon-leaf--right {
+.orihon-face.is-right {
   box-shadow: inset 12px 0 16px -10px rgba(80, 50, 20, 0.4);
+}
+
+.orihon-leaf--flip {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  z-index: 2;
+  transform: rotateY(0deg);
+  transform-style: preserve-3d;
+  will-change: transform;
+  transition: transform 0.6s ease;
+}
+
+.orihon-leaf--flip .orihon-face {
+  box-shadow: none;
+}
+
+.orihon-leaf--flip.orihon-leaf--right {
+  right: 0;
+  transform-origin: left center;
+}
+
+.orihon-leaf--flip.orihon-leaf--left {
+  left: 0;
+  transform-origin: right center;
+}
+
+.orihon-leaf--flip.is-flipped.orihon-leaf--right {
+  transform: rotateY(-180deg);
+}
+
+.orihon-leaf--flip.is-flipped.orihon-leaf--left {
+  transform: rotateY(180deg);
+}
+
+.orihon-face--front {
+  transform: rotateY(0deg);
+}
+
+.orihon-face--back {
+  transform: rotateY(180deg);
 }
 
 .orihon-paper {
@@ -533,7 +591,7 @@ input.pin {
     radial-gradient(ellipse at center, #f8f3e4 0%, #e7d7b6 50%, #cbb892 100%);
 }
 
-.orihon-leaf--right .orihon-paper {
+.is-right .orihon-paper {
   background:
     radial-gradient(circle, rgba(59, 107, 122, 0.45) 0.7px, transparent 0.8px),
     radial-gradient(circle at 80% 18%, rgba(156, 123, 79, 0.26) 0 4px, transparent 12px),
@@ -591,7 +649,7 @@ input.pin {
   border-radius: 0 0 10px 0;
 }
 
-.orihon-leaf--right .orihon-corner {
+.is-right .orihon-corner {
   border-radius: 0;
 }
 
@@ -625,53 +683,64 @@ input.pin {
   border-color: transparent;
 }
 
-.orihon-turns {
-  display: flex;
-  gap: 8px;
-  width: min(100%, 440px);
+.orihon-dismiss {
+  position: absolute;
+  z-index: 4;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  right: 8px;
+  width: 44px;
+  height: 44px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(250, 246, 240, 0.16);
+  color: #faf6f0;
+  display: grid;
+  place-items: center;
 }
 
-.orihon-turn {
-  flex: 1;
-  min-height: 44px;
-  border: 1px solid #3b6b7a;
-  border-radius: 4px;
-  background: transparent;
-  color: #3b6b7a;
-  font: inherit;
-  font-size: 15px;
-  letter-spacing: 0.08em;
+.orihon-dismiss svg {
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
 }
 
-.orihon-turn:disabled {
-  opacity: 0.35;
+.orihon-nudge {
+  position: absolute;
+  z-index: 4;
+  top: 50%;
+  width: 44px;
+  height: 72px;
+  margin: 0;
+  padding: 0;
+  transform: translateY(-50%);
+  border: 0;
+  border-radius: 999px;
+  background: rgba(44, 38, 35, 0.16);
+  color: rgba(44, 38, 35, 0.8);
+  display: grid;
+  place-items: center;
 }
 
-.orihon-close {
-  width: min(100%, 440px);
-  margin-top: 0;
+.orihon-nudge--prev {
+  left: 2px;
 }
 
-.orihon-spread.is-turning-next .orihon-leaf--right {
-  transform-origin: left center;
-  animation: orihon-flip-next 0.6s ease forwards;
+.orihon-nudge--next {
+  right: 2px;
 }
 
-.orihon-spread.is-turning-prev .orihon-leaf--left {
-  transform-origin: right center;
-  animation: orihon-flip-prev 0.6s ease forwards;
+.orihon-nudge__icon {
+  width: 20px;
+  height: 20px;
+  pointer-events: none;
 }
 
-@keyframes orihon-flip-next {
-  to {
-    transform: rotateY(-86deg);
-  }
-}
-
-@keyframes orihon-flip-prev {
-  to {
-    transform: rotateY(86deg);
-  }
+.orihon-dismiss:focus-visible,
+.orihon-nudge:focus-visible {
+  outline: 2px solid #faf6f0;
+  outline-offset: 2px;
 }
 
 .seal {
@@ -745,8 +814,6 @@ input.pin {
 
 @media (prefers-reduced-motion: reduce) {
   .seal--press,
-  .orihon-spread.is-turning-next .orihon-leaf--right,
-  .orihon-spread.is-turning-prev .orihon-leaf--left,
   .stage,
   .sheet,
   .sheet__pane,
@@ -755,7 +822,8 @@ input.pin {
     animation: none;
   }
 
-  .sheet {
+  .sheet,
+  .orihon-leaf--flip {
     transition: none;
   }
 }

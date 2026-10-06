@@ -30,7 +30,7 @@ function sheetLabel(screen: Screen): string {
 }
 
 function sheetRatio(screen: Screen): number {
-  if (screen === "goal" || screen === "whisper") return 0.72;
+  if (screen === "goal" || screen === "whisper") return 0.6;
   if (screen === "askName" || screen === "top") return 0.45;
   return 0.38;
 }
@@ -52,11 +52,10 @@ function HomeStage() {
     <main className="stage stage--home">
       <div className="map-layer">
         <CampusMap insetRef={insetRef} refitRef={refitRef} />
-        <div className="map-chrome">
-          <h1>五高の囁き</h1>
-          <p className="sub">あなたは、五高の声を聞いたことがありますか。</p>
-        </div>
       </div>
+      <header className="float-header">
+        <h1>五高の囁き</h1>
+      </header>
       <BottomSheet
         label={sheetLabel(screen)}
         preferredRatio={sheetRatio(screen)}
@@ -66,6 +65,7 @@ function HomeStage() {
           refitRef.current();
         }}
       >
+        <p className="sub">あなたは、五高の声を聞いたことがありますか。</p>
         <HomeStatus />
       </BottomSheet>
     </main>

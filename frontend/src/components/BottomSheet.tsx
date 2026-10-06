@@ -6,7 +6,7 @@ import {
   type ReactNode,
 } from "react";
 
-const SNAPS = [0.18, 0.45, 0.72];
+const SNAPS = [0.18, 0.45, 0.6];
 
 function nearestSnap(value: number): number {
   return SNAPS.reduce((best, snap) =>
@@ -49,7 +49,7 @@ export function BottomSheet({
     const sheet = sheetRef.current;
     const parent = sheet?.parentElement;
     if (!sheet || !parent) return;
-    const limit = Math.max(96, parent.clientHeight - 130);
+    const limit = Math.max(96, Math.round(parent.clientHeight * 0.6));
     const height = Math.min(limit, Math.max(96, Math.round(parent.clientHeight * next)));
     sheet.style.height = `${height}px`;
     parent.style.setProperty("--map-inset", `${height}px`);
@@ -98,7 +98,7 @@ export function BottomSheet({
       const parent = sheetRef.current?.parentElement;
       if (!drag || !parent || parent.clientHeight === 0) return;
       const dy = drag.y - ev.clientY;
-      const next = Math.min(0.8, Math.max(0.16, drag.ratio + dy / parent.clientHeight));
+      const next = Math.min(0.6, Math.max(0.16, drag.ratio + dy / parent.clientHeight));
       ratioRef.current = next;
       writeHeight(next);
     };
