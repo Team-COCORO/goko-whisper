@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>五高の囁き</title>
+<link rel="stylesheet" href="ui.css">
+
+</head>
+<body>
+<div id="root">
+  <div id="demo" aria-label="確認用" title="来場者の画面には出ません。QR は ?stamp=spot1&amp;token=demo でも開きます。残数は何か入力すると見られます。">
+    <span>確認用</span>
+    <button type="button" data-demo="qr" data-spot="1">チラシQR</button>
+    <button type="button" data-demo="qr" data-spot="2">模擬店QR</button>
+    <button type="button" data-demo="qr" data-spot="3">記念館QR</button>
+    <button type="button" data-demo="admin">残数</button>
+    <button type="button" data-demo="expire">5分経過</button>
+    <button type="button" id="demo-soldout" data-demo="soldout">配布終了</button>
+    <button type="button" id="demo-offline" data-demo="offline">通信失敗</button>
+    <button type="button" data-demo="blocked">記録不可</button>
+    <button type="button" data-demo="reset">最初から</button>
+    <span class="hint">暗証 2580</span>
+  </div>
+  <div class="app-shell" id="shell">
+    <main id="stage" class="stage stage--home"></main>
+    <button class="stamp-fab" id="fab" type="button" aria-label="スタンプ帳" data-act="open-book">
+      <span class="stamp-fab__book" aria-hidden="true">
+        <span class="stamp-fab__spine"></span>
+        <span class="stamp-fab__slip"></span>
+        <span class="stamp-fab__mark"></span>
+      </span>
+    </button>
+    <div class="stamp-book" id="book" hidden role="dialog" aria-label="スタンプ帳"></div>
+    <nav class="bottom-nav" id="nav" aria-label="メインナビゲーション">
+      <button type="button" data-act="tab" data-tab="home">
+        <svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="9"/><path d="M13 5l3 8-3 8-3-8z"/></svg>
+        ホーム
+      </button>
+      <button type="button" data-act="tab" data-tab="food">
+        <svg viewBox="0 0 26 26" aria-hidden="true"><path d="M9 8h8v12H9zM11 8V5h4v3M13 3v2"/></svg>
+        食品
+      </button>
+      <button type="button" data-act="tab" data-tab="present">
+        <svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="9"/><path d="M13 8l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z"/></svg>
+        プレゼント
+      </button>
+    </nav>
+  </div>
+</div>
+<script>
+const KEY = "goko-ui-sample";
+const ADMIN_KEY = "goko-ui-sample-admin";
+const DEMO_TOKEN = "demo";
+const STAFF_PIN = "2580";
+const PRESS_MS = 3000;
+const HOLD_MS = 5000;
+const DISPLAY_MS = 5 * 60 * 1000;
+const MAP_W = 320;
+const MAP_H = 240;
+
+const WHISPERS = {
+  1: "耳を澄ませ。この街の風は、まだあの頃の声を運んでいる。",
+  2: "灯は、消えない。学んだ者の記憶が、石となり、壁となり、今もここに立っている。",
+  3: "扉の前だ。百年の石が、最後の声をここに留めている。",
+};
+
+const FRAMES = [
+  { id: 1, label: "チラシ", tilt: -6 },
+  { id: 2, label: "模擬店", tilt: 3 },
+  { id: 3, label: "五高記念館", tilt: -2 },
+];
+
+let rally = null;
+let storageBlocked = false;
+let activeTab = "home";
+let soldOut = false;
+let offline = false;
+let bookOpen = false;
+let whisperId = null;
+let whisperOpensGoal = false;
+let showGoal = false;
+let isAdmin = false;
+let issuing = false;
+let issueError = false;
+let revealed = false;
+let redeeming = false;
+let pin = "";
+let verifyMessage = "";
+let verifying = false;
+let now = Date.now();
+let adminToken = "";
+let adminMessage = "";
+let adminSummary = null;
+let opening = 0;
+let turning = null;
+let livePress = null;
+let pressTimer = 0;
+let turnTimer = 0;
+let issueFlight = 0;
+let clockTimer = 0;
+let lastBookSig = "";
+let view = { k: 1, x: 0, y: 0 };
+let fitK = 1;
+let fitted = false;
+let mapObserver = null;
+
+function esc(value) {
+  return String(value).replace(/[&<>"']/g, (ch) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[ch]);
+}
+
+function uuid() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  return "00000000-0000-4000-8000-000000000000";
+}
+
+function emptyRally() {
+  return {
+    clientId: uuid(),
+    nickname: "",
+    stamp1Done: false,
+    stamp2Done: false,
+    stamp3Done: false,
+    pendingStamp: null,
+    goalUnlocked: false,
+    redeemed: false,
+  };
+}
+
+function stampDone(id) {
+  if (id === 1) return rally.stamp1Done;
+  if (id === 2) return rally.stamp2Done;
+  return rally.stamp3Done;
+}
+
+function allStamps() {
+  return rally.stamp1Done && rally.stamp2Done && rally.stamp3Done;
+}
+
+function goalUnlocked() {
+  return rally.goalUnlocked || Boolean(rally.rewardCode);
+}
+
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function isLocked() {
+  return Boolean(livePress && (livePress.phase === "press" || livePress.phase === "hold"));
+}
+
+function persist() {
+  try {
+    localStorage.setItem(KEY, JSON.stringify(rally));
+  } catch (error) {
+    storageBlocked = true;
+  }
+}
+
+function parseRally(raw) {
+  if (raw == null) return emptyRally();
+  try {
+    const record = JSON.parse(raw);
+    if (!record || typeof record !== "object") return emptyRally();
+    if (typeof record.nickname !== "string") return emptyRally();
+    const next = emptyRally();
+    if (typeof record.clientId === "string") next.clientId = record.clientId;
+    next.nickname = record.nickname;
+    next.stamp1Done = record.stamp1Done === true;
+    next.stamp2Done = record.stamp2Done === true;
+    next.stamp3Done = record.stamp3Done === true;
+    next.pendingStamp = record.pendingStamp === 1 || record.pendingStamp === 2 || record.pendingStamp === 3
+      ? record.pendingStamp
+      : null;
+    next.goalUnlocked = record.goalUnlocked === true;
+    next.redeemed = record.redeemed === true;
+    if (typeof record.rewardCode === "string") next.rewardCode = record.rewardCode;
+    if (typeof record.issuedAt === "number") next.issuedAt = record.issuedAt;
+    if (next.pendingStamp && stampDone(next.pendingStamp)) next.pendingStamp = null;
+    return next;
+  } catch (error) {
+    return emptyRally();
+  }
+}
+
+function spotToId(stamp) {
+  if (stamp === "spot1") return 1;
+  if (stamp === "spot2") return 2;
+  if (stamp === "spot3") return 3;
+  return null;
+}
+
+function deriveScreen() {
+  if (isAdmin) return "admin";
+  if (rally.redeemed) return "redeemed";
+  if (showGoal) {
+    if (!rally.rewardCode && soldOut) return "soldOut";
+    return "goal";
+  }
+  if (whisperId) return "whisper";
+  if (!rally.nickname.trim() && rally.pendingStamp) return "askName";
+  const anyStamp = rally.stamp1Done || rally.stamp2Done || rally.stamp3Done;
+  if (!anyStamp && !rally.pendingStamp) return "top";
+  if (!allStamps()) return "guide";
+  if (!rally.nickname.trim()) return "askName";
+  if (!rally.rewardCode && soldOut) return "soldOut";
+  return "top";
+}
+
+function remainLabel(issuedAt, at) {
+  const remain = Math.max(0, issuedAt + DISPLAY_MS - at);
+  const minutes = Math.floor(remain / 60000);
+  const seconds = Math.floor((remain % 60000) / 1000);
+  return minutes + ":" + String(seconds).padStart(2, "0");
+}
+
+function nameFields(label) {
+  const trimmed = rally.nickname.trim();
+  const ready = trimmed.length > 0 && trimmed.length <= 20;
+  const locked = Boolean(rally.rewardCode);
+  return (
+    '<input id="name-input" maxlength="20" placeholder="旅人" value="' + esc(rally.nickname) + '"' +
+    (locked ? " disabled" : "") +
+    ' autocomplete="nickname" aria-label="あなたの名">' +
+    (locked ? "" : '<button class="b" id="name-btn" type="button" data-act="save-name"' +
+      (ready ? "" : " disabled") + ">" + esc(label) + "</button>")
+  );
+}
+
+function goalCard() {
+  const displayName = rally.nickname.trim() || "旅人";
+  if (issuing && !rally.rewardCode) {
+    return '<div class="card"><p class="note">発行しています</p></div>';
+  }
+  if (issueError && !rally.rewardCode) {
+    return '<div class="card"><p class="err">通信が必要です</p><button class="b" type="button" data-act="retry-issue">再試行</button></div>';
+  }
+  const expired = rally.issuedAt != null && now >= rally.issuedAt + DISPLAY_MS;
+  const showCode = Boolean(rally.rewardCode) && (!expired || revealed);
+  if (rally.rewardCode && expired && !revealed) {
+    return '<div class="card"><p class="note">5 分が過ぎました。コードは隠されています。</p><button class="b" type="button" data-act="reveal">コードを再表示</button></div>';
+  }
+  if (showCode && redeeming) {
+    return (
+      '<div class="card"><h2>スタッフ消込</h2><p class="field-label">数字 4 桁の暗証番号を入力</p>' +
+      '<input class="pin" id="pin" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="••••" aria-label="スタッフ暗証番号" value="' + esc(pin) + '">' +
+      (verifyMessage ? '<p class="err">' + esc(verifyMessage) + "</p>" : "") +
+      '<button class="b" id="redeem-btn" type="button" data-act="redeem-finish"' +
+      (pin.length < 4 || verifying ? " disabled" : "") + ">受け取り完了</button>" +
+      '<p class="note">4 桁そろうまで押せません</p></div>'
+    );
+  }
+  if (showCode && rally.rewardCode) {
+    const note = rally.issuedAt != null && !expired
+      ? "残り " + remainLabel(rally.issuedAt, now) + "・スタッフに提示してください"
+      : "スタッフに提示してください";
+    return (
+      '<div class="card"><h2>' + esc(displayName) + " さん</h2>" +
+      '<p class="closing">あなたは今、百年前の声が聞こえた場所に立っている。</p>' +
+      '<div class="code">' + esc(rally.rewardCode) + "</div>" +
+      '<p class="note js-remain">' + esc(note) + "</p>" +
+      '<button class="b alt" type="button" data-act="redeem-open">スタッフ用：消込</button></div>'
+    );
+  }
+  return "";
+}
+
+function homeCard(screen) {
+  if (screen === "whisper" && whisperId) {
+    return (
+      '<div class="card"><h2>囁き</h2><div class="whisper">' + esc(WHISPERS[whisperId]) + "</div>" +
+      '<button class="b alt" type="button" data-act="dismiss-whisper">閉じる</button></div>'
+    );
+  }
+  if (screen === "guide") {
+    const missing = [];
+    if (!rally.stamp1Done) missing.push("チラシの QR");
+    if (!rally.stamp2Done) missing.push("模擬店の QR");
+    if (!rally.stamp3Done) missing.push("五高記念館の QR");
+    return '<div class="card"><h2>案内</h2><p>まだ残っている声は、' + esc(missing.join("と")) + "です。</p></div>";
+  }
+  if (screen === "askName" && rally.pendingStamp) {
+    return '<div class="card"><div class="whisper">耳を澄ませ。百年の声が、まだここに漂っている。</div>' + nameFields("名前を残す") + "</div>";
+  }
+  if (screen === "askName") {
+    return '<div class="card"><p class="err">三つの声が揃った。名を残してから、先へ。</p>' + nameFields("名を残す") + "</div>";
+  }
+  if (screen === "top") {
+    return (
+      '<div class="card"><div class="whisper">耳を澄ませ。百年の声が、まだここに漂っている。</div>' +
+      (rally.nickname.trim() ? "" : nameFields("名前を残す")) + "</div>"
+    );
+  }
+  if (screen === "goal") return goalCard();
+  if (screen === "redeemed") {
+    return '<div class="card"><p class="err">受取は完了しています</p></div>';
+  }
+  if (screen === "soldOut") {
+    return '<div class="card"><p class="err">本日の配布は終了しました</p><p class="note">すでにコードをお持ちの方は、消込できます。</p></div>';
+  }
+  return "";
+}
+
+function mapHtml() {
+  const pin = (x, y, label) =>
+    '<circle cx="' + x + '" cy="' + y + '" r="11" fill="#8b3a2b" stroke="#faf6f0" stroke-width="2"/>' +
+    '<text x="' + x + '" y="' + (y + 28) + '" font-size="15" font-weight="bold" text-anchor="middle" fill="#2c2623" stroke="#efe6da" stroke-width="3" paint-order="stroke">' + label + "</text>";
+  return (
+    '<div class="mapw" id="mapw" aria-label="キャンパスの見取り図">' +
+    '<svg aria-hidden="true"><g id="mg">' +
+    '<rect x="10" y="10" width="300" height="220" fill="#efe6da" stroke="#c5a059" stroke-dasharray="4 3"/>' +
+    '<rect x="30" y="30" width="70" height="40" fill="#c9a98f"/>' +
+    '<rect x="110" y="140" width="100" height="50" fill="#a95a48"/>' +
+    '<rect x="225" y="45" width="60" height="55" fill="#c9a98f"/>' +
+    '<rect x="35" y="150" width="50" height="50" fill="#d8cbb9"/>' +
+    '<path d="M50 110H280M160 20V210" stroke="#d8cbb9" stroke-width="8"/>' +
+    pin(65, 50, "第一の囁き") + pin(255, 72, "模擬店") + pin(160, 165, "五高記念館") +
+    "</g></svg>" +
+    '<div class="mz">' +
+    '<button type="button" aria-label="拡大" data-act="zoom-in">＋</button>' +
+    '<button type="button" aria-label="縮小" data-act="zoom-out">－</button>' +
+    '<button type="button" class="fit" aria-label="全体表示" data-act="fit">全体</button>' +
+    "</div></div>"
+  );
+}
+
+function foodHtml() {
+  const stalls = [
+    { name: "模擬店 A（仮）", color: "#a95a48" },
+    { name: "模擬店 B（仮）", color: "#5b6b7a" },
+  ];
+  return (
+    "<h1>模擬店</h1><p class=\"sub\">囁きは、この中のどこかに眠っている。</p>" +
+    stalls.map((stall) =>
+      '<div class="card row"><div class="ph" style="background:' + stall.color + '">画像なし</div><div><p><b>' +
+      stall.name + '</b></p><p style="font-size:15px">紹介文がここに入ります。</p></div></div>'
+    ).join("")
+  );
+}
+
+function presentHtml() {
+  const gifts = [
+    { label: "限定バルーン", name: "「五高の囁き」限定バルーン", color: "#c5a059" },
+    { label: "限定しおり", name: "「五高の囁き」限定しおり", color: "#8b3a2b" },
+  ];
+  return (
+    "<h1>限定プレゼント</h1><p class=\"sub\">どちらか一つ。受付が手渡します。</p>" +
+    gifts.map((gift) =>
+      '<div class="card row"><div class="ph" style="background:' + gift.color + '">' + gift.label +
+      "</div><div><p><b>" + gift.name + '</b></p><p style="font-size:15px">数量限定</p></div></div>'
+    ).join("") +
+    '<button class="b" type="button" data-act="open-goal"' + (goalUnlocked() ? "" : " disabled") + ">ゴールへ進む</button>"
+  );
+}
+
+function adminHtml() {
+  const body = adminSummary
+    ? "<p>発行 " + adminSummary.issued + "<br>消込 " + adminSummary.redeemed + "<br>残数 " + adminSummary.remaining + "<br>上限 " + adminSummary.limit + "</p>"
+    : "";
+  return (
+    "<h1>残数</h1><div class=\"card\"><p class=\"field-label\">管理トークン</p>" +
+    '<input id="admin-token" type="password" autocomplete="off" aria-label="管理トークン">' +
+    '<button class="b" type="button" data-act="load-admin">残数を見る</button>' +
+    (adminMessage ? '<p class="err">' + esc(adminMessage) + "</p>" : "") +
+    body + "</div>"
+  );
+}
+
+function applyView() {
+  const wrap = document.getElementById("mapw");
+  const group = document.getElementById("mg");
+  if (!wrap || !group) return;
+  const axis = (pos, scale, size, content) => {
+    const drawn = content * scale;
+    if (drawn <= size) return (size - drawn) / 2;
+    return Math.min(0, Math.max(size - drawn, pos));
+  };
+  view.x = axis(view.x, view.k, wrap.clientWidth, MAP_W);
+  view.y = axis(view.y, view.k, wrap.clientHeight, MAP_H);
+  group.setAttribute("transform", "translate(" + view.x + " " + view.y + ") scale(" + view.k + ")");
+}
+
+function syncFit() {
+  const wrap = document.getElementById("mapw");
+  if (!wrap || wrap.clientWidth === 0 || wrap.clientHeight === 0) return;
+  fitK = Math.min(wrap.clientWidth / MAP_W, wrap.clientHeight / MAP_H);
+  if (!fitted || view.k < fitK) {
+    view.k = fitK;
+    view.x = 0;
+    view.y = 0;
+    fitted = true;
+  }
+  applyView();
+}
+
+function fitMap() {
+  const wrap = document.getElementById("mapw");
+  if (!wrap) return;
+  fitK = Math.min(wrap.clientWidth / MAP_W, wrap.clientHeight / MAP_H);
+  view = { k: fitK, x: 0, y: 0 };
+  fitted = true;
+  applyView();
+}
+
+function zoomAt(factor, cx, cy) {
+  const next = Math.min(fitK * 5, Math.max(fitK, view.k * factor));
+  const applied = next / view.k || 1;
+  view.x = cx - (cx - view.x) * applied;
+  view.y = cy - (cy - view.y) * applied;
+  view.k = next;
+  applyView();
+}
+
+function zoomBy(factor) {
+  const wrap = document.getElementById("mapw");
+  if (!wrap) return;
+  zoomAt(factor, wrap.clientWidth / 2, wrap.clientHeight / 2);
+}
+
+function initMap() {
+  const wrap = document.getElementById("mapw");
+  const group = document.getElementById("mg");
+  if (!wrap || !group || wrap.dataset.bound) return;
+  wrap.dataset.bound = "1";
+  const pointers = new Map();
+  let pinchDistance = 0;
+  const point = (event) => {
+    const rect = wrap.getBoundingClientRect();
+    return [event.clientX - rect.left, event.clientY - rect.top];
+  };
+  wrap.addEventListener("pointerdown", (event) => {
+    if (event.target.closest(".mz")) return;
+    wrap.setPointerCapture(event.pointerId);
+    pointers.set(event.pointerId, point(event));
+    if (pointers.size === 2) {
+      const pair = [...pointers.values()];
+      pinchDistance = Math.hypot(pair[0][0] - pair[1][0], pair[0][1] - pair[1][1]);
+    }
+  });
+  wrap.addEventListener("pointermove", (event) => {
+    if (!pointers.has(event.pointerId)) return;
+    const next = point(event);
+    const prev = pointers.get(event.pointerId);
+    if (!prev) return;
+    if (pointers.size === 1) {
+      view.x += next[0] - prev[0];
+      view.y += next[1] - prev[1];
+      pointers.set(event.pointerId, next);
+      applyView();
+      return;
+    }
+    pointers.set(event.pointerId, next);
+    const pair = [...pointers.values()];
+    const distance = Math.hypot(pair[0][0] - pair[1][0], pair[0][1] - pair[1][1]);
+    if (pinchDistance > 0) {
+      zoomAt(distance / pinchDistance, (pair[0][0] + pair[1][0]) / 2, (pair[0][1] + pair[1][1]) / 2);
+    }
+    pinchDistance = distance;
+  });
+  const endPointer = (event) => {
+    pointers.delete(event.pointerId);
+    pinchDistance = 0;
+  };
+  wrap.addEventListener("pointerup", endPointer);
+  wrap.addEventListener("pointercancel", endPointer);
+  wrap.addEventListener("wheel", (event) => {
+    event.preventDefault();
+    const at = point(event);
+    zoomAt(event.deltaY < 0 ? 1.2 : 1 / 1.2, at[0], at[1]);
+  }, { passive: false });
+  wrap.addEventListener("dblclick", (event) => {
+    const rect = wrap.getBoundingClientRect();
+    zoomAt(1.8, event.clientX - rect.left, event.clientY - rect.top);
+  });
+  if (mapObserver) mapObserver.disconnect();
+  mapObserver = new ResizeObserver(() => syncFit());
+  mapObserver.observe(wrap);
+  syncFit();
+}
+
+function startClock() {
+  clearInterval(clockTimer);
+  clockTimer = 0;
+  if (!rally.rewardCode || rally.issuedAt == null) return;
+  if (!document.querySelector(".js-remain")) return;
+  clockTimer = setInterval(() => {
+    now = Date.now();
+    if (now >= rally.issuedAt + DISPLAY_MS && !revealed) {
+      clearInterval(clockTimer);
+      render();
+      return;
+    }
+    const el = document.querySelector(".js-remain");
+    if (!el) {
+      clearInterval(clockTimer);
+      return;
+    }
+    el.textContent = "残り " + remainLabel(rally.issuedAt, now) + "・スタッフに提示してください";
+  }, 1000);
+}
+
+function wantsIssue() {
+  return activeTab === "home" &&
+    !storageBlocked &&
+    !isAdmin &&
+    showGoal &&
+    !rally.redeemed &&
+    !rally.rewardCode &&
+    !soldOut &&
+    !issueError;
+}
+
+function finishIssue() {
+  issueFlight = 0;
+  issuing = false;
+  if (!showGoal || activeTab !== "home" || isAdmin || rally.redeemed || rally.rewardCode) {
+    render();
+    return;
+  }
+  if (offline) issueError = true;
+  else if (!soldOut) {
+    rally.rewardCode = String(1000 + Math.floor(Math.random() * 9000));
+    rally.issuedAt = Date.now();
+    now = Date.now();
+    revealed = false;
+    redeeming = false;
+    persist();
+  }
+  render();
+}
+
+function leafId(which, side) {
+  if (which === 0) return side === "left" ? 1 : 2;
+  return side === "left" ? 2 : 3;
+}
+
+function displayedOpening() {
+  if (livePress) return livePress.id === 3 ? 1 : 0;
+  return opening;
+}
+
+function sealSvg(tilt, pressing) {
+  return (
+    '<svg class="seal' + (pressing ? " seal--press" : "") + '" style="--tilt:' + tilt + 'deg" viewBox="0 0 100 100" aria-hidden="true">' +
+    '<path fill="currentColor" fill-rule="evenodd" d="M50 6C66 4 78 12 88 24C96 36 98 44 94 54C96 68 88 82 74 90C60 98 48 94 36 90C22 84 8 72 8 56C8 40 16 24 30 14C38 8 42 7 50 6ZM50 32a14 14 0 1 0 .1 0Z"/>' +
+    '<path fill="currentColor" d="M46 40h8v5h5v8h-5v5h-8v-5h-5v-8h5z"/>' +
+    "</svg>"
+  );
+}
+
+function leafHtml(side) {
+  const shown = displayedOpening();
+  const id = leafId(shown, side);
+  const frame = FRAMES[id - 1];
+  const pressed = stampDone(id) || (livePress && livePress.id === id);
+  const pressing = Boolean(livePress && livePress.phase === "press" && livePress.id === id);
+  return (
+    '<article class="orihon-leaf orihon-leaf--' + side + '" aria-label="' + frame.label + 'の頁">' +
+    '<div class="orihon-paper"><div class="orihon-rule"></div><div class="orihon-rule orihon-rule--inner"></div>' +
+    '<span class="orihon-corner orihon-corner--tl"></span><span class="orihon-corner orihon-corner--tr"></span>' +
+    '<span class="orihon-corner orihon-corner--bl"></span><span class="orihon-corner orihon-corner--br"></span>' +
+    '<p class="orihon-vert">' + frame.label + "</p>" +
+    '<div class="orihon-well' + (pressed ? " orihon-well--on" : "") + '">' +
+    (pressed ? sealSvg(frame.tilt, pressing) : "") +
+    "</div></div></article>"
+  );
+}
+
+function bookHtml() {
+  const shown = displayedOpening();
+  const spread = turning === "next"
+    ? "orihon-spread is-turning-next"
+    : turning === "prev"
+      ? "orihon-spread is-turning-prev"
+      : "orihon-spread";
+  const prevDisabled = Boolean(livePress) || Boolean(turning) || shown === 0;
+  const nextDisabled = Boolean(livePress) || Boolean(turning) || shown === 1;
+  return (
+    '<div class="' + spread + '">' + leafHtml("left") + leafHtml("right") + "</div>" +
+    '<div class="orihon-turns">' +
+    '<button class="orihon-turn" type="button" data-act="turn-prev"' + (prevDisabled ? " disabled" : "") + ">前の見開き</button>" +
+    '<button class="orihon-turn" type="button" data-act="turn-next"' + (nextDisabled ? " disabled" : "") + ">次の見開き</button>" +
+    "</div>" +
+    (isLocked() ? "" : '<button class="b alt orihon-close" type="button" data-act="close-book">閉じる</button>')
+  );
+}
+
+function bookSignature() {
+  return [
+    bookOpen,
+    displayedOpening(),
+    turning || "",
+    livePress ? livePress.id + livePress.phase : "",
+    rally.stamp1Done,
+    rally.stamp2Done,
+    rally.stamp3Done,
+    isLocked(),
+  ].join("|");
+}
+
+function syncChrome() {
+  document.getElementById("fab").hidden = storageBlocked || isAdmin || bookOpen;
+  document.querySelectorAll("#nav button").forEach((btn) => {
+    const on = btn.dataset.tab === activeTab;
+    btn.classList.toggle("on", on);
+    if (on) btn.setAttribute("aria-current", "page");
+    else btn.removeAttribute("aria-current");
+  });
+  const book = document.getElementById("book");
+  const sig = bookSignature();
+  if (sig === lastBookSig) return;
+  lastBookSig = sig;
+  book.hidden = !bookOpen;
+  book.innerHTML = bookOpen ? bookHtml() : "";
+}
+
+function renderStage() {
+  const stage = document.getElementById("stage");
+  if (storageBlocked) {
+    stage.className = "stage";
+    stage.innerHTML = '<div class="card"><p class="err">このブラウザでは記録を残せません。通常のタブで開いてください。</p></div>';
+    return;
+  }
+  if (activeTab === "food") {
+    stage.className = "stage";
+    stage.innerHTML = foodHtml();
+    return;
+  }
+  if (activeTab === "present") {
+    stage.className = "stage";
+    stage.innerHTML = presentHtml();
+    return;
+  }
+  const screen = deriveScreen();
+  if (screen === "admin") {
+    stage.className = "stage";
+    stage.innerHTML = adminHtml();
+    const input = document.getElementById("admin-token");
+    if (input) input.value = adminToken;
+    return;
+  }
+  stage.className = "stage stage--home";
+  stage.innerHTML =
+    "<h1>五高の囁き</h1><p class=\"sub\">あなたは、五高の声を聞いたことがありますか。</p>" +
+    mapHtml() + homeCard(screen);
+  initMap();
+  startClock();
+}
+
+function render() {
+  now = Date.now();
+  const pendingIssue = wantsIssue();
+  if (!pendingIssue && issueFlight) {
+    clearTimeout(issueFlight);
+    issueFlight = 0;
+    issuing = false;
+  }
+  if (pendingIssue) issuing = true;
+  renderStage();
+  syncChrome();
+  const sold = document.getElementById("demo-soldout");
+  const off = document.getElementById("demo-offline");
+  if (sold) sold.classList.toggle("is-on", soldOut);
+  if (off) off.classList.toggle("is-on", offline);
+  if (pendingIssue && !issueFlight) issueFlight = setTimeout(finishIssue, 700);
+}
+
+function arm() {
+  clearTimeout(pressTimer);
+  const current = livePress;
+  if (!current || current.phase === "wait-close") return;
+  const duration = current.phase === "press" ? PRESS_MS : HOLD_MS;
+  const remain = Math.max(0, duration - (Date.now() - current.startedAt));
+  pressTimer = setTimeout(() => {
+    if (!livePress || livePress.id !== current.id || livePress.phase !== current.phase) return;
+    if (current.phase === "press") {
+      livePress = current.willComplete
+        ? { id: current.id, phase: "hold", willComplete: true, startedAt: Date.now() }
+        : { id: current.id, phase: "wait-close", willComplete: false, startedAt: Date.now() };
+      syncChrome();
+      if (livePress.phase === "hold") arm();
+      return;
+    }
+    const id = current.id;
+    livePress = null;
+    bookOpen = false;
+    showWhisper(id, true);
+  }, remain);
+}
+
+function startPress(id) {
+  const finished = [rally.stamp1Done, rally.stamp2Done, rally.stamp3Done].filter(Boolean).length;
+  const willComplete = finished === 2;
+  if (id === 1) rally.stamp1Done = true;
+  else if (id === 2) rally.stamp2Done = true;
+  else rally.stamp3Done = true;
+  if (rally.pendingStamp === id) rally.pendingStamp = null;
+  persist();
+  const phase = prefersReducedMotion() ? (willComplete ? "hold" : "wait-close") : "press";
+  livePress = { id: id, phase: phase, willComplete: willComplete, startedAt: Date.now() };
+  bookOpen = true;
+  opening = id === 3 ? 1 : 0;
+  turning = null;
+  activeTab = "home";
+  arm();
+  render();
+}
+
+function showWhisper(id, opensGoal) {
+  whisperId = id;
+  if (opensGoal) whisperOpensGoal = true;
+  activeTab = "home";
+  render();
+}
+
+function finishClose() {
+  if (isLocked()) return;
+  const id = livePress && livePress.phase === "wait-close" ? livePress.id : null;
+  clearTimeout(pressTimer);
+  livePress = null;
+  bookOpen = false;
+  if (id) showWhisper(id, false);
+  else syncChrome();
+}
+
+function turnTo(dir) {
+  if (livePress || turning) return;
+  const shown = displayedOpening();
+  if (dir === "next" && shown === 1) return;
+  if (dir === "prev" && shown === 0) return;
+  if (prefersReducedMotion()) {
+    opening = dir === "next" ? 1 : 0;
+    syncChrome();
+    return;
+  }
+  turning = dir;
+  syncChrome();
+  clearTimeout(turnTimer);
+  turnTimer = setTimeout(() => {
+    opening = turning === "next" ? 1 : 0;
+    turning = null;
+    syncChrome();
+  }, 620);
+}
+
+function saveNickname() {
+  const input = document.getElementById("name-input");
+  if (!input || rally.rewardCode) return;
+  const nickname = input.value.trim();
+  if (!nickname || nickname.length > 20) return;
+  rally.nickname = nickname;
+  persist();
+  if (storageBlocked) {
+    render();
+    return;
+  }
+  if (rally.pendingStamp) startPress(rally.pendingStamp);
+  else render();
+}
+
+function dismissWhisper() {
+  const opens = whisperOpensGoal;
+  whisperId = null;
+  whisperOpensGoal = false;
+  if (opens) {
+    showGoal = true;
+    if (!rally.goalUnlocked) {
+      rally.goalUnlocked = true;
+      persist();
+    }
+  }
+  render();
+}
+
+function leaveAdminHash() {
+  if (location.hash !== "#admin") return;
+  history.replaceState(null, "", location.pathname + location.search);
+  isAdmin = false;
+}
+
+function openGoal() {
+  if (!goalUnlocked()) return;
+  showGoal = true;
+  activeTab = "home";
+  leaveAdminHash();
+  render();
+}
+
+function finishRedeem() {
+  const input = document.getElementById("pin");
+  pin = (input ? input.value : pin).replace(/\D/g, "").slice(0, 4);
+  if (pin.length !== 4 || verifying) return;
+  verifying = true;
+  const btn = document.getElementById("redeem-btn");
+  if (btn) btn.disabled = true;
+  setTimeout(() => {
+    verifying = false;
+    if (offline) {
+      verifyMessage = "通信が必要です";
+    } else if (pin !== STAFF_PIN) {
+      pin = "";
+      verifyMessage = "暗証番号が違います";
+    } else {
+      rally.redeemed = true;
+      persist();
+      redeeming = false;
+      pin = "";
+      verifyMessage = "";
+    }
+    render();
+  }, 400);
+}
+
+function loadAdmin() {
+  const input = document.getElementById("admin-token");
+  adminToken = input ? input.value : adminToken;
+  try {
+    sessionStorage.setItem(ADMIN_KEY, adminToken);
+  } catch (error) {
+    /* タブを閉じると消える想定。失敗しても画面は出す */
+  }
+  adminMessage = "";
+  adminSummary = null;
+  if (offline) adminMessage = "通信が必要です";
+  else if (!adminToken.trim()) adminMessage = "認証に失敗しました";
+  else adminSummary = { issued: 12, redeemed: 5, remaining: 88, limit: 100 };
+  render();
+}
+
+function land(id) {
+  if (storageBlocked || livePress) return;
+  leaveAdminHash();
+  activeTab = "home";
+  if (stampDone(id)) {
+    rally.pendingStamp = null;
+    persist();
+    render();
+    return;
+  }
+  rally.pendingStamp = id;
+  persist();
+  if (rally.nickname.trim()) startPress(id);
+  else render();
+}
+
+function resetAll() {
+  clearTimeout(pressTimer);
+  clearTimeout(turnTimer);
+  clearTimeout(issueFlight);
+  clearInterval(clockTimer);
+  issueFlight = 0;
+  pressTimer = 0;
+  livePress = null;
+  turning = null;
+  opening = 0;
+  bookOpen = false;
+  activeTab = "home";
+  whisperId = null;
+  whisperOpensGoal = false;
+  showGoal = false;
+  soldOut = false;
+  offline = false;
+  issuing = false;
+  issueError = false;
+  revealed = false;
+  redeeming = false;
+  pin = "";
+  verifyMessage = "";
+  verifying = false;
+  adminMessage = "";
+  adminSummary = null;
+  adminToken = "";
+  isAdmin = false;
+  storageBlocked = false;
+  fitted = false;
+  view = { k: 1, x: 0, y: 0 };
+  lastBookSig = "";
+  try { localStorage.removeItem(KEY); } catch (error) { /* 消せなくても初期表示に戻す */ }
+  try { sessionStorage.removeItem(ADMIN_KEY); } catch (error) { /* 同上 */ }
+  rally = emptyRally();
+  persist();
+  if (location.hash || location.search) {
+    history.replaceState(null, "", location.pathname);
+  }
+  render();
+}
+
+function onShellClick(event) {
+  const el = event.target.closest("[data-act]");
+  if (!el || el.disabled) return;
+  const act = el.dataset.act;
+  if (act === "zoom-in") return zoomBy(1.5);
+  if (act === "zoom-out") return zoomBy(1 / 1.5);
+  if (act === "fit") return fitMap();
+  if (act === "open-book") {
+    if (bookOpen || isAdmin || storageBlocked) return;
+    bookOpen = true;
+    syncChrome();
+    return;
+  }
+  if (act === "turn-prev") return turnTo("prev");
+  if (act === "turn-next") return turnTo("next");
+  if (act === "close-book") return finishClose();
+  if (act === "save-name") return saveNickname();
+  if (act === "dismiss-whisper") return dismissWhisper();
+  if (act === "open-goal") return openGoal();
+  if (act === "retry-issue") {
+    issueError = false;
+    issuing = true;
+    render();
+    return;
+  }
+  if (act === "reveal") {
+    revealed = true;
+    render();
+    return;
+  }
+  if (act === "redeem-open") {
+    redeeming = true;
+    pin = "";
+    verifyMessage = "";
+    render();
+    return;
+  }
+  if (act === "redeem-finish") return finishRedeem();
+  if (act === "load-admin") return loadAdmin();
+  if (act === "tab") {
+    activeTab = el.dataset.tab;
+    render();
+  }
+}
+
+function onShellInput(event) {
+  if (event.target.id === "name-input") {
+    const trimmed = event.target.value.trim();
+    const btn = document.getElementById("name-btn");
+    if (btn) btn.disabled = trimmed.length === 0 || trimmed.length > 20;
+  }
+  if (event.target.id === "pin") {
+    pin = event.target.value.replace(/\D/g, "").slice(0, 4);
+    if (event.target.value !== pin) event.target.value = pin;
+    const btn = document.getElementById("redeem-btn");
+    if (btn) btn.disabled = pin.length < 4 || verifying;
+  }
+  if (event.target.id === "admin-token") adminToken = event.target.value;
+}
+
+function boot() {
+  try {
+    adminToken = sessionStorage.getItem(ADMIN_KEY) || "";
+  } catch (error) {
+    adminToken = "";
+  }
+  try {
+    rally = parseRally(localStorage.getItem(KEY));
+    const params = new URLSearchParams(location.search);
+    const id = spotToId(params.get("stamp"));
+    if (params.get("token") === DEMO_TOKEN && id && !stampDone(id)) {
+      rally.pendingStamp = id;
+    }
+    if (allStamps() && rally.nickname.trim() && !rally.pendingStamp) {
+      rally.goalUnlocked = true;
+    }
+    persist();
+    if (params.has("stamp") || params.has("token")) {
+      params.delete("stamp");
+      params.delete("token");
+      const search = params.toString();
+      history.replaceState(null, "", location.pathname + (search ? "?" + search : "") + location.hash);
+    }
+  } catch (error) {
+    storageBlocked = true;
+    rally = emptyRally();
+  }
+  showGoal = Boolean(rally.rewardCode);
+  isAdmin = location.hash === "#admin";
+}
+
+boot();
+document.getElementById("shell").addEventListener("click", onShellClick);
+document.getElementById("shell").addEventListener("input", onShellInput);
+document.getElementById("demo").addEventListener("click", (event) => {
+  const el = event.target.closest("[data-demo]");
+  if (!el) return;
+  const demo = el.dataset.demo;
+  if (demo === "qr") return land(Number(el.dataset.spot));
+  if (demo === "admin") {
+    activeTab = "home";
+    isAdmin = true;
+    if (location.hash !== "#admin") location.hash = "admin";
+    else render();
+    return;
+  }
+  if (demo === "expire") {
+    if (rally.issuedAt == null) return;
+    rally.issuedAt = Date.now() - DISPLAY_MS - 1;
+    now = Date.now();
+    revealed = false;
+    persist();
+    render();
+    return;
+  }
+  if (demo === "soldout") {
+    soldOut = !soldOut;
+    if (soldOut && (showGoal || goalUnlocked())) {
+      showGoal = true;
+      activeTab = "home";
+      leaveAdminHash();
+    }
+    render();
+    return;
+  }
+  if (demo === "offline") {
+    offline = !offline;
+    render();
+    return;
+  }
+  if (demo === "blocked") {
+    storageBlocked = true;
+    bookOpen = false;
+    livePress = null;
+    render();
+    return;
+  }
+  if (demo === "reset") resetAll();
+});
+window.addEventListener("hashchange", () => {
+  isAdmin = location.hash === "#admin";
+  render();
+});
+
+if (!storageBlocked && rally.pendingStamp && rally.nickname.trim()) startPress(rally.pendingStamp);
+else render();
+</script>
+</body>
+</html>
