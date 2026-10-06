@@ -14,8 +14,7 @@ const GIFTS = [
 ];
 
 export function PresentPage() {
-  const { stamp1Done, stamp2Done, setActiveTab } = useApp();
-  const both = stamp1Done && stamp2Done;
+  const { goalUnlocked, openGoal } = useApp();
 
   return (
     <>
@@ -37,8 +36,8 @@ export function PresentPage() {
       <button
         className="b"
         type="button"
-        disabled={!both}
-        onClick={() => setActiveTab("home")}
+        disabled={!goalUnlocked}
+        onClick={openGoal}
       >
         ゴールへ進む
       </button>

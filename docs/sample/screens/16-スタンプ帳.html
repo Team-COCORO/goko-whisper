@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>五高の囁き — スタンプ帳（まだ無い）</title>
+<link rel="stylesheet" href="../ui.css">
+</head>
+<body>
+<div id="root">
+  <div id="demo" aria-label="画面名">
+    <span>画面</span>
+    <span class="hint">スタンプ帳（まだ無い）</span>
+    <a href="index.html">一覧</a>
+  </div>
+  <div class="app-shell">
+    <main class="stage stage--home"><h1>五高の囁き</h1>
+<p class="sub">あなたは、五高の声を聞いたことがありますか。</p>
+<div class="mapw" id="mapw" aria-label="キャンパスの見取り図">
+<svg aria-hidden="true"><g id="mg">
+<rect x="10" y="10" width="300" height="220" fill="#efe6da" stroke="#c5a059" stroke-dasharray="4 3"/>
+<rect x="30" y="30" width="70" height="40" fill="#c9a98f"/>
+<rect x="110" y="140" width="100" height="50" fill="#a95a48"/>
+<rect x="225" y="45" width="60" height="55" fill="#c9a98f"/>
+<rect x="35" y="150" width="50" height="50" fill="#d8cbb9"/>
+<path d="M50 110H280M160 20V210" stroke="#d8cbb9" stroke-width="8"/>
+<circle cx="65" cy="50" r="11" fill="#8b3a2b" stroke="#faf6f0" stroke-width="2"/>
+<text x="65" y="78" font-size="15" font-weight="bold" text-anchor="middle" fill="#2c2623" stroke="#efe6da" stroke-width="3" paint-order="stroke">第一の囁き</text>
+<circle cx="255" cy="72" r="11" fill="#8b3a2b" stroke="#faf6f0" stroke-width="2"/>
+<text x="255" y="100" font-size="15" font-weight="bold" text-anchor="middle" fill="#2c2623" stroke="#efe6da" stroke-width="3" paint-order="stroke">模擬店</text>
+<circle cx="160" cy="165" r="11" fill="#8b3a2b" stroke="#faf6f0" stroke-width="2"/>
+<text x="160" y="193" font-size="15" font-weight="bold" text-anchor="middle" fill="#2c2623" stroke="#efe6da" stroke-width="3" paint-order="stroke">五高記念館</text>
+</g></svg>
+<div class="mz">
+<button type="button" aria-label="拡大">＋</button>
+<button type="button" aria-label="縮小">－</button>
+<button type="button" class="fit" aria-label="全体表示">全体</button>
+</div>
+</div>
+<script src="map.js"></script>
+<div class="card"><div class="whisper">耳を澄ませ。百年の声が、まだここに漂っている。</div></div></main>
+<div class="stamp-book" role="dialog" aria-label="スタンプ帳">
+<div class="orihon-spread"><article class="orihon-leaf orihon-leaf--left" aria-label="チラシの頁">
+<div class="orihon-paper"><div class="orihon-rule"></div><div class="orihon-rule orihon-rule--inner"></div>
+<span class="orihon-corner orihon-corner--tl"></span><span class="orihon-corner orihon-corner--tr"></span>
+<span class="orihon-corner orihon-corner--bl"></span><span class="orihon-corner orihon-corner--br"></span>
+<p class="orihon-vert">チラシ</p>
+<div class="orihon-well"></div></div></article><article class="orihon-leaf orihon-leaf--right" aria-label="模擬店の頁">
+<div class="orihon-paper"><div class="orihon-rule"></div><div class="orihon-rule orihon-rule--inner"></div>
+<span class="orihon-corner orihon-corner--tl"></span><span class="orihon-corner orihon-corner--tr"></span>
+<span class="orihon-corner orihon-corner--bl"></span><span class="orihon-corner orihon-corner--br"></span>
+<p class="orihon-vert">模擬店</p>
+<div class="orihon-well"></div></div></article></div>
+<div class="orihon-turns">
+<button class="orihon-turn" type="button" disabled>前の見開き</button>
+<button class="orihon-turn" type="button">次の見開き</button>
+</div>
+<button class="b alt orihon-close" type="button">閉じる</button>
+</div>
+    
+    <nav class="bottom-nav" aria-label="メインナビゲーション">
+      <button type="button" class="on" aria-current="page"><svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="9"/><path d="M13 5l3 8-3 8-3-8z"/></svg>ホーム</button>
+<button type="button"><svg viewBox="0 0 26 26" aria-hidden="true"><path d="M9 8h8v12H9zM11 8V5h4v3M13 3v2"/></svg>食品</button>
+<button type="button"><svg viewBox="0 0 26 26" aria-hidden="true"><circle cx="13" cy="13" r="9"/><path d="M13 8l1.6 3.3 3.6.5-2.6 2.5.6 3.6-3.2-1.7-3.2 1.7.6-3.6-2.6-2.5 3.6-.5z"/></svg>プレゼント</button>
+    </nav>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>明治集印帳ピクトグラム (Meiji Stamp Book Pictograms)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@600;800&family=Inter:wght@400;500;600;700&family=Yuji+Syuku&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --sumi-black: #1a1a1a;
+      --vermilion: #c53023;
+      --paper-bone: #f7f2e7;
+      --indigo-ink: #1e2c3b;
+      --brass-gold: #c29d53;
+    }
+
+    body {
+      font-family: 'Inter', 'Shippori Mincho', sans-serif;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .font-mincho {
+      font-family: 'Shippori Mincho', serif;
+    }
+
+    .font-stamp {
+      font-family: 'Yuji Syuku', serif;
+    }
+
+    /* Crisp SVG rendering */
+    .pictogram-svg {
+      shape-rendering: geometricPrecision;
+      text-rendering: geometricPrecision;
+    }
+
+    /* Grid background pattern for alignment checking */
+    .canvas-grid-light {
+      background-size: 16px 16px;
+      background-image: 
+        linear-gradient(to right, rgba(0, 0, 0, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.05) 1px, transparent 1px);
+    }
+
+    .canvas-grid-dark {
+      background-size: 16px 16px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    }
+
+    /* Pure CSS Pictogram construction */
+    .css-picto-book {
+      position: relative;
+      background-color: currentColor;
+      border-radius: 2px 5px 5px 2px;
+      display: inline-block;
+    }
+    
+    .css-picto-spine {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 22%;
+      background: rgba(255,255,255,0.18);
+      border-right: 1.5px solid rgba(255,255,255,0.25);
+    }
+  </style>
+</head>
+
+<body class="bg-stone-950 text-stone-100 min-h-screen p-4 md:p-8 flex flex-col items-center">
+
+  <header class="max-w-5xl w-full text-center mb-8">
+    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-red-800/50 bg-red-950/30 text-red-300 text-xs tracking-widest font-semibold mb-3">
+      <span>💮</span> 明治浪漫の意匠を現代のアイコン文法へ
+    </div>
+    <h1 class="text-3xl md:text-5xl font-extrabold tracking-wide font-mincho text-stone-100 mb-3">
+      明治集印帳 ピクトグラム体系
+    </h1>
+    <p class="text-stone-400 text-sm md:text-base max-w-2xl mx-auto leading-relaxed">
+      明治の「和装本（四つ目綴じ・題簽）」と「記念印・駅スタンプ（朱肉）」の記号的本質を抽出し、
+      24pxのマイクロサイズからアプリUI、案内サインまで耐えうるピクトグラムとして再構成しました。
+    </p>
+  </header>
+
+  <main class="max-w-5xl w-full space-y-8">
+    
+    <!-- Controls Bar -->
+    <div class="bg-stone-900 border border-stone-800 p-4 rounded-xl flex flex-wrap items-center justify-between gap-4 shadow-xl">
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-stone-400 font-medium">背景テーマ:</span>
+        <div class="inline-flex rounded-lg bg-stone-950 p-1 border border-stone-800">
+          <button id="themeDarkBtn" onclick="setPreviewBg('dark')" class="px-3 py-1 text-xs rounded-md font-medium transition bg-stone-800 text-amber-300">漆黒 (Dark)</button>
+          <button id="themeLightBtn" onclick="setPreviewBg('light')" class="px-3 py-1 text-xs rounded-md font-medium transition text-stone-400 hover:text-stone-200">生成り紙 (Light)</button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-stone-400 font-medium">強調アクセント色:</span>
+        <div class="flex items-center gap-2">
+          <button onclick="setAccentColor('#c53023')" class="w-6 h-6 rounded-full bg-[#c53023] ring-2 ring-red-400 border border-stone-900" title="真朱 (しんしゅ・朱肉)"></button>
+          <button onclick="setAccentColor('#b83b5e')" class="w-6 h-6 rounded-full bg-[#b83b5e] border border-stone-900" title="紅梅色"></button>
+          <button onclick="setAccentColor('#d4a340')" class="w-6 h-6 rounded-full bg-[#d4a340] border border-stone-900" title="金箔・黄丹"></button>
+          <button onclick="setAccentColor('#245a7d')" class="w-6 h-6 rounded-full bg-[#245a7d] border border-stone-900" title="藍墨"></button>
+        </div>
+      </div>
+
+      <div class="text-xs text-stone-400">
+        規格: <code class="text-amber-400 font-mono">24×24 基底グリッド準拠</code>
+      </div>
+    </div>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      
+      <!-- Style 1: Modern Two-Tone (墨 × 朱肉) -->
+      <div class="picto-card bg-stone-900/90 border border-stone-800 rounded-2xl p-6 flex flex-col justify-between hover:border-stone-700 transition">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-bold text-amber-400 tracking-wider">01. ツートーン記号</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-stone-800 text-stone-400 font-mono">SVG / CSS</span>
+          </div>
+          <p class="text-xs text-stone-400 mb-5">
+            四つ目綴じの結束糸・題簽・押印された丸スタンプ（桜花紋）の二色構成。最も推奨される標準ピクトグラム。
+          </p>
+
+          <!-- Icon Preview Viewport -->
+          <div id="previewCard1" class="h-44 rounded-xl flex items-center justify-center bg-stone-950 canvas-grid-dark border border-stone-800/80 relative overflow-hidden">
+            <svg class="pictogram-svg w-28 h-28 drop-shadow-md" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Book back shadow / Edge depth -->
+              <path d="M12 7H39C40.6569 7 42 8.34315 42 10V40C42 41.6569 40.6569 43 39 43H12V7Z" fill="#2d3238" class="picto-body-base"/>
+              <!-- Book main cover -->
+              <path d="M8 5H36C37.6569 5 39 6.34315 39 8V38C39 39.6569 37.6569 41 36 41H8C6.89543 41 6 40.1046 6 39V7C6 5.89543 6.89543 5 8 5Z" fill="#14181d" stroke="#4a525d" stroke-width="1.5" class="picto-cover"/>
+              
+              <!-- Spine cloth corner guards (角裂) -->
+              <path d="M39 8L34 5H36C37.6569 5 39 6.34315 39 8Z" fill="#8c6e3b"/>
+              <path d="M39 38L34 41H36C37.6569 41 39 39.6569 39 38Z" fill="#8c6e3b"/>
+
+              <!-- Spine Cloth band (背裂) -->
+              <path d="M6 7C6 5.89543 6.89543 5 8 5H14V41H8C6.89543 41 6 40.1046 6 39V7Z" fill="#69512d"/>
+              
+              <!-- 4-Hole Stab Stitching (四つ目綴じ) -->
+              <line x1="12" y1="5" x2="12" y2="41" stroke="#f1e5cf" stroke-width="1.2" stroke-dasharray="0 6" stroke-linecap="round"/>
+              <circle cx="12" cy="9" r="1.4" fill="#0c0d10"/>
+              <circle cx="12" cy="18" r="1.4" fill="#0c0d10"/>
+              <circle cx="12" cy="28" r="1.4" fill="#0c0d10"/>
+              <circle cx="12" cy="37" r="1.4" fill="#0c0d10"/>
+              <!-- Wrap-around stitch hints -->
+              <path d="M12 9H6M12 37H6M12 9V5M12 37V41" stroke="#f1e5cf" stroke-width="1.2"/>
+
+              <!-- Title Slip (題簽 - Daisen) -->
+              <rect x="29" y="8" width="6.5" height="18" rx="0.5" fill="#fdfaf3" stroke="#8c6e3b" stroke-width="0.8"/>
+              <line x1="32.25" y1="11" x2="32.25" y2="23" stroke="#14181d" stroke-width="1.5" stroke-linecap="round"/>
+
+              <!-- Vermilion Stamp mark (朱肉・印影) -->
+              <circle cx="24" cy="27" r="7.5" stroke="var(--vermilion)" stroke-width="1.6" class="picto-accent-stroke" fill="none"/>
+              <circle cx="24" cy="27" r="5.5" stroke="var(--vermilion)" stroke-width="0.7" stroke-dasharray="1 1" class="picto-accent-stroke"/>
+              <!-- Inner Meiji emblem / Floral cross -->
+              <path d="M24 23.5V30.5M20.5 27H27.5M21.5 24.5L26.5 29.5M21.5 29.5L26.5 24.5" stroke="var(--vermilion)" stroke-width="1" stroke-linecap="round" class="picto-accent-stroke"/>
+            </svg>
+          </div>
+        </div>
+
+        <button onclick="copySnippet('svg-twotone')" class="mt-4 w-full py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-2 border border-stone-700">
+          <span>📋</span> SVGコードをコピー
+        </button>
+      </div>
+
+      <!-- Style 2: Flat Silhouette Monochrome (単色ピクト・標識) -->
+      <div class="picto-card bg-stone-900/90 border border-stone-800 rounded-2xl p-6 flex flex-col justify-between hover:border-stone-700 transition">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-bold text-amber-400 tracking-wider">02. 単色シルエット（JIS/案内用）</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-stone-800 text-stone-400 font-mono">1-Color Solid</span>
+          </div>
+          <p class="text-xs text-stone-400 mb-5">
+            駅構内標識や地図記号（POI）、モノクロ印刷にも最適なネガポジ切り抜き型の単色シルエット。
+          </p>
+
+          <div id="previewCard2" class="h-44 rounded-xl flex items-center justify-center bg-stone-950 canvas-grid-dark border border-stone-800/80 relative">
+            <svg class="pictogram-svg w-28 h-28 text-stone-100 picto-fill-target" viewBox="0 0 48 48" fill="currentColor">
+              <!-- Book main body with cutouts -->
+              <path fill-rule="evenodd" clip-rule="evenodd" d="M10 6C8.89543 6 8 6.89543 8 8V40C8 41.1046 8.89543 42 10 42H38C39.1046 42 40 41.1046 40 40V8C40 6.89543 39.1046 6 38 6H10ZM16 8V40H10V8H16ZM13.5 11C14.3284 11 15 10.3284 15 9.5C15 8.67157 14.3284 8 13.5 8C12.6716 8 12 8.67157 12 9.5C12 10.3284 12.6716 11 13.5 11ZM13.5 19C14.3284 19 15 18.3284 15 17.5C15 16.6716 14.3284 16 13.5 16C12.6716 16 12 16.6716 12 17.5C12 18.3284 12.6716 19 13.5 19ZM13.5 30.5C14.3284 30.5 15 29.8284 15 29C15 28.1716 14.3284 27.5 13.5 27.5C12.6716 27.5 12 28.1716 12 29C12 29.8284 12.6716 30.5 13.5 30.5ZM13.5 38.5C14.3284 38.5 15 37.8284 15 37C15 36.1716 14.3284 35.5 13.5 35.5C12.6716 35.5 12 36.1716 12 37C12 37.8284 12.6716 38.5 13.5 38.5ZM35 10H30V24H35V10ZM26 21C29.866 21 33 24.134 33 28C33 31.866 29.866 35 26 35C22.134 35 19 31.866 19 28C19 24.134 22.134 21 26 21ZM26 23.5C23.5147 23.5 21.5 25.5147 21.5 28C21.5 30.4853 23.5147 32.5 26 32.5C28.4853 32.5 30.5 30.4853 30.5 28C30.5 25.5147 28.4853 23.5 26 23.5Z"/>
+            </svg>
+          </div>
+        </div>
+
+        <button onclick="copySnippet('svg-monochrome')" class="mt-4 w-full py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-2 border border-stone-700">
+          <span>📋</span> SVGコードをコピー
+        </button>
+      </div>
+
+      <!-- Style 3: Minimal Line Art (アウトライン線画) -->
+      <div class="picto-card bg-stone-900/90 border border-stone-800 rounded-2xl p-6 flex flex-col justify-between hover:border-stone-700 transition">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-bold text-amber-400 tracking-wider">03. ミニマル線画（Line UI）</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-stone-800 text-stone-400 font-mono">2px Stroke</span>
+          </div>
+          <p class="text-xs text-stone-400 mb-5">
+            現代のWebアイコンセット（Feather / Lucide）と完全に調和する幾何学的な2px線画シンボル。
+          </p>
+
+          <div id="previewCard3" class="h-44 rounded-xl flex items-center justify-center bg-stone-950 canvas-grid-dark border border-stone-800/80 relative">
+            <svg class="pictogram-svg w-28 h-28 text-stone-100" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <!-- Book Outline -->
+              <rect x="8" y="6" width="32" height="36" rx="3"/>
+              <!-- Spine fold division -->
+              <line x1="16" y1="6" x2="16" y2="42"/>
+              <!-- 4 Stitch eyelets (dots) -->
+              <circle cx="12" cy="10.5" r="1" fill="currentColor"/>
+              <circle cx="12" cy="19.5" r="1" fill="currentColor"/>
+              <circle cx="12" cy="28.5" r="1" fill="currentColor"/>
+              <circle cx="12" cy="37.5" r="1" fill="currentColor"/>
+              <!-- Daisen -->
+              <rect x="31" y="9" width="5" height="14" rx="0.5" stroke-width="1.8"/>
+              <!-- Stamp circle & cross mark -->
+              <circle cx="24" cy="28" r="6" stroke="var(--vermilion)" class="picto-accent-stroke"/>
+              <path d="M24 25V31M21 28H27" stroke="var(--vermilion)" stroke-width="1.8" class="picto-accent-stroke"/>
+            </svg>
+          </div>
+        </div>
+
+        <button onclick="copySnippet('svg-outline')" class="mt-4 w-full py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-2 border border-stone-700">
+          <span>📋</span> SVGコードをコピー
+        </button>
+      </div>
+
+      <!-- Style 4: Modern App Icon Badge (角丸アプリアイコン) -->
+      <div class="picto-card bg-stone-900/90 border border-stone-800 rounded-2xl p-6 flex flex-col justify-between hover:border-stone-700 transition">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-bold text-amber-400 tracking-wider">04. スクワークル・アプリバッジ</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-stone-800 text-stone-400 font-mono">App Tile</span>
+          </div>
+          <p class="text-xs text-stone-400 mb-5">
+            iOS / Android のアプリアイコンやファビコンに適した、深い藍色背景と金襴を想起させるエンブレム。
+          </p>
+
+          <div id="previewCard4" class="h-44 rounded-xl flex items-center justify-center bg-stone-950 canvas-grid-dark border border-stone-800/80 relative">
+            <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#233549] to-[#0f1721] p-2.5 shadow-2xl border border-sky-900/50 flex items-center justify-center relative">
+              <svg class="pictogram-svg w-full h-full" viewBox="0 0 48 48" fill="none">
+                <rect x="8" y="5" width="31" height="38" rx="2" fill="#faf5ec"/>
+                <!-- Spine cloth in deep indigo -->
+                <path d="M8 5H14V43H8C6.89543 43 6 42.1046 6 41V7C6 5.89543 6.89543 5 8 5Z" fill="#1b2533"/>
+                <!-- Corner reinforcement triangles -->
+                <path d="M39 5L33 5L39 11V5Z" fill="#b08b47"/>
+                <path d="M39 43L33 43L39 37V43Z" fill="#b08b47"/>
+                <!-- 4 Stitch Holes & golden threads -->
+                <line x1="11" y1="5" x2="11" y2="43" stroke="#e0be75" stroke-width="1" stroke-dasharray="1 6"/>
+                <circle cx="11" cy="9" r="1.3" fill="#000"/>
+                <circle cx="11" cy="18" r="1.3" fill="#000"/>
+                <circle cx="11" cy="28" r="1.3" fill="#000"/>
+                <circle cx="11" cy="38" r="1.3" fill="#000"/>
+                <!-- Title Slip -->
+                <rect x="29" y="8" width="6" height="16" fill="#f4ede0" stroke="#b08b47" stroke-width="0.8"/>
+                <line x1="32" y1="10" x2="32" y2="21" stroke="#1b2533" stroke-width="1.2"/>
+                <!-- Souvenir Stamp Impression -->
+                <circle cx="23" cy="28" r="7" stroke="var(--vermilion)" stroke-width="1.5" fill="rgba(197,48,35,0.08)" class="picto-accent-stroke"/>
+                <circle cx="23" cy="28" r="5" stroke="var(--vermilion)" stroke-width="0.6" stroke-dasharray="1 1" class="picto-accent-stroke"/>
+                <!-- Meiji star/bloom -->
+                <circle cx="23" cy="28" r="1.8" fill="var(--vermilion)" class="picto-accent-fill"/>
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="copySnippet('svg-badge')" class="mt-4 w-full py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-2 border border-stone-700">
+          <span>📋</span> バッジコードをコピー
+        </button>
+      </div>
+
+      <!-- Style 5: Pure CSS Single-Element Glyph (純CSSピクトグラム) -->
+      <div class="picto-card bg-stone-900/90 border border-stone-800 rounded-2xl p-6 flex flex-col justify-between hover:border-stone-700 transition">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-bold text-amber-400 tracking-wider">05. 純CSSピクトグラム</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-stone-800 text-stone-400 font-mono">Pure CSS</span>
+          </div>
+          <p class="text-xs text-stone-400 mb-5">
+            外部SVGや画像ファイル不要。1つのHTMLタグと疑似要素（`::before` / `::after`）だけで描画。
+          </p>
+
+          <div id="previewCard5" class="h-44 rounded-xl flex items-center justify-center bg-stone-950 canvas-grid-dark border border-stone-800/80 relative">
+            <!-- Pure CSS Stamp Book Icon -->
+            <div class="w-16 h-22 css-picto-book text-stone-200 border-2 border-stone-400/80 shadow-lg relative flex items-center justify-center" style="width: 70px; height: 95px; background-color: #212832;">
+              <!-- Spine band -->
+              <div class="absolute left-0 top-0 bottom-0 w-4 bg-[#7a5c37] border-r border-amber-900/40"></div>
+              <!-- Stitch dots -->
+              <div class="absolute left-1.5 top-2 bottom-2 w-1 flex flex-col justify-between items-center z-10">
+                <span class="w-1.5 h-1.5 rounded-full bg-stone-950 border border-amber-200/50"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-stone-950 border border-amber-200/50"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-stone-950 border border-amber-200/50"></span>
+                <span class="w-1.5 h-1.5 rounded-full bg-stone-950 border border-amber-200/50"></span>
+              </div>
+              <!-- Daisen -->
+              <div class="absolute top-2 right-2 w-3.5 h-12 bg-[#faf4e6] border border-[#a17e40] flex items-center justify-center">
+                <div class="w-0.5 h-8 bg-stone-900"></div>
+              </div>
+              <!-- Stamp Seal mark in CSS -->
+              <div class="w-7 h-7 rounded-full border border-dashed border-red-600 flex items-center justify-center text-[9px] text-red-500 font-bold ml-1 mt-3" style="box-shadow: 0 0 0 1.5px #c53023;">
+                印
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button onclick="copySnippet('pure-css')" class="mt-4 w-full py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-2 border border-stone-700">
+          <span>📋</span> CSSコードをコピー
+        </button>
+      </div>
+
+      <!-- Style 6: Rubber Stamp Vintage Seal (朱肉スタンプ印影) -->
+      <div class="picto-card bg-stone-900/90 border border-stone-800 rounded-2xl p-6 flex flex-col justify-between hover:border-stone-700 transition">
+        <div>
+          <div class="flex items-center justify-between mb-4">
+            <span class="text-xs font-bold text-amber-400 tracking-wider">06. 記念印影ピクト（消印・御朱印）</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-stone-800 text-stone-400 font-mono">Meiji Seal</span>
+          </div>
+          <p class="text-xs text-stone-400 mb-5">
+            集印帳そのものの中に押される「明治時代の鉄道記念印・博覧会印」の円形ピクトグラム。
+          </p>
+
+          <div id="previewCard6" class="h-44 rounded-xl flex items-center justify-center bg-stone-950 canvas-grid-dark border border-stone-800/80 relative">
+            <svg class="pictogram-svg w-28 h-28" viewBox="0 0 48 48" fill="none">
+              <!-- Outer double seal rings -->
+              <circle cx="24" cy="24" r="21" stroke="var(--vermilion)" stroke-width="2" class="picto-accent-stroke"/>
+              <circle cx="24" cy="24" r="18" stroke="var(--vermilion)" stroke-width="0.8" stroke-dasharray="1.5 1" class="picto-accent-stroke"/>
+              
+              <!-- Arched text simulation or top header -->
+              <path d="M12 20H36" stroke="var(--vermilion)" stroke-width="1.2" class="picto-accent-stroke"/>
+              <path d="M12 28H36" stroke="var(--vermilion)" stroke-width="1.2" class="picto-accent-stroke"/>
+              
+              <!-- Center Meiji Loco / Book Icon inside stamp -->
+              <rect x="20" y="14" width="8" height="10" rx="0.5" stroke="var(--vermilion)" stroke-width="1" class="picto-accent-stroke"/>
+              <line x1="22.5" y1="14" x2="22.5" y2="24" stroke="var(--vermilion)" stroke-width="0.8" class="picto-accent-stroke"/>
+              
+              <!-- Star / Imperial crest symbol -->
+              <circle cx="24" cy="24" r="1.5" fill="var(--vermilion)" class="picto-accent-fill"/>
+              
+              <!-- Date marks -->
+              <text x="24" y="34" font-family="'Shippori Mincho', serif" font-size="3.5" font-weight="bold" fill="var(--vermilion)" text-anchor="middle" letter-spacing="1">明治三六年</text>
+            </svg>
+          </div>
+        </div>
+
+        <button onclick="copySnippet('svg-seal')" class="mt-4 w-full py-2 bg-stone-800 hover:bg-stone-700 text-stone-200 text-xs font-semibold rounded-lg transition flex items-center justify-center gap-2 border border-stone-700">
+          <span>📋</span> SVGコードをコピー
+        </button>
+      </div>
+
+    </section>
+
+    <section class="bg-stone-900 border border-stone-800 rounded-2xl p-6 md:p-8">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 pb-4 border-b border-stone-800">
+        <div>
+          <h2 class="text-lg font-bold text-amber-200 font-mincho flex items-center gap-2">
+            <span>🔍</span> マルチサイズ・視認性検証 (Responsive Scale Grid)
+          </h2>
+          <p class="text-xs text-stone-400 mt-1">
+            24px（標準UI）、32px（リスト）、48px（ナビゲーション）、64px（カード）、128px（高精細）での潰れ・輪郭をテスト。
+          </p>
+        </div>
+        <div class="text-xs text-stone-400 bg-stone-950 px-3 py-1.5 rounded-lg border border-stone-800">
+          自動ピクセル補正：<span class="text-emerald-400 font-semibold">有効</span>
+        </div>
+      </div>
+
+      <!-- Scales display -->
+      <div class="grid grid-cols-2 sm:grid-cols-5 gap-6 items-end text-center">
+        
+        <!-- 24px -->
+        <div class="flex flex-col items-center gap-3 p-4 bg-stone-950/60 rounded-xl border border-stone-800/80">
+          <div class="h-16 flex items-center justify-center">
+            <svg class="pictogram-svg w-6 h-6 text-stone-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="3" width="16" height="18" rx="1.5"/>
+              <line x1="8" y1="3" x2="8" y2="21"/>
+              <circle cx="6" cy="6" r="0.6" fill="currentColor"/>
+              <circle cx="6" cy="18" r="0.6" fill="currentColor"/>
+              <rect x="15" y="5" width="2.5" height="7" stroke-width="1.2"/>
+              <circle cx="12" cy="14" r="3" stroke="var(--vermilion)" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <span class="text-xs font-mono text-stone-400">24 × 24 px<br><span class="text-[10px] text-stone-500">標準UIアイコン</span></span>
+        </div>
+
+        <!-- 32px -->
+        <div class="flex flex-col items-center gap-3 p-4 bg-stone-950/60 rounded-xl border border-stone-800/80">
+          <div class="h-16 flex items-center justify-center">
+            <svg class="pictogram-svg w-8 h-8 text-stone-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="4" y="3" width="16" height="18" rx="1.5"/>
+              <line x1="8" y1="3" x2="8" y2="21"/>
+              <circle cx="6" cy="5.5" r="0.7" fill="currentColor"/>
+              <circle cx="6" cy="10" r="0.7" fill="currentColor"/>
+              <circle cx="6" cy="14" r="0.7" fill="currentColor"/>
+              <circle cx="6" cy="18.5" r="0.7" fill="currentColor"/>
+              <rect x="15" y="5" width="2.5" height="7" stroke-width="1.2"/>
+              <circle cx="12" cy="14" r="3" stroke="var(--vermilion)" stroke-width="1.5"/>
+            </svg>
+          </div>
+          <span class="text-xs font-mono text-stone-400">32 × 32 px<br><span class="text-[10px] text-stone-500">ツールバー</span></span>
+        </div>
+
+        <!-- 48px -->
+        <div class="flex flex-col items-center gap-3 p-4 bg-stone-950/60 rounded-xl border border-stone-800/80">
+          <div class="h-16 flex items-center justify-center">
+            <svg class="pictogram-svg w-12 h-12 text-stone-200" viewBox="0 0 48 48" fill="none">
+              <rect x="8" y="5" width="32" height="38" rx="2" fill="#1e2530" stroke="#4a5568" stroke-width="1.5"/>
+              <path d="M8 5H15V43H8V5Z" fill="#5c4424"/>
+              <line x1="12" y1="5" x2="12" y2="43" stroke="#f0e2cd" stroke-width="1" stroke-dasharray="0 7" stroke-linecap="round"/>
+              <rect x="31" y="8" width="5" height="16" fill="#f8f4eb" stroke="#a07d3b" stroke-width="1"/>
+              <circle cx="23" cy="27" r="7" stroke="var(--vermilion)" stroke-width="1.8"/>
+            </svg>
+          </div>
+          <span class="text-xs font-mono text-stone-400">48 × 48 px<br><span class="text-[10px] text-stone-500">ナビゲーション</span></span>
+        </div>
+
+        <!-- 64px -->
+        <div class="flex flex-col items-center gap-3 p-4 bg-stone-950/60 rounded-xl border border-stone-800/80">
+          <div class="h-16 flex items-center justify-center">
+            <svg class="pictogram-svg w-16 h-16 text-stone-200" viewBox="0 0 48 48" fill="none">
+              <rect x="8" y="5" width="32" height="38" rx="2" fill="#1e2530" stroke="#4a5568" stroke-width="1.5"/>
+              <path d="M8 5H15V43H8V5Z" fill="#5c4424"/>
+              <line x1="12" y1="5" x2="12" y2="43" stroke="#f0e2cd" stroke-width="1.2" stroke-dasharray="0 7" stroke-linecap="round"/>
+              <rect x="30" y="8" width="6.5" height="17" fill="#f8f4eb" stroke="#a07d3b" stroke-width="1"/>
+              <circle cx="23" cy="28" r="7.5" stroke="var(--vermilion)" stroke-width="1.8"/>
+              <path d="M23 24V32M19 28H27" stroke="var(--vermilion)" stroke-width="1.2"/>
+            </svg>
+          </div>
+          <span class="text-xs font-mono text-stone-400">64 × 64 px<br><span class="text-[10px] text-stone-500">カード / リスト</span></span>
+        </div>
+
+        <!-- 128px -->
+        <div class="col-span-2 sm:col-span-1 flex flex-col items-center gap-3 p-4 bg-stone-950/60 rounded-xl border border-stone-800/80">
+          <div class="h-16 flex items-center justify-center">
+            <svg class="pictogram-svg w-16 h-16 text-stone-200" viewBox="0 0 48 48" fill="none">
+              <path d="M12 7H40V43H12V7Z" fill="#2d3748"/>
+              <rect x="8" y="5" width="32" height="38" rx="2" fill="#18202a" stroke="#4a5568" stroke-width="1.2"/>
+              <path d="M8 5H15V43H8V5Z" fill="#785932"/>
+              <circle cx="11.5" cy="9.5" r="1.2" fill="#000"/>
+              <circle cx="11.5" cy="19" r="1.2" fill="#000"/>
+              <circle cx="11.5" cy="29" r="1.2" fill="#000"/>
+              <circle cx="11.5" cy="38.5" r="1.2" fill="#000"/>
+              <rect x="30" y="8" width="6" height="17" fill="#fcf8f0" stroke="#9d7637" stroke-width="0.8"/>
+              <circle cx="23" cy="28" r="7.5" stroke="var(--vermilion)" stroke-width="1.6"/>
+              <circle cx="23" cy="28" r="5.5" stroke="var(--vermilion)" stroke-width="0.7" stroke-dasharray="1 1"/>
+            </svg>
+          </div>
+          <span class="text-xs font-mono text-stone-400">128 × 128 px<br><span class="text-[10px] text-stone-500">高精細シンボル</span></span>
+        </div>
+
+      </div>
+    </section>
+
+    <section class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-stone-900/60 border border-stone-800 rounded-2xl p-6 md:p-8">
+      <div>
+        <h3 class="text-base font-bold text-amber-300 font-mincho mb-3 flex items-center gap-2">
+          <span>📜</span> 明治集印帳ピクトグラムの4大構成要素
+        </h3>
+        <ul class="space-y-3 text-xs text-stone-300 leading-relaxed">
+          <li class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-amber-900/50 text-amber-300 flex items-center justify-center shrink-0 text-[11px] font-bold">1</span>
+            <div>
+              <strong class="text-stone-100">四つ目綴じ（4-Hole Stab Stitching）：</strong><br>
+              西洋の洋装製本と決定的に区別する和装本の象徴。背表紙に並ぶ「縦4点の穴と結束糸」をミニマルなドットや点線で抽象化。
+            </div>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-amber-900/50 text-amber-300 flex items-center justify-center shrink-0 text-[11px] font-bold">2</span>
+            <div>
+              <strong class="text-stone-100">題簽（Title Slip Rectangle）：</strong><br>
+              表紙の右上に縦長に貼られた表題紙。通常の手帳ピクトグラムと一目で区別できる和風タイポグラフィ領域。
+            </div>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-amber-900/50 text-amber-300 flex items-center justify-center shrink-0 text-[11px] font-bold">3</span>
+            <div>
+              <strong class="text-stone-100">朱肉の二重丸スタンプ印（Vermilion Seal）：</strong><br>
+              単なる「ノート」ではなく「スタンプ帳・印譜帖」であることを瞬時に伝えるため、中央下部にアクセントカラー（朱色）の印影を配置。
+            </div>
+          </li>
+          <li class="flex items-start gap-2.5">
+            <span class="w-5 h-5 rounded-full bg-amber-900/50 text-amber-300 flex items-center justify-center shrink-0 text-[11px] font-bold">4</span>
+            <div>
+              <strong class="text-stone-100">角裂（Spine & Corner Guards）：</strong><br>
+              本の四隅と背を補強する伝統工芸の三角切り返し。ピクトグラムにクラフト感と時代感を与えます。
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Implementation Cheat-Sheet & Copyable Code Area -->
+      <div class="flex flex-col justify-between">
+        <div>
+          <h3 class="text-base font-bold text-amber-300 font-mincho mb-3 flex items-center gap-2">
+            <span>💻</span> Web / App 組み込み用コード
+          </h3>
+          <p class="text-xs text-stone-400 mb-3">
+            クリップボードから直接React / HTML / Vue / Figmaにペースト可能です。
+          </p>
+          <div class="relative bg-stone-950 p-3 rounded-xl border border-stone-800 font-mono text-[11px] text-amber-200/90 overflow-x-auto max-h-48">
+            <pre id="codeDisplayArea">&lt;!-- 24px Meiji Stamp Book Pictogram --&gt;
+&lt;svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"&gt;
+  &lt;rect x="4" y="3" width="16" height="18" rx="1.5"/&gt;
+  &lt;line x1="8" y1="3" x2="8" y2="21"/&gt;
+  &lt;circle cx="6" cy="6" r="0.6" fill="currentColor"/&gt;
+  &lt;circle cx="6" cy="18" r="0.6" fill="currentColor"/&gt;
+  &lt;rect x="15" y="5" width="2.5" height="7"/&gt;
+  &lt;circle cx="12" cy="14" r="3" stroke="#c53023"/&gt;
+&lt;/svg&gt;</pre>
+          </div>
+        </div>
+
+        <div id="copyToast" class="hidden mt-3 text-center text-xs py-2 px-3 rounded-lg bg-emerald-950/80 border border-emerald-700 text-emerald-300 font-medium">
+          ✓ クリップボードにコードをコピーしました
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="mt-10 text-center text-xs text-stone-500 pb-8">
+    <p>明治時代 集印帳ピクトグラム設計規格（四つ目綴じ比率・二重円印章記号・24pxグリッドスナップ）</p>
+  </footer>
+
+  <script>
+    // Snippet library
+    const snippets = {
+      'svg-twotone': `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M12 7H39C40.6569 7 42 8.34315 42 10V40C42 41.6569 40.6569 43 39 43H12V7Z" fill="#2d3238"/>
+  <path d="M8 5H36C37.6569 5 39 6.34315 39 8V38C39 39.6569 37.6569 41 36 41H8C6.89543 41 6 40.1046 6 39V7C6 5.89543 6.89543 5 8 5Z" fill="#14181d" stroke="#4a525d" stroke-width="1.5"/>
+  <path d="M6 7C6 5.89543 6.89543 5 8 5H14V41H8C6.89543 41 6 40.1046 6 39V7Z" fill="#69512d"/>
+  <line x1="12" y1="5" x2="12" y2="41" stroke="#f1e5cf" stroke-width="1.2" stroke-dasharray="0 6" stroke-linecap="round"/>
+  <circle cx="12" cy="9" r="1.4" fill="#0c0d10"/><circle cx="12" cy="18" r="1.4" fill="#0c0d10"/><circle cx="12" cy="28" r="1.4" fill="#0c0d10"/><circle cx="12" cy="37" r="1.4" fill="#0c0d10"/>
+  <rect x="29" y="8" width="6.5" height="18" rx="0.5" fill="#fdfaf3" stroke="#8c6e3b" stroke-width="0.8"/>
+  <circle cx="24" cy="27" r="7.5" stroke="#c53023" stroke-width="1.6" fill="none"/>
+  <path d="M24 23.5V30.5M20.5 27H27.5" stroke="#c53023" stroke-width="1" stroke-linecap="round"/>
+</svg>`,
+
+      'svg-monochrome': `<svg width="48" height="48" viewBox="0 0 48 48" fill="currentColor">
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M10 6C8.89543 6 8 6.89543 8 8V40C8 41.1046 8.89543 42 10 42H38C39.1046 42 40 41.1046 40 40V8C40 6.89543 39.1046 6 38 6H10ZM16 8V40H10V8H16ZM13.5 11C14.3284 11 15 10.3284 15 9.5C15 8.67157 14.3284 8 13.5 8C12.6716 8 12 8.67157 12 9.5C12 10.3284 12.6716 11 13.5 11ZM13.5 19C14.3284 19 15 18.3284 15 17.5C15 16.6716 14.3284 16 13.5 16C12.6716 16 12 16.6716 12 17.5C12 18.3284 12.6716 19 13.5 19ZM13.5 30.5C14.3284 30.5 15 29.8284 15 29C15 28.1716 14.3284 27.5 13.5 27.5C12.6716 27.5 12 28.1716 12 29C12 29.8284 12.6716 30.5 13.5 30.5ZM13.5 38.5C14.3284 38.5 15 37.8284 15 37C15 36.1716 14.3284 35.5 13.5 35.5C12.6716 35.5 12 36.1716 12 37C12 37.8284 12.6716 38.5 13.5 38.5ZM35 10H30V24H35V10ZM26 21C29.866 21 33 24.134 33 28C33 31.866 29.866 35 26 35C22.134 35 19 31.866 19 28C19 24.134 22.134 21 26 21ZM26 23.5C23.5147 23.5 21.5 25.5147 21.5 28C21.5 30.4853 23.5147 32.5 26 32.5C28.4853 32.5 30.5 30.4853 30.5 28C30.5 25.5147 28.4853 23.5 26 23.5Z"/>
+</svg>`,
+
+      'svg-outline': `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="8" y="6" width="32" height="36" rx="3"/>
+  <line x1="16" y1="6" x2="16" y2="42"/>
+  <circle cx="12" cy="10.5" r="1" fill="currentColor"/>
+  <circle cx="12" cy="19.5" r="1" fill="currentColor"/>
+  <circle cx="12" cy="28.5" r="1" fill="currentColor"/>
+  <circle cx="12" cy="37.5" r="1" fill="currentColor"/>
+  <rect x="31" y="9" width="5" height="14" rx="0.5"/>
+  <circle cx="24" cy="28" r="6" stroke="#c53023"/>
+  <path d="M24 25V31M21 28H27" stroke="#c53023"/>
+</svg>`,
+
+      'svg-badge': `<div class="w-16 h-16 rounded-2xl bg-[#1b2533] p-2 flex items-center justify-center shadow-lg">
+  <svg viewBox="0 0 48 48" fill="none" class="w-full h-full">
+    <rect x="8" y="5" width="31" height="38" rx="2" fill="#faf5ec"/>
+    <path d="M8 5H14V43H8V5Z" fill="#111722"/>
+    <line x1="11" y1="5" x2="11" y2="43" stroke="#e0be75" stroke-dasharray="1 6"/>
+    <rect x="29" y="8" width="6" height="16" fill="#f4ede0" stroke="#b08b47" stroke-width="0.8"/>
+    <circle cx="23" cy="28" r="7" stroke="#c53023" stroke-width="1.5"/>
+  </svg>
+</div>`,
+
+      'pure-css': `<!-- Pure CSS Meiji Stamp Book Component -->
+<div class="relative w-16 h-22 rounded bg-slate-900 border border-slate-700 shadow overflow-hidden">
+  <div class="absolute left-0 top-0 bottom-0 w-3 bg-[#69512d]"></div>
+  <div class="absolute top-2 right-2 w-3 h-10 bg-[#faf5ec] border border-[#a17e40]"></div>
+  <div class="absolute bottom-3 left-6 w-6 h-6 rounded-full border border-dashed border-red-600"></div>
+</div>`,
+
+      'svg-seal': `<svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+  <circle cx="24" cy="24" r="21" stroke="#c53023" stroke-width="2"/>
+  <circle cx="24" cy="24" r="18" stroke="#c53023" stroke-width="0.8" stroke-dasharray="1.5 1"/>
+  <line x1="12" y1="20" x2="36" y2="20" stroke="#c53023" stroke-width="1.2"/>
+  <line x1="12" y1="28" x2="36" y2="28" stroke="#c53023" stroke-width="1.2"/>
+  <circle cx="24" cy="24" r="2" fill="#c53023"/>
+</svg>`
+    };
+
+    const codeDisplayArea = document.getElementById('codeDisplayArea');
+    const copyToast = document.getElementById('copyToast');
+
+    // Clipboard copy helper using execCommand for sandbox safety
+    function copySnippet(key) {
+      const code = snippets[key];
+      if (!code) return;
+
+      codeDisplayArea.textContent = code;
+
+      const textarea = document.createElement('textarea');
+      textarea.value = code;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast();
+      } catch (err) {
+        console.error('Copy failed', err);
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function showToast() {
+      copyToast.classList.remove('hidden');
+      setTimeout(() => {
+        copyToast.classList.add('hidden');
+      }, 2400);
+    }
+
+    // Toggle Preview Arena between Dark and Light paper backgrounds
+    function setPreviewBg(mode) {
+      const previewCards = [1, 2, 3, 4, 5, 6].map(i => document.getElementById(`previewCard${i}`));
+      const darkBtn = document.getElementById('themeDarkBtn');
+      const lightBtn = document.getElementById('themeLightBtn');
+
+      if (mode === 'light') {
+        previewCards.forEach(card => {
+          card.classList.remove('bg-stone-950', 'canvas-grid-dark', 'text-stone-100');
+          card.classList.add('bg-[#f4efe4]', 'canvas-grid-light', 'text-stone-900');
+        });
+        lightBtn.classList.add('bg-stone-800', 'text-amber-300');
+        lightBtn.classList.remove('text-stone-400');
+        darkBtn.classList.remove('bg-stone-800', 'text-amber-300');
+        darkBtn.classList.add('text-stone-400');
+      } else {
+        previewCards.forEach(card => {
+          card.classList.remove('bg-[#f4efe4]', 'canvas-grid-light', 'text-stone-900');
+          card.classList.add('bg-stone-950', 'canvas-grid-dark', 'text-stone-100');
+        });
+        darkBtn.classList.add('bg-stone-800', 'text-amber-300');
+        darkBtn.classList.remove('text-stone-400');
+        lightBtn.classList.remove('bg-stone-800', 'text-amber-300');
+        lightBtn.classList.add('text-stone-400');
+      }
+    }
+
+    // Dynamic accent color switcher (Vermilion / Crimson / Gold / Navy)
+    function setAccentColor(colorHex) {
+      document.documentElement.style.setProperty('--vermilion', colorHex);
+    }
+  </script>
+</body>
+</html>

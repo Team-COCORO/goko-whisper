@@ -1,15 +1,9 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
 
 const MAP_W = 320;
 const MAP_H = 240;
 
 type View = { k: number; x: number; y: number };
-
-type CampusMapProps = {
-  stamp1: boolean;
-  stamp2: boolean;
-  showStamps: boolean;
-};
 
 type MapApi = {
   zoomIn: () => void;
@@ -45,7 +39,12 @@ function Pin({ x, y, label }: { x: number; y: number; label: string }) {
   );
 }
 
-export function CampusMap({ stamp1, stamp2, showStamps }: CampusMapProps) {
+type Props = {
+  insetRef: RefObject<number>;
+  refitRef: MutableRefObject<() => void>;
+};
+
+export function CampusMap({ insetRef, refitRef }: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const groupRef = useRef<SVGGElement>(null);
   const apiRef = useRef<MapApi>({
@@ -61,13 +60,16 @@ export function CampusMap({ stamp1, stamp2, showStamps }: CampusMapProps) {
 
     const view: View = { k: 1, x: 0, y: 0 };
     let fitK = 1;
-    let fitted = false;
+    let userAdjusted = false;
     const pointers = new Map<number, [number, number]>();
     let pinchDistance = 0;
 
+    const visibleHeight = () =>
+      Math.max(120, wrap.clientHeight - (insetRef.current ?? 0));
+
     const axis = (pos: number, scale: number, size: number, content: number) => {
       const drawn = content * scale;
-      if (drawn <= size) return (size - drawn) / 2;
+      if (drawn <= size) return Math.min(size - drawn, Math.max(0, pos));
       return Math.min(0, Math.max(size - drawn, pos));
     };
 
@@ -83,14 +85,17 @@ export function CampusMap({ stamp1, stamp2, showStamps }: CampusMapProps) {
     };
 
     const fit = () => {
-      fitK = Math.min(wrap.clientWidth / MAP_W, wrap.clientHeight / MAP_H);
+      const width = wrap.clientWidth;
+      const visibleH = visibleHeight();
+      fitK = Math.min(width / MAP_W, visibleH / MAP_H);
       view.k = fitK;
-      view.x = 0;
-      view.y = 0;
+      view.x = (width - MAP_W * fitK) / 2;
+      view.y = Math.max(0, (visibleH - MAP_H * fitK) / 2);
       apply();
     };
 
     const zoomAt = (factor: number, cx: number, cy: number) => {
+      userAdjusted = true;
       const next = Math.min(fitK * 5, Math.max(fitK, view.k * factor));
       const applied = next / view.k;
       view.x = cx - (cx - view.x) * applied;
@@ -100,13 +105,16 @@ export function CampusMap({ stamp1, stamp2, showStamps }: CampusMapProps) {
     };
 
     const zoomBy = (factor: number) => {
-      zoomAt(factor, wrap.clientWidth / 2, wrap.clientHeight / 2);
+      zoomAt(factor, wrap.clientWidth / 2, visibleHeight() / 2);
     };
 
     apiRef.current = {
       zoomIn: () => zoomBy(1.5),
       zoomOut: () => zoomBy(1 / 1.5),
-      fit,
+      fit: () => {
+        userAdjusted = false;
+        fit();
+      },
     };
 
     const point = (event: { clientX: number; clientY: number }): [number, number] => {
@@ -130,8 +138,11 @@ export function CampusMap({ stamp1, stamp2, showStamps }: CampusMapProps) {
       const prev = pointers.get(event.pointerId);
       if (!prev) return;
       if (pointers.size === 1) {
-        view.x += next[0] - prev[0];
-        view.y += next[1] - prev[1];
+        const dx = next[0] - prev[0];
+        const dy = next[1] - prev[1];
+        if (dx !== 0 || dy !== 0) userAdjusted = true;
+        view.x += dx;
+        view.y += dy;
         pointers.set(event.pointerId, next);
         apply();
         return;
@@ -163,13 +174,12 @@ export function CampusMap({ stamp1, stamp2, showStamps }: CampusMapProps) {
 
     const syncFit = () => {
       if (wrap.clientWidth === 0 || wrap.clientHeight === 0) return;
-      fitK = Math.min(wrap.clientWidth / MAP_W, wrap.clientHeight / MAP_H);
-      if (!fitted || view.k < fitK) {
-        view.k = fitK;
-        view.x = 0;
-        view.y = 0;
-        fitted = true;
+      if (!userAdjusted) {
+        fit();
+        return;
       }
+      const visibleH = visibleHeight();
+      fitK = Math.min(wrap.clientWidth / MAP_W, visibleH / MAP_H);
       apply();
     };
 
@@ -179,6 +189,7 @@ export function CampusMap({ stamp1, stamp2, showStamps }: CampusMapProps) {
 
     observer.observe(wrap);
     syncFit();
+    refitRef.current = syncFit;
     wrap.addEventListener("pointerdown", onDown);
     wrap.addEventListener("pointermove", onMove);
     wrap.addEventListener("pointerup", onUp);
@@ -187,6 +198,7 @@ export function CampusMap({ stamp1, stamp2, showStamps }: CampusMapProps) {
     wrap.addEventListener("dblclick", onDblClick);
 
     return () => {
+      refitRef.current = () => {};
       observer.disconnect();
       wrap.removeEventListener("pointerdown", onDown);
       wrap.removeEventListener("pointermove", onMove);
@@ -195,7 +207,7 @@ export function CampusMap({ stamp1, stamp2, showStamps }: CampusMapProps) {
       wrap.removeEventListener("wheel", onWheel);
       wrap.removeEventListener("dblclick", onDblClick);
     };
-  }, []);
+  }, [insetRef, refitRef]);
 
   return (
     <div className="mapw" ref={wrapRef} aria-label="キャンパスの見取り図">
@@ -224,12 +236,6 @@ export function CampusMap({ stamp1, stamp2, showStamps }: CampusMapProps) {
           <Pin x={160} y={165} label="五高記念館" />
         </g>
       </svg>
-      {showStamps && (
-        <div className="stamps">
-          <div className={stamp1 ? "st on" : "st"}>①</div>
-          <div className={stamp2 ? "st on" : "st"}>②</div>
-        </div>
-      )}
       <div className="mz">
         <button type="button" aria-label="拡大" onClick={() => apiRef.current.zoomIn()}>
           ＋

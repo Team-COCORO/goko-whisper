@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>明治集印帖 版面意匠録 | Meiji Stamp Book Sheet Design System</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Yuji+Boku&family=Zen+Antique+Soft&family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --color-bengara: #9b3928;
+      --color-shuniku: #be2e1b;
+      --color-asagi: #3b6b7a;
+      --color-konjo: #1d3248;
+      --color-sumi: #211e1c;
+      --color-kincha: #b58838;
+      --color-shirasagi: #f9f5ec;
+      --color-acid-burn: #a07845;
+      --paper-base: #f5eedb;
+      --paper-aging: 0.65;
+    }
+
+    body {
+      font-family: 'Shippori Mincho', serif;
+      background-color: #121518;
+      color: #dfd7cc;
+    }
+
+    .font-antique {
+      font-family: 'Zen Antique Soft', 'Shippori Mincho', serif;
+    }
+
+    .font-western {
+      font-family: 'Cinzel', serif;
+    }
+
+    .font-calligraphy {
+      font-family: 'Yuji Boku', serif;
+    }
+
+    .vertical-rl {
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+    }
+
+    /* Traditional Japanese Screen Texture (簀の目 / 繊維) */
+    .paper-sunome {
+      background-image: 
+        repeating-linear-gradient(0deg, rgba(160, 120, 70, 0.05) 0px, rgba(160, 120, 70, 0.05) 1px, transparent 1px, transparent 4px),
+        repeating-linear-gradient(90deg, rgba(160, 120, 70, 0.08) 0px, rgba(160, 120, 70, 0.08) 1.5px, transparent 1.5px, transparent 28px);
+    }
+
+    /* Metal / Brass ornamental gradients */
+    .brass-badge {
+      background: linear-gradient(135deg, #dfc282 0%, #aa853c 50%, #765620 100%);
+      color: #1a150c;
+    }
+
+    /* Stamp Book Accordion Fold Edge Effect */
+    .orihon-shadow-right {
+      box-shadow: 18px 0 35px -10px rgba(0,0,0,0.5), inset -12px 0 16px -6px rgba(90, 60, 20, 0.35);
+    }
+    .orihon-shadow-left {
+      box-shadow: -18px 0 35px -10px rgba(0,0,0,0.5), inset 12px 0 16px -6px rgba(90, 60, 20, 0.35);
+    }
+    .orihon-center-crease {
+      box-shadow: inset 0 0 25px rgba(50, 30, 10, 0.35);
+    }
+
+    /* Custom Scrollbar for antique feel */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #181b20;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #463b2f;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #8b6e49;
+    }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col bg-[#111317] text-[#ece4d8] selection:bg-[#be2e1b] selection:text-white">
+
+  <!-- SVG PROCEDURAL FILTERS (Procedural Paper Grit, Foxing Spots, and Stamp Ink Bleed) -->
+  <svg class="hidden" aria-hidden="true">
+    <filter id="meiji-acid-paper-filter" x="0%" y="0%" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise" />
+      <feColorMatrix type="matrix" values="
+        0 0 0 0 0.58
+        0 0 0 0 0.44
+        0 0 0 0 0.26
+        0 0 0 0.28 0" in="noise" result="coloredNoise" />
+      <feComposite operator="in" in="coloredNoise" in2="SourceGraphic" result="textured" />
+      <feBlend mode="multiply" in="SourceGraphic" in2="textured" />
+    </filter>
+
+    <filter id="stamp-ink-bleed">
+      <feTurbulence type="fractalNoise" baseFrequency="0.12" numOctaves="3" result="fineNoise" />
+      <feDisplacementMap in="SourceGraphic" in2="fineNoise" scale="2.2" xChannelSelector="R" yChannelSelector="G" />
+    </filter>
+  </svg>
+
+  <header class="border-b border-[#2d251d] bg-[#16191f]/90 sticky top-0 z-40 backdrop-blur-md px-4 py-3 shadow-md">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-sm brass-badge flex items-center justify-center font-black font-calligraphy text-xl shadow-inner border border-[#fbf3d5]">
+          印
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-lg md:text-xl font-bold tracking-wider text-[#f5ebd7] font-antique">
+              明治集印帖 版面意匠録
+            </h1>
+            <span class="text-[10px] uppercase font-western tracking-widest px-1.5 py-0.5 rounded border border-[#8b6e49]/40 text-[#c7a36b]">
+              Anno 1868-1912
+            </span>
+          </div>
+          <p class="text-[11px] text-[#9b8f80]">和装折本・官民罫紙・記念印影の統合デザインシステム & 押印試行機</p>
+        </div>
+      </div>
+
+      <!-- Action toolbars -->
+      <div class="flex items-center gap-2 text-xs">
+        <div class="inline-flex rounded-md p-1 bg-[#0d0f13] border border-[#2e261e]">
+          <button id="viewTabStudio" onclick="switchMainTab('studio')" class="px-3 py-1 rounded text-[#e2b96f] bg-[#221c15] font-semibold transition">
+            台紙・押印機
+          </button>
+          <button id="viewTabSystem" onclick="switchMainTab('designsystem')" class="px-3 py-1 rounded text-[#a59a8b] hover:text-[#e4dacd] transition">
+            意匠設計規格 (Design System)
+          </button>
+        </div>
+
+        <button onclick="downloadStampSheet()" class="flex items-center gap-1.5 px-3 py-1.5 rounded bg-[#9b3928] hover:bg-[#be2e1b] text-[#fbf7f0] font-medium transition shadow-sm border border-[#d6614f]">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          台紙出力 (PNG)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN APP CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 md:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+    <!-- LEFT/CENTER CANVAS ZONE (8 COLS) -->
+    <div id="studioContainer" class="lg:col-span-8 flex flex-col gap-4">
+      
+      <!-- Quick Layout Selector & Spread Toggle -->
+      <div class="bg-[#191c22] border border-[#2b241d] p-3 rounded-lg flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-3">
+          <span class="text-[#a19586] font-semibold flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-[#c7a36b]"></span> 綴じ様式:
+          </span>
+          <div class="inline-flex rounded bg-[#101217] p-0.5 border border-[#302820]">
+            <button id="bookStyleSingle" onclick="setBookMode('single')" class="px-2.5 py-1 rounded bg-[#2b2219] text-[#e7be74]">単葉・一頁</button>
+            <button id="bookStyleSpread" onclick="setBookMode('spread')" class="px-2.5 py-1 rounded text-[#998d7f] hover:text-white">折本見開き (二葉)</button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <span class="text-[#a19586]">台紙様式プリセット:</span>
+          <select id="presetSelector" onchange="applyPreset(this.value)" class="bg-[#101217] text-[#e0d6c7] border border-[#3c3125] rounded px-2.5 py-1 text-xs focus:outline-none focus:border-[#c7a36b]">
+            <option value="hakurankai">明治内国勧業博覧会 公式集印帖</option>
+            <option value="tetsudo">大日本帝國 官設鉄道開通紀念箋</option>
+            <option value="gosyuin">社寺巡礼 奉書四方枠箋</option>
+            <option value="bungo">文明開化 活版原稿用集印箋</option>
+            <option value="minimal">素紙 八角印枠（ミニマル無地）</option>
+          </select>
+        </div>
+
+        <button onclick="clearAllStamps()" class="text-[#a58178] hover:text-[#e47665] flex items-center gap-1">
+          <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          押印を全消去
+        </button>
+      </div>
+
+      <!-- WORKBENCH PREVIEW BENCH -->
+      <div class="relative w-full overflow-hidden rounded-xl bg-[#090b0e] border border-[#2b241c] p-4 md:p-8 flex items-center justify-center min-h-[580px] shadow-2xl">
+        
+        <!-- Tatami / Workshop dark desk texture underneath -->
+        <div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(#604d33 1px, transparent 1px); background-size: 14px 14px;"></div>
+        
+        <!-- Stamp Sheet Canvas Wrapper -->
+        <div id="stampBookStage" class="relative transition-all duration-300 flex items-center justify-center">
+          
+          <!-- LEFT SPREAD (Visible only in Spread Mode) -->
+          <div id="leftSheetWrapper" class="hidden relative w-[310px] md:w-[350px] h-[480px] md:h-[530px] rounded-l-sm orihon-shadow-left overflow-hidden border-y border-l border-[#5f492e]/40 select-none">
+            <div id="leftSheetSurface" class="w-full h-full relative transition-all p-5 flex flex-col justify-between">
+              <!-- Content rendered dynamically via JS -->
+            </div>
+          </div>
+
+          <!-- MAIN / RIGHT SPREAD (Always Visible) -->
+          <div id="rightSheetWrapper" class="relative w-[320px] md:w-[360px] h-[480px] md:h-[530px] rounded-r-sm orihon-shadow-right overflow-hidden border-y border-r border-l border-[#5f492e]/40 select-none cursor-crosshair group">
+            
+            <!-- STAMP DROP LAYER (Actual Paper Face) -->
+            <div id="sheetSurface" class="w-full h-full relative transition-all duration-200 p-5 md:p-6 flex flex-col justify-between" onclick="handleStampClick(event)">
+              
+              <!-- Procedural Paper Texture Overlays -->
+              <div id="agingVignette" class="absolute inset-0 pointer-events-none z-10 transition-opacity"></div>
+              <div id="foxingLayer" class="absolute inset-0 pointer-events-none z-10 opacity-70"></div>
+              <div id="sunomeLines" class="absolute inset-0 pointer-events-none z-10 opacity-40 paper-sunome"></div>
+
+              <!-- Decorative Border / Printable Form Frame -->
+              <div id="sheetBorderFrame" class="absolute inset-3 md:inset-4 pointer-events-none transition-all duration-300">
+                <!-- Injected via JS based on selected border style -->
+              </div>
+
+              <!-- Content Layer (Headers, Seals, Registration Columns) -->
+              <div id="sheetTypographyLayer" class="relative z-20 h-full flex flex-col justify-between pointer-events-none">
+                <!-- Injected via preset scripts -->
+              </div>
+
+              <!-- Dropped Stamps Layer (Dynamic DOM for interactive stamps) -->
+              <div id="droppedStampsContainer" class="absolute inset-0 z-30 pointer-events-none"></div>
+
+              <!-- Interactive Stamp Hover Reticle -->
+              <div id="stampReticle" class="absolute pointer-events-none hidden z-40 transform -translate-x-1/2 -translate-y-1/2 border border-dashed border-[#be2e1b]/70 rounded-full w-24 h-24 flex items-center justify-center text-[10px] text-[#be2e1b] font-mono tracking-tighter">
+                <span class="bg-[#121518]/80 px-1 py-0.5 rounded">押印位置</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Fold Crease Divider in Spread Mode -->
+          <div id="orihonSpineDivider" class="hidden absolute top-0 bottom-0 left-1/2 w-3 -ml-1.5 z-40 pointer-events-none bg-gradient-to-r from-transparent via-[#2b1f13]/50 to-transparent"></div>
+
+        </div>
+
+      </div>
+
+      <!-- Real-time Stamp Pad Drawer -->
+      <div class="bg-[#161a20] border border-[#2b231b] p-4 rounded-xl flex flex-col gap-3 shadow-lg">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-[#e4b868] uppercase font-western tracking-wider">Stamp Repository</span>
+            <span class="text-[11px] text-[#9e9080]">（押印する明治記念スタンプを選択）</span>
+          </div>
+          <div class="text-[11px] text-[#c49a62]">クリックして台紙の好きな位置に押印</div>
+        </div>
+
+        <!-- Stamp Selection Pill Tray -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-2.5">
+          
+          <button onclick="selectStamp(0)" class="stamp-chip active-chip p-2 rounded-lg bg-[#0e1014] border-2 border-[#be2e1b] flex flex-col items-center gap-1.5 hover:bg-[#1a1e26] transition text-left group">
+            <svg class="w-12 h-12 text-[#be2e1b]" viewBox="0 0 54 54" fill="none" stroke="currentColor">
+              <circle cx="27" cy="27" r="24" stroke-width="1.8"/>
+              <circle cx="27" cy="27" r="21" stroke-width="0.8" stroke-dasharray="2 1.5"/>
+              <path d="M12 21H42M12 33H42" stroke-width="1"/>
+              <text x="27" y="18" font-size="5" text-anchor="middle" font-family="'Shippori Mincho', serif" fill="currentColor">内国勧業博覧会</text>
+              <circle cx="27" cy="27" r="4.5" fill="currentColor"/>
+              <text x="27" y="41" font-size="4" text-anchor="middle" font-family="'Shippori Mincho', serif" fill="currentColor">明治廿三年</text>
+            </svg>
+            <span class="text-[10px] text-[#ece2d3] font-semibold">勧業博覧会 印</span>
+          </button>
+
+          <button onclick="selectStamp(1)" class="stamp-chip p-2 rounded-lg bg-[#0e1014] border border-[#2d261e] flex flex-col items-center gap-1.5 hover:bg-[#1a1e26] transition text-left group">
+            <svg class="w-12 h-12 text-[#3b6b7a]" viewBox="0 0 54 54" fill="none" stroke="currentColor">
+              <rect x="6" y="6" width="42" height="42" rx="4" stroke-width="1.8"/>
+              <rect x="10" y="10" width="34" height="34" rx="2" stroke-width="0.7"/>
+              <path d="M10 27H44M27 10V44" stroke-width="0.8"/>
+              <text x="27" y="21" font-size="5.5" font-weight="bold" text-anchor="middle" font-family="'Zen Antique Soft', serif" fill="currentColor">新橋鐵道</text>
+              <text x="27" y="37" font-size="4" text-anchor="middle" font-family="'Zen Antique Soft', serif" fill="currentColor">紀念・開通</text>
+            </svg>
+            <span class="text-[10px] text-[#ece2d3]">官設鉄道 新橋印</span>
+          </button>
+
+          <button onclick="selectStamp(2)" class="stamp-chip p-2 rounded-lg bg-[#0e1014] border border-[#2d261e] flex flex-col items-center gap-1.5 hover:bg-[#1a1e26] transition text-left group">
+            <svg class="w-12 h-12 text-[#9b3928]" viewBox="0 0 54 54" fill="none" stroke="currentColor">
+              <!-- Octagon border -->
+              <polygon points="17,5 37,5 49,17 49,37 37,49 17,49 5,37 5,17" stroke-width="1.8"/>
+              <polygon points="18,8 36,8 46,18 46,36 36,46 18,46 8,36 8,18" stroke-width="0.7"/>
+              <circle cx="27" cy="27" r="7" stroke-width="1"/>
+              <path d="M27 21V33M21 27H33" stroke-width="1.2"/>
+              <text x="27" y="41" font-size="4" text-anchor="middle" font-family="'Shippori Mincho', serif" fill="currentColor">郵便電信局</text>
+            </svg>
+            <span class="text-[10px] text-[#ece2d3]">郵便局 風景印</span>
+          </button>
+
+          <button onclick="selectStamp(3)" class="stamp-chip p-2 rounded-lg bg-[#0e1014] border border-[#2d261e] flex flex-col items-center gap-1.5 hover:bg-[#1a1e26] transition text-left group">
+            <svg class="w-12 h-12 text-[#1d3248]" viewBox="0 0 54 54" fill="none" stroke="currentColor">
+              <circle cx="27" cy="27" r="23" stroke-width="1.8"/>
+              <path d="M27 7 A20 20 0 0 1 47 27 A20 20 0 0 1 27 47 A20 20 0 0 1 7 27" stroke-width="0.8" stroke-dasharray="1 2"/>
+              <!-- Stylized sakura center -->
+              <circle cx="27" cy="27" r="3" fill="currentColor"/>
+              <path d="M27 15L29 23L37 21L31 27L37 33L29 31L27 39L25 31L17 33L23 27L17 21L25 23Z" fill="currentColor" fill-opacity="0.2" stroke-width="1"/>
+              <text x="27" y="43" font-size="3.8" text-anchor="middle" font-family="'Zen Antique Soft', serif" fill="currentColor">上野公園櫻花</text>
+            </svg>
+            <span class="text-[10px] text-[#ece2d3]">上野名所 記念印</span>
+          </button>
+
+          <button onclick="selectStamp(4)" class="stamp-chip p-2 rounded-lg bg-[#0e1014] border border-[#2d261e] flex flex-col items-center gap-1.5 hover:bg-[#1a1e26] transition text-left group">
+            <svg class="w-12 h-12 text-[#9b3928]" viewBox="0 0 54 54" fill="none" stroke="currentColor">
+              <circle cx="27" cy="27" r="24" stroke-width="2"/>
+              <line x1="7" y1="20" x2="47" y2="20" stroke-width="1"/>
+              <line x1="7" y1="34" x2="47" y2="34" stroke-width="1"/>
+              <text x="27" y="16" font-size="4.5" text-anchor="middle" font-family="'Cinzel', serif" fill="currentColor">TOKYO HOTEL</text>
+              <text x="27" y="29" font-size="6" font-weight="bold" text-anchor="middle" font-family="'Shippori Mincho', serif" fill="currentColor">帝國紀念</text>
+              <text x="27" y="42" font-size="4" text-anchor="middle" font-family="'Cinzel', serif" fill="currentColor">1890 MEIJI</text>
+            </svg>
+            <span class="text-[10px] text-[#ece2d3]">文明開化 英和印</span>
+          </button>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT CONTROLS PANEL (4 COLS) -->
+    <div id="controlPanel" class="lg:col-span-4 flex flex-col gap-5">
+      
+      <!-- Studio Controls Container -->
+      <div id="studioControls" class="space-y-5">
+        
+        <!-- Parameter Card 1: Paper Chemistry & Aging -->
+        <div class="bg-[#161a20] border border-[#2b231b] rounded-xl p-4 shadow-lg">
+          <div class="flex items-center justify-between border-b border-[#2d251d] pb-2.5 mb-3">
+            <h2 class="text-xs font-bold text-[#e5be71] flex items-center gap-2 font-antique">
+              <span>📜</span> 紙質調合・経年酸化シミュレータ
+            </h2>
+            <span class="text-[10px] text-[#8e8071] font-mono">Acid Paper Eng.</span>
+          </div>
+
+          <!-- Paper base type radio -->
+          <div class="mb-4">
+            <label class="block text-[11px] text-[#9b8f7f] mb-1.5">紙料種別（パルプ・和紙原紙）:</label>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <button onclick="setPaperBaseType('acidic')" id="paperBtnAcid" class="py-1.5 px-2 rounded border border-[#a47b47] bg-[#221c16] text-[#f1c37b] font-medium text-left">
+                ① 明治機械抄き酸性紙
+                <span class="block text-[9px] text-[#9a8569] font-normal">ロジンサイズ・高酸化・黄変</span>
+              </button>
+              <button onclick="setPaperBaseType('hosho')" id="paperBtnHosho" class="py-1.5 px-2 rounded border border-[#322a21] bg-[#0f1216] text-[#b6ab9a] hover:text-white text-left">
+                ② 鳥の子・手漉き奉書
+                <span class="block text-[9px] text-[#6b6255] font-normal">三椏・楮 繊維・簀の目</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Aging Slider -->
+          <div class="space-y-3 text-xs">
+            <div>
+              <div class="flex justify-between text-[11px] mb-1">
+                <span class="text-[#cfc4b4]">時代経過（日焼け・酸化変色）:</span>
+                <span id="agingLabel" class="text-[#e2b96f] font-mono">130年経過 (明治20年代)</span>
+              </div>
+              <input id="agingSlider" type="range" min="0" max="1" step="0.02" value="0.68" oninput="updateAgingFactor(this.value)" class="w-full accent-[#be2e1b] cursor-pointer">
+              <div class="flex justify-between text-[9px] text-[#716657] mt-0.5">
+                <span>明治初期 (新品)</span>
+                <span>日露戦後</span>
+                <span>現在 (古色セピア)</span>
+              </div>
+            </div>
+
+            <!-- Foxing spots & Edge scorch toggle -->
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <label class="flex items-center gap-2 cursor-pointer bg-[#0f1115] p-2 rounded border border-[#2b241c]">
+                <input type="checkbox" id="chkFoxing" checked onchange="toggleFoxing(this.checked)" class="accent-[#be2e1b]">
+                <span class="text-[11px] text-[#b6aa99]">狐斑 (シミ・斑点)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer bg-[#0f1115] p-2 rounded border border-[#2b241c]">
+                <input type="checkbox" id="chkSunome" checked onchange="toggleSunome(this.checked)" class="accent-[#be2e1b]">
+                <span class="text-[11px] text-[#b6aa99]">簀の目スクリーン</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Parameter Card 2: Border and Ruling System (飾り罫・版心) -->
+        <div class="bg-[#161a20] border border-[#2b231b] rounded-xl p-4 shadow-lg">
+          <div class="flex items-center justify-between border-b border-[#2d251d] pb-2.5 mb-3">
+            <h2 class="text-xs font-bold text-[#e5be71] flex items-center gap-2 font-antique">
+              <span>📐</span> 版面意匠・飾り罫線システム
+            </h2>
+            <span class="text-[10px] text-[#8e8071] font-mono">Ornament Grid</span>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <div>
+              <label class="block text-[11px] text-[#9b8f7f] mb-1">外枠・飾り罫（ボーダーパターン）:</label>
+              <select id="borderPatternSelect" onchange="updateBorderPattern(this.value)" class="w-full bg-[#0f1115] text-[#e0d6c7] border border-[#3b3023] rounded p-2 text-xs">
+                <option value="double_meiji">明治二重細太枠（子持罫＋四隅雷紋）</option>
+                <option value="arabesque">文明開化・洋風唐草唐草枠 (Victorian Meiji)</option>
+                <option value="wave_kamon">日本伝統・青海波＆花菱文様</option>
+                <option value="classic_box">官製罫紙・方形細罫（朱刷り）</option>
+                <option value="none">無枠（白紙台紙）</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] text-[#9b8f7f] mb-1">罫線色（印刷インキ）:</label>
+                <div class="flex items-center gap-1.5">
+                  <button onclick="setRulingColor('#9b3928')" class="w-6 h-6 rounded-full bg-[#9b3928] border border-[#ffb1a4]" title="弁柄（べんがら朱刷り）"></button>
+                  <button onclick="setRulingColor('#3b6b7a')" class="w-6 h-6 rounded-full bg-[#3b6b7a] border border-[#8ed7eb]" title="浅葱（あさぎ色・青刷罫）"></button>
+                  <button onclick="setRulingColor('#2a2724')" class="w-6 h-6 rounded-full bg-[#2a2724] border border-[#8a8176]" title="墨（油性黒インキ）"></button>
+                  <button onclick="setRulingColor('#a48348')" class="w-6 h-6 rounded-full bg-[#a48348] border border-[#ffe09d]" title="黄土・金茶刷り"></button>
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-[11px] text-[#9b8f7f] mb-1">版心記号（魚尾）:</label>
+                <select id="gyobiSelect" onchange="updateGyobi(this.value)" class="w-full bg-[#0f1115] text-[#e0d6c7] border border-[#3b3023] rounded p-1.5 text-xs">
+                  <option value="white">白魚尾 (標準)</option>
+                  <option value="black">黒魚尾 (墨塗り)</option>
+                  <option value="none">なし</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Stamp Target Frames on Sheet -->
+            <div>
+              <label class="block text-[11px] text-[#9b8f7f] mb-1">台紙側のスタンプ受枠（印枠配置）:</label>
+              <div class="grid grid-cols-3 gap-1.5 text-[11px]">
+                <button onclick="setTargetFrame('quad')" class="py-1.5 px-2 bg-[#0e1115] rounded border border-[#3b3023] text-stone-300 hover:border-[#c7a36b]">四連印枠</button>
+                <button onclick="setTargetFrame('center_large')" class="py-1.5 px-2 bg-[#0e1115] rounded border border-[#3b3023] text-stone-300 hover:border-[#c7a36b]">中央大円枠</button>
+                <button onclick="setTargetFrame('free')" class="py-1.5 px-2 bg-[#0e1115] rounded border border-[#3b3023] text-stone-300 hover:border-[#c7a36b]">自由配置</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Parameter Card 3: Stamp Physics & Ink Bleed -->
+        <div class="bg-[#161a20] border border-[#2b231b] rounded-xl p-4 shadow-lg">
+          <div class="flex items-center justify-between border-b border-[#2d251d] pb-2.5 mb-3">
+            <h2 class="text-xs font-bold text-[#e5be71] flex items-center gap-2 font-antique">
+              <span>🔴</span> 印影物理シミュレーション (印圧・朱肉)
+            </h2>
+            <span class="text-[10px] text-[#8e8071] font-mono">Impression Physics</span>
+          </div>
+
+          <div class="space-y-3 text-xs">
+            <!-- Ink hue -->
+            <div>
+              <label class="block text-[11px] text-[#9b8f7f] mb-1.5">朱肉・インキ色:</label>
+              <div class="flex items-center gap-2">
+                <button onclick="setStampInk('#be2e1b', '朱肉 (銀朱・辰砂)')" class="px-2.5 py-1 rounded bg-[#be2e1b]/20 border border-[#be2e1b] text-[#f7a094] text-xs">真朱 (標準)</button>
+                <button onclick="setStampInk('#8b1e10', '古印 (沈んだ深朱)')" class="px-2.5 py-1 rounded bg-[#8b1e10]/20 border border-[#8b1e10] text-[#e89085] text-xs">深紅・弁柄</button>
+                <button onclick="setStampInk('#1d3248', '藍インキ (明治鉄道印)')" class="px-2.5 py-1 rounded bg-[#1d3248]/30 border border-[#48739f] text-[#a0c7ed] text-xs">紺青・藍</button>
+                <button onclick="setStampInk('#432549', '紫印 (官民記念印)')" class="px-2.5 py-1 rounded bg-[#432549]/30 border border-[#895394] text-[#dab5e3] text-xs">紫墨</button>
+              </div>
+            </div>
+
+            <!-- Pressure / Opacity -->
+            <div>
+              <div class="flex justify-between text-[11px] mb-1">
+                <span class="text-[#cfc4b4]">印圧（インキかすれ・濃度）:</span>
+                <span id="pressureValLabel" class="text-[#e2b96f] font-mono">0.88</span>
+              </div>
+              <input id="pressureSlider" type="range" min="0.4" max="1.0" step="0.05" value="0.88" oninput="updateStampPressure(this.value)" class="w-full accent-[#be2e1b] cursor-pointer">
+            </div>
+
+            <!-- Random Tilt -->
+            <div class="flex items-center justify-between pt-1">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="chkRandomAngle" checked class="accent-[#be2e1b]">
+                <span class="text-[11px] text-[#b6aa99]">押印時の自然な傾き・ブレ（±4°）</span>
+              </label>
+              <span class="text-[10px] text-[#786b5c]">手押し感を再現</span>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DESIGN SYSTEM INSPECTOR DRAWER (Activated when second tab is chosen or embedded) -->
+      <div id="designSystemPanel" class="hidden space-y-4">
+        
+        <div class="bg-[#161a20] border border-[#2b231b] rounded-xl p-4 shadow-lg">
+          <div class="flex items-center justify-between border-b border-[#2d251d] pb-2 mb-3">
+            <h3 class="text-xs font-bold text-[#e5be71] font-antique flex items-center gap-1.5">
+              <span>🎨</span> 明治色譜（伝統色相規格）
+            </h3>
+            <span class="text-[10px] text-[#8e8071]">CSS / Hex</span>
+          </div>
+
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center justify-between p-1.5 rounded bg-[#0f1115] border border-[#262019]">
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded bg-[#be2e1b] shadow-inner"></span>
+                <span class="text-[#f1e6d4] font-semibold">真朱 (Shinshu)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <code class="text-[#e7be74] font-mono text-[10px]">#be2e1b</code>
+                <button onclick="copyToClipboard('#be2e1b')" class="text-[10px] text-[#938575] hover:text-white">コピー</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between p-1.5 rounded bg-[#0f1115] border border-[#262019]">
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded bg-[#9b3928] shadow-inner"></span>
+                <span class="text-[#f1e6d4]">弁柄 (Bengara)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <code class="text-[#e7be74] font-mono text-[10px]">#9b3928</code>
+                <button onclick="copyToClipboard('#9b3928')" class="text-[10px] text-[#938575] hover:text-white">コピー</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between p-1.5 rounded bg-[#0f1115] border border-[#262019]">
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded bg-[#3b6b7a] shadow-inner"></span>
+                <span class="text-[#f1e6d4]">浅葱色 (Asagi)</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <code class="text-[#e7be74] font-mono text-[10px]">#3b6b7a</code>
+                <button onclick="copyToClipboard('#3b6b7a')" class="text-[10px] text-[#938575] hover:text-white">コピー</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between p-1.5 rounded bg-[#0f1115] border border-[#262019]">
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded bg-[#f5eedb] border border-[#a49179]"></span>
+                <span class="text-[#f1e6d4]">鳥の子・半紙白</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <code class="text-[#e7be74] font-mono text-[10px]">#f5eedb</code>
+                <button onclick="copyToClipboard('#f5eedb')" class="text-[10px] text-[#938575] hover:text-white">コピー</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between p-1.5 rounded bg-[#0f1115] border border-[#262019]">
+              <div class="flex items-center gap-2">
+                <span class="w-4 h-4 rounded bg-[#a07845]"></span>
+                <span class="text-[#f1e6d4]">酸性紙焼け・セピア</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <code class="text-[#e7be74] font-mono text-[10px]">#a07845</code>
+                <button onclick="copyToClipboard('#a07845')" class="text-[10px] text-[#938575] hover:text-white">コピー</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CSS Snippet Generator for Aged Paper -->
+        <div class="bg-[#161a20] border border-[#2b231b] rounded-xl p-4 shadow-lg">
+          <div class="flex items-center justify-between border-b border-[#2d251d] pb-2 mb-3">
+            <h3 class="text-xs font-bold text-[#e5be71] font-antique flex items-center gap-1.5">
+              <span>📋</span> 生成された明治古紙CSS
+            </h3>
+            <button onclick="copyPaperCss()" class="text-[10px] px-2 py-0.5 rounded bg-[#2b2218] border border-[#6b5535] text-[#ecd19b]">CSSをコピー</button>
+          </div>
+          <div class="bg-[#0b0d10] p-3 rounded border border-[#251e18] font-mono text-[10px] text-[#b9c8a7] overflow-x-auto max-h-48 leading-relaxed">
+            <pre id="cssOutputBox">/* 明治期酸性紙・経年古紙CSS */
+.meiji-vintage-paper {
+  background-color: #f3ecd6;
+  background-image: 
+    radial-gradient(ellipse at 50% 50%, rgba(243,236,214,0.3) 0%, rgba(160,120,69,0.55) 100%),
+    radial-gradient(#8b6838 1px, transparent 1px);
+  background-size: 100% 100%, 18px 18px;
+  box-shadow: inset 0 0 35px rgba(95,67,31,0.5);
+  filter: contrast(104%) sepia(24%);
+}</pre>
+          </div>
+        </div>
+
+        <!-- Typography Stack Spec -->
+        <div class="bg-[#161a20] border border-[#2b231b] rounded-xl p-4 shadow-lg">
+          <h3 class="text-xs font-bold text-[#e5be71] font-antique mb-2">活版印刷・明治組版原則</h3>
+          <ul class="text-[11px] text-[#a99d8d] space-y-1.5 list-disc list-inside">
+            <li><strong>縦書き右送りの徹底：</strong> <code>writing-mode: vertical-rl;</code></li>
+            <li><strong>約物と題簽の配置：</strong> 右肩に標題紙（題簽）または印章案内を組む</li>
+            <li><strong>インキ圧と文字滲み：</strong> 活字は真っ黒を避け、煤墨色（<code>#252220</code>）と微細なぼかしを用いる</li>
+          </ul>
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- TOAST NOTIFICATION -->
+  <div id="toastBox" class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none bg-[#241c14] border border-[#8b6838] text-[#f7e8ce] text-xs px-4 py-2.5 rounded-lg shadow-2xl flex items-center gap-2">
+    <span class="text-amber-400">✓</span>
+    <span id="toastMsg">クリップボードにコピーしました</span>
+  </div>
+
+  <!-- PRINT / CAPTURE HIDDEN CANVAS -->
+  <canvas id="exportCanvas" class="hidden"></canvas>
+
+  <script>
+    /* ========================================================
+       STATE CONFIGURATION
+       ======================================================== */
+    const appState = {
+      bookMode: 'single', // 'single' | 'spread'
+      preset: 'hakurankai',
+      paperBase: 'acidic', // 'acidic' | 'hosho'
+      agingFactor: 0.68,
+      foxing: true,
+      sunome: true,
+      borderStyle: 'double_meiji',
+      rulingColor: '#9b3928',
+      gyobi: 'white',
+      targetFrame: 'quad',
+      stampInk: '#be2e1b',
+      stampInkName: '真朱 (銀朱・辰砂)',
+      stampPressure: 0.88,
+      randomAngle: true,
+      activeStampIndex: 0,
+      placedStamps: []
+    };
+
+    /* ========================================================
+       PRESET TEMPLATES DEFINITION
+       ======================================================== */
+    const sheetPresets = {
+      hakurankai: {
+        borderStyle: 'double_meiji',
+        rulingColor: '#9b3928',
+        targetFrame: 'quad',
+        gyobi: 'white',
+        paperBase: 'acidic',
+        agingFactor: 0.70,
+        renderHtml: (side) => `
+          <!-- Header and Columns for Hakurankai -->
+          <div class="flex items-center justify-between border-b border-[#9b3928]/40 pb-1.5 text-[#9b3928]">
+            <span class="text-[9px] tracking-widest font-antique">明治廿三年 第三回内国勧業博覧会</span>
+            <span class="text-[10px] font-bold font-antique">記念集印帖</span>
+            <span class="text-[9px] font-mono font-western">UPENO PARK TOKYO</span>
+          </div>
+
+          <!-- Vertical Ruling Area -->
+          <div class="my-auto h-[320px] flex items-center justify-around px-2 text-[#9b3928]/90">
+            <!-- Stamp box 1 -->
+            <div class="h-full w-24 border border-dashed border-[#9b3928]/50 rounded p-1 flex flex-col items-center justify-between text-center">
+              <span class="text-[8px] vertical-rl tracking-widest text-[#9b3928]/80 font-antique">農業館第一号印</span>
+              <span class="text-[9px] text-[#9b3928]/30 font-antique">【 押印枠 】</span>
+              <span class="text-[8px] font-western text-[#9b3928]/60">NO. 1</span>
+            </div>
+
+            <!-- Stamp box 2 -->
+            <div class="h-full w-24 border border-dashed border-[#9b3928]/50 rounded p-1 flex flex-col items-center justify-between text-center">
+              <span class="text-[8px] vertical-rl tracking-widest text-[#9b3928]/80 font-antique">工業館機械印</span>
+              <span class="text-[9px] text-[#9b3928]/30 font-antique">【 押印枠 】</span>
+              <span class="text-[8px] font-western text-[#9b3928]/60">NO. 2</span>
+            </div>
+
+            <!-- Right Title Slip (題簽) Column in Vertical Script -->
+            <div class="h-full flex flex-col items-center justify-between py-2 border-l border-[#9b3928]/30 pl-2">
+              <div class="vertical-rl text-[11px] font-antique tracking-widest font-bold text-[#3d2719]">
+                東京上野公園地 博覧会御記念
+              </div>
+              <div class="text-[8px] vertical-rl text-[#865d38] font-antique">
+                東京府下 谷中勧工場刻
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Footer -->
+          <div class="flex items-center justify-between text-[9px] border-t border-[#9b3928]/40 pt-1 text-[#8b5a32]">
+            <span>明治二十三年四月調製</span>
+            <span class="font-antique tracking-widest">第一号頁</span>
+          </div>
+        `
+      },
+
+      tetsudo: {
+        borderStyle: 'arabesque',
+        rulingColor: '#3b6b7a',
+        targetFrame: 'center_large',
+        gyobi: 'black',
+        paperBase: 'acidic',
+        agingFactor: 0.62,
+        renderHtml: (side) => `
+          <div class="flex items-center justify-between border-b border-[#3b6b7a]/40 pb-1.5 text-[#3b6b7a]">
+            <span class="text-[8px] font-western tracking-wider">IMPERIAL JAPANESE RAILWAYS</span>
+            <span class="text-[10px] font-bold font-antique">官設鉄道 驛記念印箋</span>
+            <span class="text-[8px] font-western">EST. 1872</span>
+          </div>
+
+          <div class="my-auto h-[320px] flex items-center justify-center p-2 relative">
+            <!-- Center Large Stamp Frame -->
+            <div class="w-56 h-56 rounded-full border-2 border-dashed border-[#3b6b7a]/50 flex flex-col items-center justify-center text-center p-4">
+              <div class="text-[10px] text-[#3b6b7a]/70 font-antique mb-1">【 駅頭記念印 押捺所 】</div>
+              <div class="text-[8px] text-[#3b6b7a]/50">新橋・横浜・品川 各驛</div>
+            </div>
+            
+            <div class="absolute right-3 top-4 vertical-rl text-[10px] font-antique text-[#304852] tracking-widest font-semibold">
+              鐵道開通 陸蒸気初登臨記念
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between text-[9px] border-t border-[#3b6b7a]/40 pt-1 text-[#3b6b7a]/80">
+            <span>大日本帝國 鐵道寮</span>
+            <span class="font-western text-[8px]">SHINBASHI STATION</span>
+          </div>
+        `
+      },
+
+      gosyuin: {
+        borderStyle: 'classic_box',
+        rulingColor: '#9b3928',
+        targetFrame: 'free',
+        gyobi: 'none',
+        paperBase: 'hosho',
+        agingFactor: 0.45,
+        renderHtml: (side) => `
+          <div class="flex justify-between items-center text-[#9b3928] border-b border-[#9b3928]/40 pb-1">
+            <span class="text-[9px] font-antique tracking-widest">諸国社寺 集印帳</span>
+            <span class="text-[9px] font-antique">奉書 墨書印面</span>
+          </div>
+
+          <div class="my-auto h-[320px] flex justify-between px-3 text-[#3a2c20]">
+            <div class="vertical-rl text-[11px] font-calligraphy text-[#221c17] tracking-widest font-bold">
+              奉拝 諸国霊場巡礼記念
+            </div>
+            <div class="flex items-center justify-center flex-1">
+              <div class="w-48 h-56 border border-dashed border-[#9b3928]/30 rounded flex items-center justify-center text-[10px] text-[#9b3928]/40 font-antique">
+                【 御朱印・消印自由押捺 】
+              </div>
+            </div>
+            <div class="vertical-rl text-[9px] text-[#865d38] font-antique">
+              明治三十年代調製
+            </div>
+          </div>
+
+          <div class="text-right text-[8px] text-[#8b6540] border-t border-[#9b3928]/20 pt-1">
+            南無大慈大悲
+          </div>
+        `
+      },
+
+      bungo: {
+        borderStyle: 'wave_kamon',
+        rulingColor: '#a48348',
+        targetFrame: 'quad',
+        gyobi: 'white',
+        paperBase: 'acidic',
+        agingFactor: 0.75,
+        renderHtml: (side) => `
+          <div class="flex justify-between items-center text-[#735422] border-b border-[#a48348]/40 pb-1 text-[9px]">
+            <span class="font-western">MEIJI BUNGO MANUSCRIPT</span>
+            <span class="font-antique font-bold">文豪記念印稿箋</span>
+            <span class="font-western">VOL. IV</span>
+          </div>
+
+          <div class="my-auto h-[320px] flex items-center justify-around px-2">
+            <div class="w-24 h-full border border-dashed border-[#a48348]/40 p-1 flex flex-col justify-between items-center">
+              <span class="text-[8px] vertical-rl text-[#6f5024] font-antique">春陽堂 書籍紀念</span>
+              <span class="text-[8px] text-[#9b7842]/40">【 印影 】</span>
+              <span class="text-[7px] text-[#9b7842]">明治文壇</span>
+            </div>
+            <div class="w-24 h-full border border-dashed border-[#a48348]/40 p-1 flex flex-col justify-between items-center">
+              <span class="text-[8px] vertical-rl text-[#6f5024] font-antique">硯友社 記念号印</span>
+              <span class="text-[8px] text-[#9b7842]/40">【 印影 】</span>
+              <span class="text-[7px] text-[#9b7842]">紅葉・露伴</span>
+            </div>
+            <div class="vertical-rl text-[11px] font-antique tracking-widest text-[#3b2d1d] font-bold">
+              文明開化 小説之印譜
+            </div>
+          </div>
+
+          <div class="flex justify-between text-[8px] text-[#8b6e42] border-t border-[#a48348]/40 pt-1">
+            <span>東京銀座活版所印刷</span>
+            <span>四百字詰擬製</span>
+          </div>
+        `
+      },
+
+      minimal: {
+        borderStyle: 'none',
+        rulingColor: '#9b3928',
+        targetFrame: 'center_large',
+        gyobi: 'none',
+        paperBase: 'acidic',
+        agingFactor: 0.55,
+        renderHtml: (side) => `
+          <div class="h-full flex flex-col justify-center items-center">
+            <div class="w-56 h-56 border-2 border-[#9b3928]/40 rounded-full flex flex-col items-center justify-center p-3 text-center">
+              <div class="w-48 h-48 border border-dashed border-[#9b3928]/30 rounded-full flex flex-col items-center justify-center">
+                <span class="text-[11px] font-antique text-[#8b4f32]">明治集印帖 素紙</span>
+                <span class="text-[9px] text-[#8b4f32]/50 font-mono mt-1">24×24 基底</span>
+              </div>
+            </div>
+          </div>
+        `
+      }
+    };
+
+    /* STAMP DEFINITIONS (Inline SVG strings) */
+    const STAMPS = [
+      {
+        name: '内国勧業博覧会 印',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow" style="filter: url(#stamp-ink-bleed)">
+          <circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="3.5" fill="none"/>
+          <circle cx="50" cy="50" r="41" stroke="currentColor" stroke-width="1.2" stroke-dasharray="3 2" fill="none"/>
+          <line x1="20" y1="36" x2="80" y2="36" stroke="currentColor" stroke-width="2"/>
+          <line x1="20" y1="64" x2="80" y2="64" stroke="currentColor" stroke-width="2"/>
+          <text x="50" y="30" font-size="9" text-anchor="middle" font-family="'Shippori Mincho', serif" font-weight="bold" fill="currentColor">内国勧業博覧会</text>
+          <circle cx="50" cy="50" r="9" fill="currentColor"/>
+          <path d="M50 43V57M43 50H57" stroke="#fff" stroke-width="1.5"/>
+          <text x="50" y="77" font-size="8.5" text-anchor="middle" font-family="'Shippori Mincho', serif" fill="currentColor">明治廿三年</text>
+        </svg>`
+      },
+      {
+        name: '官設鉄道 新橋印',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow" style="filter: url(#stamp-ink-bleed)">
+          <rect x="8" y="8" width="84" height="84" rx="8" stroke="currentColor" stroke-width="3.5" fill="none"/>
+          <rect x="14" y="14" width="72" height="72" rx="4" stroke="currentColor" stroke-width="1.2" fill="none"/>
+          <line x1="14" y1="50" x2="86" y2="50" stroke="currentColor" stroke-width="1.5"/>
+          <line x1="50" y1="14" x2="50" y2="86" stroke="currentColor" stroke-width="1.5"/>
+          <text x="50" y="38" font-size="12" font-weight="bold" text-anchor="middle" font-family="'Zen Antique Soft', serif" fill="currentColor">新橋鐵道</text>
+          <text x="50" y="70" font-size="10" text-anchor="middle" font-family="'Zen Antique Soft', serif" fill="currentColor">紀念・開通</text>
+        </svg>`
+      },
+      {
+        name: '郵便局 風景印',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow" style="filter: url(#stamp-ink-bleed)">
+          <polygon points="30,8 70,8 92,30 92,70 70,92 30,92 8,70 8,30" stroke="currentColor" stroke-width="3.5" fill="none"/>
+          <polygon points="32,13 68,13 87,32 87,68 68,87 32,87 13,68 13,32" stroke="currentColor" stroke-width="1.2" fill="none"/>
+          <circle cx="50" cy="50" r="14" stroke="currentColor" stroke-width="2" fill="none"/>
+          <path d="M50 40V60M40 50H60" stroke="currentColor" stroke-width="2.5"/>
+          <text x="50" y="78" font-size="8.5" text-anchor="middle" font-family="'Shippori Mincho', serif" fill="currentColor">郵便電信局</text>
+        </svg>`
+      },
+      {
+        name: '上野公園櫻花印',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow" style="filter: url(#stamp-ink-bleed)">
+          <circle cx="50" cy="50" r="45" stroke="currentColor" stroke-width="3" fill="none"/>
+          <circle cx="50" cy="50" r="41" stroke="currentColor" stroke-width="1" stroke-dasharray="2 3" fill="none"/>
+          <circle cx="50" cy="50" r="6" fill="currentColor"/>
+          <path d="M50 25L54 42L69 38L58 49L69 60L54 56L50 73L46 56L31 60L42 49L31 38L46 42Z" fill="currentColor" fill-opacity="0.35"/>
+          <text x="50" y="82" font-size="8" text-anchor="middle" font-family="'Zen Antique Soft', serif" font-weight="bold" fill="currentColor">上野公園櫻花</text>
+        </svg>`
+      },
+      {
+        name: '文明開化 英和印',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow" style="filter: url(#stamp-ink-bleed)">
+          <circle cx="50" cy="50" r="46" stroke="currentColor" stroke-width="3.5" fill="none"/>
+          <line x1="12" y1="36" x2="88" y2="36" stroke="currentColor" stroke-width="2"/>
+          <line x1="12" y1="64" x2="88" y2="64" stroke="currentColor" stroke-width="2"/>
+          <text x="50" y="28" font-size="9" text-anchor="middle" font-family="'Cinzel', serif" fill="currentColor">TOKYO HOTEL</text>
+          <text x="50" y="55" font-size="13" font-weight="bold" text-anchor="middle" font-family="'Shippori Mincho', serif" fill="currentColor">帝國紀念</text>
+          <text x="50" y="80" font-size="8.5" text-anchor="middle" font-family="'Cinzel', serif" fill="currentColor">1890 MEIJI</text>
+        </svg>`
+      }
+    ];
+
+    const BORDER_SVGS = {
+      double_meiji: `
+        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">
+          <!-- Outer border -->
+          <rect x="1" y="1" width="98" height="98" stroke="currentColor" stroke-width="1.8"/>
+          <!-- Inner border (子持罫) -->
+          <rect x="3.5" y="3.5" width="93" height="93" stroke="currentColor" stroke-width="0.8"/>
+          <!-- 4 Corner Greek Key / Ra-mon (雷紋) -->
+          <path d="M4 12H12V4 M8 8H12" stroke="currentColor" stroke-width="0.8"/>
+          <path d="M96 12H88V4 M92 8H88" stroke="currentColor" stroke-width="0.8"/>
+          <path d="M4 88H12V96 M8 92H12" stroke="currentColor" stroke-width="0.8"/>
+          <path d="M96 88H88V96 M92 92H88" stroke="currentColor" stroke-width="0.8"/>
+        </svg>
+      `,
+      arabesque: `
+        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">
+          <rect x="2" y="2" width="96" height="96" stroke="currentColor" stroke-width="1.5"/>
+          <rect x="4.5" y="4.5" width="91" height="91" stroke="currentColor" stroke-width="0.6" stroke-dasharray="1 1"/>
+          <!-- Flourish corner swirls -->
+          <path d="M3 15C10 15 15 10 15 3M5 10C8 10 10 8 10 5" stroke="currentColor" stroke-width="1"/>
+          <path d="M97 15C90 15 85 10 85 3M95 10C92 10 90 8 90 5" stroke="currentColor" stroke-width="1"/>
+          <path d="M3 85C10 85 15 90 15 97M5 90C8 90 10 92 10 95" stroke="currentColor" stroke-width="1"/>
+          <path d="M97 85C90 85 85 90 85 97M95 90C92 90 90 92 90 95" stroke="currentColor" stroke-width="1"/>
+        </svg>
+      `,
+      wave_kamon: `
+        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">
+          <rect x="2" y="2" width="96" height="96" stroke="currentColor" stroke-width="2"/>
+          <!-- Wave motifs in corners -->
+          <path d="M3 3Q12 7 12 16 M3 3Q7 12 16 12" stroke="currentColor" stroke-width="1"/>
+          <path d="M97 3Q88 7 88 16 M97 3Q93 12 84 12" stroke="currentColor" stroke-width="1"/>
+          <path d="M3 97Q12 93 12 84 M3 97Q7 88 16 88" stroke="currentColor" stroke-width="1"/>
+          <path d="M97 97Q88 93 88 84 M97 97Q93 88 84 88" stroke="currentColor" stroke-width="1"/>
+        </svg>
+      `,
+      classic_box: `
+        <svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none" fill="none">
+          <rect x="2" y="2" width="96" height="96" stroke="currentColor" stroke-width="1.2"/>
+        </svg>
+      `,
+      none: ''
+    };
+
+    // Initialize procedural paper engine
+    function renderPaperSurface() {
+      const surface = document.getElementById('sheetSurface');
+      const leftSurface = document.getElementById('leftSheetSurface');
+      const agingOverlay = document.getElementById('agingVignette');
+      const foxingLayer = document.getElementById('foxingLayer');
+      const sunome = document.getElementById('sunomeLines');
+
+      // Base tone calculation
+      let baseR, baseG, baseB;
+      if (appState.paperBase === 'acidic') {
+        // Acidic western paper: yellowish brown
+        baseR = 245 - Math.round(appState.agingFactor * 45);
+        baseG = 236 - Math.round(appState.agingFactor * 65);
+        baseB = 212 - Math.round(appState.agingFactor * 95);
+      } else {
+        // Hosho / Washi: slightly purer bone white with warm tone
+        baseR = 252 - Math.round(appState.agingFactor * 25);
+        baseG = 248 - Math.round(appState.agingFactor * 35);
+        baseB = 236 - Math.round(appState.agingFactor * 55);
+      }
+
+      const paperColor = `rgb(${baseR}, ${baseG}, ${baseB})`;
+      surface.style.backgroundColor = paperColor;
+      if (leftSurface) leftSurface.style.backgroundColor = paperColor;
+
+      // Dark edge oxidization (Burn / Aging vignette)
+      const edgeIntensity = 0.25 + appState.agingFactor * 0.45;
+      agingOverlay.style.background = `
+        radial-gradient(ellipse at 50% 50%, transparent 40%, rgba(130, 85, 35, ${edgeIntensity}) 100%),
+        linear-gradient(to right, rgba(90, 55, 20, 0.25), transparent 12%, transparent 88%, rgba(90, 55, 20, 0.25))
+      `;
+
+      // Foxing Spots procedural generation
+      if (appState.foxing) {
+        foxingLayer.style.display = 'block';
+        foxingLayer.style.backgroundImage = `
+          radial-gradient(#8f6333 1.2px, transparent 1.2px),
+          radial-gradient(#7c4e20 1.8px, transparent 1.8px)
+        `;
+        foxingLayer.style.backgroundSize = '37px 37px, 63px 63px';
+        foxingLayer.style.backgroundPosition = '0 0, 15px 22px';
+        foxingLayer.style.opacity = (0.3 + appState.agingFactor * 0.6).toFixed(2);
+      } else {
+        foxingLayer.style.display = 'none';
+      }
+
+      // Sunome screen
+      sunome.style.display = appState.sunome ? 'block' : 'none';
+
+      // Update generated CSS box
+      updateCssDisplayBox(paperColor);
+    }
+
+    function renderBordersAndTypography() {
+      const frameEl = document.getElementById('sheetBorderFrame');
+      const typoEl = document.getElementById('sheetTypographyLayer');
+      const leftSurface = document.getElementById('leftSheetSurface');
+
+      // Set border frame svg with ruling color
+      frameEl.innerHTML = BORDER_SVGS[appState.borderStyle] || '';
+      frameEl.style.color = appState.rulingColor;
+
+      // Preset HTML
+      const currentPreset = sheetPresets[appState.preset];
+      if (currentPreset) {
+        typoEl.innerHTML = currentPreset.renderHtml('right');
+        if (leftSurface && appState.bookMode === 'spread') {
+          leftSurface.innerHTML = `
+            <div class="absolute inset-3 md:inset-4 pointer-events-none" style="color: ${appState.rulingColor}">
+              ${BORDER_SVGS[appState.borderStyle] || ''}
+            </div>
+            <div class="relative z-20 h-full flex flex-col justify-between pointer-events-none">
+              ${currentPreset.renderHtml('left')}
+            </div>
+          `;
+        }
+      }
+    }
+
+    /* Interactive Stamp Placement on Click */
+    function handleStampClick(event) {
+      const surface = document.getElementById('sheetSurface');
+      const rect = surface.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      // Random slight tilt (-3.5 deg to +3.5 deg) if enabled
+      let angle = 0;
+      if (appState.randomAngle) {
+        angle = (Math.random() * 7 - 3.5).toFixed(1);
+      }
+
+      // Scale variation slightly
+      const scale = (0.95 + Math.random() * 0.08).toFixed(2);
+
+      const stampData = {
+        index: appState.activeStampIndex,
+        x,
+        y,
+        angle,
+        scale,
+        color: appState.stampInk,
+        opacity: appState.stampPressure
+      };
+
+      appState.placedStamps.push(stampData);
+      renderPlacedStamps();
+      triggerStampPressAnimation();
+    }
+
+    function renderPlacedStamps() {
+      const container = document.getElementById('droppedStampsContainer');
+      container.innerHTML = '';
+
+      appState.placedStamps.forEach((stamp, idx) => {
+        const stampDef = STAMPS[stamp.index];
+        const wrapper = document.createElement('div');
+        wrapper.className = 'absolute transform -translate-x-1/2 -translate-y-1/2 pointer-events-none transition-transform select-none';
+        wrapper.style.left = `${stamp.x}px`;
+        wrapper.style.top = `${stamp.y}px`;
+        wrapper.style.width = '105px';
+        wrapper.style.height = '105px';
+        wrapper.style.color = stamp.color;
+        wrapper.style.opacity = stamp.opacity;
+        wrapper.style.transform = `translate(-50%, -50%) rotate(${stamp.angle}deg) scale(${stamp.scale})`;
+        
+        wrapper.innerHTML = stampDef.svg;
+        container.appendChild(wrapper);
+      });
+    }
+
+    function triggerStampPressAnimation() {
+      const surface = document.getElementById('sheetSurface');
+      surface.classList.add('scale-[0.995]');
+      setTimeout(() => surface.classList.remove('scale-[0.995]'), 120);
+    }
+
+    function clearAllStamps() {
+      appState.placedStamps = [];
+      renderPlacedStamps();
+      showToast('押印をすべて消去しました');
+    }
+
+    /* Switch Presets */
+    function applyPreset(presetKey) {
+      if (!sheetPresets[presetKey]) return;
+      appState.preset = presetKey;
+      const cfg = sheetPresets[presetKey];
+
+      appState.borderStyle = cfg.borderStyle;
+      document.getElementById('borderPatternSelect').value = cfg.borderStyle;
+
+      appState.rulingColor = cfg.rulingColor;
+      appState.targetFrame = cfg.targetFrame;
+      appState.gyobi = cfg.gyobi;
+      document.getElementById('gyobiSelect').value = cfg.gyobi;
+
+      appState.paperBase = cfg.paperBase;
+      appState.agingFactor = cfg.agingFactor;
+      document.getElementById('agingSlider').value = cfg.agingFactor;
+      updateAgingLabel(cfg.agingFactor);
+
+      renderPaperSurface();
+      renderBordersAndTypography();
+      showToast(`台紙を「${document.getElementById('presetSelector').selectedOptions[0].text}」に更新`);
+    }
+
+    /* Stamp reticle tracking */
+    const surfaceEl = document.getElementById('sheetSurface');
+    const reticleEl = document.getElementById('stampReticle');
+
+    surfaceEl.addEventListener('mouseenter', () => reticleEl.classList.remove('hidden'));
+    surfaceEl.addEventListener('mouseleave', () => reticleEl.classList.add('hidden'));
+    surfaceEl.addEventListener('mousemove', (e) => {
+      const rect = surfaceEl.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      reticleEl.style.left = `${x}px`;
+      reticleEl.style.top = `${y}px`;
+    });
+
+    /* Controls Callbacks */
+    function setBookMode(mode) {
+      appState.bookMode = mode;
+      const leftSheet = document.getElementById('leftSheetWrapper');
+      const divider = document.getElementById('orihonSpineDivider');
+      const btnSingle = document.getElementById('bookStyleSingle');
+      const btnSpread = document.getElementById('bookStyleSpread');
+
+      if (mode === 'spread') {
+        leftSheet.classList.remove('hidden');
+        divider.classList.remove('hidden');
+        btnSpread.classList.add('bg-[#2b2219]', 'text-[#e7be74]');
+        btnSpread.classList.remove('text-[#998d7f]');
+        btnSingle.classList.remove('bg-[#2b2219]', 'text-[#e7be74]');
+        btnSingle.classList.add('text-[#998d7f]');
+      } else {
+        leftSheet.classList.add('hidden');
+        divider.classList.add('hidden');
+        btnSingle.classList.add('bg-[#2b2219]', 'text-[#e7be74]');
+        btnSingle.classList.remove('text-[#998d7f]');
+        btnSpread.classList.remove('bg-[#2b2219]', 'text-[#e7be74]');
+        btnSpread.classList.add('text-[#998d7f]');
+      }
+      renderBordersAndTypography();
+    }
+
+    function setPaperBaseType(type) {
+      appState.paperBase = type;
+      const btnAcid = document.getElementById('paperBtnAcid');
+      const btnHosho = document.getElementById('paperBtnHosho');
+
+      if (type === 'acidic') {
+        btnAcid.className = 'py-1.5 px-2 rounded border border-[#a47b47] bg-[#221c16] text-[#f1c37b] font-medium text-left';
+        btnHosho.className = 'py-1.5 px-2 rounded border border-[#322a21] bg-[#0f1216] text-[#b6ab9a] hover:text-white text-left';
+      } else {
+        btnHosho.className = 'py-1.5 px-2 rounded border border-[#a47b47] bg-[#221c16] text-[#f1c37b] font-medium text-left';
+        btnAcid.className = 'py-1.5 px-2 rounded border border-[#322a21] bg-[#0f1216] text-[#b6ab9a] hover:text-white text-left';
+      }
+      renderPaperSurface();
+    }
+
+    function updateAgingFactor(val) {
+      appState.agingFactor = parseFloat(val);
+      updateAgingLabel(appState.agingFactor);
+      renderPaperSurface();
+    }
+
+    function updateAgingLabel(val) {
+      const label = document.getElementById('agingLabel');
+      if (val < 0.2) label.textContent = '明治初期調製 (新品・微白)';
+      else if (val < 0.5) label.textContent = '約80年経過 (薄セピア調)';
+      else if (val < 0.8) label.textContent = '130年経過 (明治盛期・日焼け)';
+      else label.textContent = '激しい経年酸化 (古色濃茶・焦げ)';
+    }
+
+    function toggleFoxing(chk) {
+      appState.foxing = chk;
+      renderPaperSurface();
+    }
+
+    function toggleSunome(chk) {
+      appState.sunome = chk;
+      renderPaperSurface();
+    }
+
+    function updateBorderPattern(pattern) {
+      appState.borderStyle = pattern;
+      renderBordersAndTypography();
+    }
+
+    function setRulingColor(colorHex) {
+      appState.rulingColor = colorHex;
+      renderBordersAndTypography();
+    }
+
+    function updateGyobi(val) {
+      appState.gyobi = val;
+      renderBordersAndTypography();
+    }
+
+    function setTargetFrame(type) {
+      appState.targetFrame = type;
+      renderBordersAndTypography();
+    }
+
+    function selectStamp(idx) {
+      appState.activeStampIndex = idx;
+      const chips = document.querySelectorAll('.stamp-chip');
+      chips.forEach((c, i) => {
+        if (i === idx) {
+          c.classList.add('border-2', 'border-[#be2e1b]');
+          c.classList.remove('border-[#2d261e]');
+        } else {
+          c.classList.remove('border-2', 'border-[#be2e1b]');
+          c.classList.add('border-[#2d261e]');
+        }
+      });
+    }
+
+    function setStampInk(hex, name) {
+      appState.stampInk = hex;
+      appState.stampInkName = name;
+      showToast(`インキを「${name}」に設定`);
+    }
+
+    function updateStampPressure(val) {
+      appState.stampPressure = parseFloat(val);
+      document.getElementById('pressureValLabel').textContent = val;
+    }
+
+    /* Tab switcher */
+    function switchMainTab(tab) {
+      const studioControls = document.getElementById('studioControls');
+      const dsPanel = document.getElementById('designSystemPanel');
+      const btnStudio = document.getElementById('viewTabStudio');
+      const btnSystem = document.getElementById('viewTabSystem');
+
+      if (tab === 'studio') {
+        studioControls.classList.remove('hidden');
+        dsPanel.classList.add('hidden');
+        btnStudio.classList.add('bg-[#221c15]', 'text-[#e2b96f]');
+        btnStudio.classList.remove('text-[#a59a8b]');
+        btnSystem.classList.remove('bg-[#221c15]', 'text-[#e2b96f]');
+        btnSystem.classList.add('text-[#a59a8b]');
+      } else {
+        studioControls.classList.add('hidden');
+        dsPanel.classList.remove('hidden');
+        btnSystem.classList.add('bg-[#221c15]', 'text-[#e2b96f]');
+        btnSystem.classList.remove('text-[#a59a8b]');
+        btnStudio.classList.remove('bg-[#221c15]', 'text-[#e2b96f]');
+        btnStudio.classList.add('text-[#a59a8b]');
+      }
+    }
+
+    function updateCssDisplayBox(bgCol) {
+      const box = document.getElementById('cssOutputBox');
+      box.textContent = `/* 明治期スタンプ台紙 CSS設計値 */
+.meiji-stamp-paper {
+  background-color: ${bgCol};
+  background-image: 
+    radial-gradient(ellipse at 50% 50%, rgba(${bgCol.replace(/[^\d,]/g,'')},0.3) 0%, rgba(130,85,35,${(0.25 + appState.agingFactor*0.45).toFixed(2)}) 100%),
+    ${appState.sunome ? 'repeating-linear-gradient(0deg, rgba(160,120,70,0.05) 0px, rgba(160,120,70,0.05) 1px, transparent 1px, transparent 4px),' : ''}
+    radial-gradient(#8f6333 1.2px, transparent 1.2px);
+  background-size: 100% 100%, 37px 37px;
+  box-shadow: inset 0 0 35px rgba(90,55,20,0.35);
+  writing-mode: vertical-rl;
+  color: ${appState.rulingColor};
+}`;
+    }
+
+    function copyPaperCss() {
+      const box = document.getElementById('cssOutputBox');
+      copyToClipboard(box.textContent, '紙質CSSをクリップボードにコピーしました');
+    }
+
+    function copyToClipboard(text, customMsg) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast(customMsg || `${text} をコピーしました`);
+      } catch (e) {
+        console.error(e);
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById('toastBox');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.remove('translate-y-20', 'opacity-0');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0');
+      }, 2500);
+    }
+
+    /* Client-side Canvas PNG Rendering for Export */
+    function downloadStampSheet() {
+      const canvas = document.getElementById('exportCanvas');
+      const ctx = canvas.getContext('2d');
+      const surface = document.getElementById('sheetSurface');
+      const w = surface.offsetWidth * 2;
+      const h = surface.offsetHeight * 2;
+
+      canvas.width = w;
+      canvas.height = h;
+
+      // Base background
+      ctx.fillStyle = surface.style.backgroundColor || '#f4ecd7';
+      ctx.fillRect(0, 0, w, h);
+
+      // Vignette
+      const grad = ctx.createRadialGradient(w/2, h/2, w*0.2, w/2, h/2, w*0.7);
+      grad.addColorStop(0, 'rgba(0,0,0,0)');
+      grad.addColorStop(1, `rgba(110,75,30,${(0.3 + appState.agingFactor * 0.4).toFixed(2)})`);
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Border outline
+      ctx.strokeStyle = appState.rulingColor;
+      ctx.lineWidth = 6;
+      ctx.strokeRect(30, 30, w - 60, h - 60);
+      ctx.lineWidth = 2;
+      ctx.strokeRect(42, 42, w - 84, h - 84);
+
+      // Stamp marks drawn on canvas
+      appState.placedStamps.forEach(s => {
+        ctx.save();
+        ctx.translate(s.x * 2, s.y * 2);
+        ctx.rotate((s.angle * Math.PI) / 180);
+        ctx.scale(s.scale, s.scale);
+        ctx.globalAlpha = s.opacity;
+
+        // Draw vintage red seal stamp circle
+        ctx.strokeStyle = s.color;
+        ctx.fillStyle = s.color;
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.arc(0, 0, 48, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(0, 0, 40, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Stamp text
+        ctx.font = 'bold 16px "Shippori Mincho", serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(STAMPS[s.index].name.substring(0, 6), 0, -10);
+
+        ctx.font = '12px "Shippori Mincho", serif';
+        ctx.fillText("明治記念印", 0, 14);
+
+        ctx.restore();
+      });
+
+      // Download trigger
+      const link = document.createElement('a');
+      link.download = `Meiji_Stamp_Sheet_${Date.now()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+      showToast('台紙画像をPNG形式で出力しました');
+    }
+
+    // Window load bootstrapping
+    window.addEventListener('DOMContentLoaded', () => {
+      applyPreset('hakurankai');
+      selectStamp(0);
+    });
+  </script>
+</body>
+</html>
