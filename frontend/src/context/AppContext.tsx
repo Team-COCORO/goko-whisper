@@ -188,6 +188,7 @@ function deriveScreen(
   }
   if (whisperId) return "whisper";
   if (!rally.nickname.trim() && rally.pendingStamp) return "askName";
+  if (rally.nickname.trim() && rally.pendingStamp) return "herald";
   const anyStamp = rally.stamp1Done || rally.stamp2Done || rally.stamp3Done;
   if (!anyStamp && !rally.pendingStamp) return "top";
   if (!allStamps(rally)) return "guide";

@@ -5,6 +5,7 @@ import { useApp } from "../context/AppContext";
 
 const PRESS_MS = 3000;
 const HOLD_MS = 5000;
+const HERALD_MS = 1400;
 
 const FRAMES: { id: WhisperId; label: string; tilt: number; stamp: string }[] = [
   { id: 1, label: "チラシ", tilt: -1.2, stamp: "/stamps/夏目漱石.svg" },
@@ -230,24 +231,30 @@ export function StampBook() {
     }
     if (!pendingStamp || !nickname.trim()) return;
 
+    const id = pendingStamp;
     const finished = [stamp1Done, stamp2Done, stamp3Done].filter(Boolean).length;
     const willComplete = finished === 2;
-    const nextPhase: Phase = prefersReducedMotion()
-      ? willComplete
-        ? "hold"
-        : "wait-close"
-      : "press";
-    livePress = {
-      id: pendingStamp,
-      phase: nextPhase,
-      willComplete,
-      startedAt: Date.now(),
-    };
-    beginPress(pendingStamp);
-    openBook();
-    setBookLocked(nextPhase === "press" || nextPhase === "hold");
-    arm();
-    armImpact(livePress);
+    const wait = window.setTimeout(() => {
+      if (livePress) return;
+      const nextPhase: Phase = prefersReducedMotion()
+        ? willComplete
+          ? "hold"
+          : "wait-close"
+        : "press";
+      livePress = {
+        id,
+        phase: nextPhase,
+        willComplete,
+        startedAt: Date.now(),
+      };
+      beginPress(id);
+      openBook();
+      setBookLocked(nextPhase === "press" || nextPhase === "hold");
+      arm();
+      armImpact(livePress);
+      bridge?.bump();
+    }, HERALD_MS);
+    return () => window.clearTimeout(wait);
   }, [
     pendingStamp,
     nickname,
