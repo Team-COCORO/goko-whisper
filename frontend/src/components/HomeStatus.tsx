@@ -3,6 +3,17 @@ import { WHISPERS } from "../data/whispers";
 import { useApp } from "../context/AppContext";
 import { GoalPage } from "../pages/GoalPage";
 
+function inAppBrowser(): boolean {
+  return /Line\/|Instagram|FBAN|FBAV|Twitter|MicroMessenger/i.test(navigator.userAgent);
+}
+
+function BrowserNote() {
+  const text = inAppBrowser()
+    ? "この画面では記録が残りません。右上のメニューから Safari または Chrome で開いてください。"
+    : "記録は、標準カメラ（Safari または Chrome）で開いたときだけ残ります。";
+  return <p className="note">{text}</p>;
+}
+
 function NameFields({
   prompt,
   submitLabel,
@@ -87,6 +98,7 @@ export function HomeStatus() {
           耳を澄ませ。百年の声が、まだここに漂っている。
         </div>
         <NameFields submitLabel="名前を残す" />
+        <BrowserNote />
       </div>
     );
   }
@@ -109,6 +121,7 @@ export function HomeStatus() {
           耳を澄ませ。百年の声が、まだここに漂っている。
         </div>
         {!nickname.trim() && <NameFields submitLabel="名前を残す" />}
+        <BrowserNote />
       </div>
     );
   }

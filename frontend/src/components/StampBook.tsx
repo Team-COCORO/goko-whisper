@@ -6,10 +6,15 @@ import { useApp } from "../context/AppContext";
 const PRESS_MS = 3000;
 const HOLD_MS = 5000;
 
-const FRAMES: { id: WhisperId; label: string; tilt: number }[] = [
-  { id: 1, label: "チラシ", tilt: -6 },
-  { id: 2, label: "模擬店", tilt: 3 },
-  { id: 3, label: "五高記念館", tilt: -2 },
+const FRAMES: { id: WhisperId; label: string; tilt: number; stamp: string }[] = [
+  { id: 1, label: "チラシ", tilt: -1.2, stamp: "/stamps/夏目漱石.svg" },
+  { id: 2, label: "模擬店", tilt: 0.8, stamp: "/stamps/猫（中）.svg" },
+  {
+    id: 3,
+    label: "五高記念館",
+    tilt: -0.6,
+    stamp: "/stamps/\u30e9\u30d5\u30ab\u30c6\u3099\u30a3\u30aa\u30cf\u30fc\u30f3\uff08\u4e2d\uff09.svg",
+  },
 ];
 
 type Opening = 0 | 1;
@@ -34,9 +39,24 @@ type Bridge = {
 let livePress: LivePress | null = null;
 let bridge: Bridge | null = null;
 let timer = 0;
+let impactTimer = 0;
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+function armImpact(press: LivePress) {
+  window.clearTimeout(impactTimer);
+  if (press.phase !== "press" || prefersReducedMotion()) return;
+  const wait = 400 - (Date.now() - press.startedAt);
+  if (wait < 0) return;
+  const { id, startedAt } = press;
+  impactTimer = window.setTimeout(() => {
+    if (!livePress || livePress.id !== id || livePress.startedAt !== startedAt || livePress.phase !== "press") {
+      return;
+    }
+    navigator.vibrate?.(35);
+  }, wait);
 }
 
 function arm() {
@@ -108,7 +128,7 @@ function Paper({
         <span className="orihon-corner orihon-corner--br" />
         <p className="orihon-vert">{frame.label}</p>
         <div className={pressed ? "orihon-well orihon-well--on" : "orihon-well"}>
-          {pressed && <Seal tilt={frame.tilt} pressing={pressing} />}
+          {pressed && <Seal frame={frame} pressing={pressing} />}
         </div>
       </div>
     </div>
@@ -130,22 +150,24 @@ function Chevron({ dir }: { dir: "prev" | "next" }) {
   );
 }
 
-function Seal({ tilt, pressing }: { tilt: number; pressing: boolean }) {
-  const style = { "--tilt": `${tilt}deg` } as CSSProperties;
+function Seal({
+  frame,
+  pressing,
+}: {
+  frame: (typeof FRAMES)[number];
+  pressing: boolean;
+}) {
+  const style = {
+    "--stamp": `url("${encodeURI(frame.stamp)}")`,
+    "--tilt": `${frame.tilt}deg`,
+  } as CSSProperties;
   return (
-    <svg
+    <span
       className={pressing ? "seal seal--press" : "seal"}
       style={style}
-      viewBox="0 0 100 100"
-      aria-hidden="true"
-    >
-      <path
-        fill="currentColor"
-        fillRule="evenodd"
-        d="M50 6C66 4 78 12 88 24C96 36 98 44 94 54C96 68 88 82 74 90C60 98 48 94 36 90C22 84 8 72 8 56C8 40 16 24 30 14C38 8 42 7 50 6ZM50 32a14 14 0 1 0 .1 0Z"
-      />
-      <path fill="currentColor" d="M46 40h8v5h5v8h-5v5h-8v-5h-5v-8h5z" />
-    </svg>
+      role="img"
+      aria-label={`${frame.label}の印`}
+    />
   );
 }
 
@@ -203,6 +225,7 @@ export function StampBook() {
       openBook();
       setBookLocked(livePress.phase === "press" || livePress.phase === "hold");
       arm();
+      armImpact(livePress);
       return;
     }
     if (!pendingStamp || !nickname.trim()) return;
@@ -224,6 +247,7 @@ export function StampBook() {
     openBook();
     setBookLocked(nextPhase === "press" || nextPhase === "hold");
     arm();
+    armImpact(livePress);
   }, [
     pendingStamp,
     nickname,
