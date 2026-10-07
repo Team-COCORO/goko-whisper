@@ -667,16 +667,17 @@ input.pin {
 
 .orihon-well {
   position: absolute;
-  left: 42%;
-  top: 48%;
-  width: 58%;
-  aspect-ratio: 1;
+  left: 46%;
+  top: 50%;
+  width: 70%;
+  height: 78%;
   transform: translate(-50%, -50%);
-  border: 1.5px dashed #3b6b7a;
-  border-radius: 50%;
+  border: 1px dashed rgba(59, 107, 122, 0.3);
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: visible;
 }
 
 .orihon-well--on {
@@ -744,24 +745,37 @@ input.pin {
 }
 
 .seal {
-  width: 78%;
-  height: 78%;
-  color: #8b3a2b;
+  width: 96%;
+  height: 96%;
+  background-color: #8b3a2b;
+  -webkit-mask: var(--stamp) center / contain no-repeat;
+  mask: var(--stamp) center / contain no-repeat;
+  filter: drop-shadow(0 1px 1px rgba(139, 58, 43, 0.2));
   transform: rotate(var(--tilt));
 }
 
 .seal--press {
-  animation: seal-press 3s ease-out forwards;
+  animation: stamp-realistic-press 1.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  will-change: transform, opacity;
 }
 
-@keyframes seal-press {
-  from {
-    transform: translateY(-42px) rotate(var(--tilt)) scale(1.08);
+@keyframes stamp-realistic-press {
+  0% {
     opacity: 0;
+    transform: translateY(-45px) scale(1.15) rotate(var(--tilt));
   }
-  to {
-    transform: translateY(0) rotate(var(--tilt)) scale(1);
+  32% {
+    opacity: 0.7;
+    transform: translateY(0) scale(0.96, 0.94) rotate(var(--tilt));
+  }
+  48% {
     opacity: 1;
+    transform: translateY(0) scale(1.02, 1.01) rotate(var(--tilt));
+  }
+  65%,
+  100% {
+    opacity: 0.94;
+    transform: translateY(0) scale(1) rotate(var(--tilt));
   }
 }
 
