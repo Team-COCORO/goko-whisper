@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>五高の囁き — デジタルスタンプ（ハッチング表現試作）</title>
+<style>
+  :root {
+    --bg: #ece4db;
+    --paper: #f8f3e4;
+    --paper-edge: #cbb892;
+    --stamp-color: #8b3a2b; /* 五高の朱・弁柄色 */
+    --font-serif: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
+  }
+
+  body {
+    margin: 0;
+    padding: 24px 16px;
+    background: var(--bg);
+    font-family: var(--font-serif);
+    color: #2c2623;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    font-size: 20px;
+    letter-spacing: 0.15em;
+    color: var(--stamp-color);
+    margin: 0 0 4px;
+    text-align: center;
+  }
+
+  p.desc {
+    font-size: 13px;
+    opacity: 0.8;
+    margin-bottom: 24px;
+    text-align: center;
+    line-height: 1.6;
+  }
+
+  .preview-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 100%;
+    max-width: 440px;
+  }
+
+  /* 折本の頁（台紙）を再現 */
+  .orihon-sample {
+    position: relative;
+    background:
+      radial-gradient(circle at 22% 80%, rgba(156, 123, 79, 0.2) 0 4px, transparent 11px),
+      radial-gradient(ellipse at center, var(--paper) 0%, #e7d7b6 65%, var(--paper-edge) 100%);
+    border-radius: 4px;
+    padding: 20px 16px 16px;
+    box-shadow: 0 4px 12px rgba(80, 50, 20, 0.15);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .orihon-sample::before {
+    content: "";
+    position: absolute;
+    inset: 6px;
+    border: 1.5px solid #3b6b7a;
+    pointer-events: none;
+    border-radius: 2px;
+  }
+
+  .caption {
+    font-size: 14px;
+    font-weight: bold;
+    color: #3b6b7a;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    border-bottom: 1px dashed rgba(59, 107, 122, 0.4);
+    padding-bottom: 6px;
+  }
+
+  .caption span {
+    font-size: 11px;
+    font-weight: normal;
+    opacity: 0.85;
+    margin-left: auto;
+  }
+
+  /* スタンプ表示枠 */
+  .stamp-frame {
+    width: 220px;
+    height: 280px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--stamp-color);
+  }
+
+  svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 1px 1px rgba(139, 58, 43, 0.15));
+  }
+</style>
+</head>
+<body>
+
+<h1>五高の囁き デジタル印影試作</h1>
+<p class="desc">原画のハッチング（陰影線）をスマホ画面で潰れない密度に調整したスタンプです。</p>
+
+<div class="preview-grid">
+
+  <!-- 1. 夏目漱石 -->
+  <div class="orihon-sample">
+    <div class="caption">第一の囁き（チラシ）<span>夏目漱石・教育の言魂</span></div>
+    <div class="stamp-frame">
+      <svg viewBox="0 0 200 270" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- 衣服・羽織の斜線ハッチング -->
+          <pattern id="hatch-soseki" width="5" height="5" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="5" stroke="currentColor" stroke-width="1.3" />
+          </pattern>
+          <!-- 襟・首回りのクロスハッチング -->
+          <pattern id="cross-soseki" width="4" height="4" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="4" stroke="currentColor" stroke-width="1" />
+            <line x1="0" y1="0" x2="4" y2="0" stroke="currentColor" stroke-width="1" />
+          </pattern>
+        </defs>
+
+        <!-- 外枠・飾り唐草金具 -->
+        <rect x="6" y="6" width="188" height="258" rx="4" fill="none" stroke="currentColor" stroke-width="3" />
+        <rect x="10" y="10" width="180" height="250" rx="2" fill="none" stroke="currentColor" stroke-width="1" />
+        <circle cx="12" cy="12" r="3" fill="currentColor"/>
+        <circle cx="188" cy="12" r="3" fill="currentColor"/>
+        <circle cx="12" cy="258" r="3" fill="currentColor"/>
+        <circle cx="188" cy="258" r="3" fill="currentColor"/>
+
+        <!-- 右上：漢文（言魂） -->
+        <g font-family="serif" font-weight="bold" fill="currentColor" font-size="12" letter-spacing="1">
+          <text x="170" y="32" writing-mode="vertical-rl">夫レ教育ハ</text>
+          <text x="148" y="32" writing-mode="vertical-rl">建国ノ基礎ニシテ</text>
+          <text x="126" y="32" writing-mode="vertical-rl">師弟ノ和熟ハ</text>
+          <text x="104" y="32" writing-mode="vertical-rl">育英ノ大本タリ</text>
+        </g>
+
+        <!-- 左下：夏目漱石 胸像 -->
+        <!-- 羽織のベースハッチング -->
+        <path d="M 18,208 L 18,170 C 18,145 42,130 65,130 C 85,130 115,145 125,170 L 132,208 Z" fill="url(#hatch-soseki)" stroke="currentColor" stroke-width="2" />
+        
+        <!-- 襟元（着物） -->
+        <polygon points="50,140 68,178 78,178 60,140" fill="url(#cross-soseki)" stroke="currentColor" stroke-width="1.5" />
+        <polygon points="68,178 50,208 85,208 82,178" fill="#f8f3e4" stroke="currentColor" stroke-width="1.5" />
+
+        <!-- 顔・輪郭・髪 -->
+        <path d="M 45,115 C 45,85 55,70 68,70 C 80,70 92,85 92,115 C 92,130 80,142 68,142 C 55,142 45,130 45,115 Z" fill="#f8f3e4" stroke="currentColor" stroke-width="2.5" />
+        <!-- 髪の毛（黒ベタ） -->
+        <path d="M 46,102 C 45,80 55,70 68,70 C 82,70 92,80 92,102 C 86,85 80,80 68,80 C 55,80 50,85 46,102 Z" fill="currentColor" />
+        <!-- 目・鼻・特徴的な口髭 -->
+        <ellipse cx="58" cy="104" rx="2.5" ry="1.5" fill="currentColor" />
+        <ellipse cx="78" cy="104" rx="2.5" ry="1.5" fill="currentColor" />
+        <path d="M 68,105 L 67,114 L 71,114" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        <path d="M 54,124 Q 68,120 82,124 Q 85,129 78,130 Q 68,125 58,130 Z" fill="currentColor" />
+
+        <!-- 下部：額縁プレートと記念館銘 -->
+        <g transform="translate(18, 212)">
+          <rect width="164" height="24" rx="12" fill="#f8f3e4" stroke="currentColor" stroke-width="2" />
+          <rect x="3" y="3" width="158" height="18" rx="9" fill="none" stroke="currentColor" stroke-width="1" stroke-dasharray="3 2" />
+          <text x="82" y="16" font-family="serif" font-size="12" font-weight="bold" text-anchor="middle" fill="currentColor" letter-spacing="2">夏目漱石</text>
+        </g>
+        <text x="100" y="250" font-family="serif" font-size="9" text-anchor="middle" fill="currentColor" letter-spacing="1">熊本大学五高記念館</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 2. 黒猫と洋椅子 -->
+  <div class="orihon-sample">
+    <div class="caption">第二の囁き（模擬店）<span>吾輩ハ猫デアル・記念章</span></div>
+    <div class="stamp-frame">
+      <svg viewBox="0 0 220 220" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- 椅子の金華山織調 網掛けハッチング -->
+          <pattern id="hatch-chair" width="6" height="6" patternTransform="rotate(45)" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="0" x2="0" y2="6" stroke="currentColor" stroke-width="1.2" />
+            <line x1="0" y1="0" x2="6" y2="0" stroke="currentColor" stroke-width="1.2" />
+          </pattern>
+        </defs>
+
+        <!-- 外枠（くびれ隅丸枠） -->
+        <rect x="8" y="8" width="204" height="204" rx="16" fill="none" stroke="currentColor" stroke-width="4" />
+        <rect x="13" y="13" width="194" height="194" rx="12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-dasharray="5 3" />
+
+        <!-- 洋椅子（背もたれ・座面のハッチング） -->
+        <path d="M 22,50 Q 55,42 70,55 L 70,145 L 22,145 Z" fill="url(#hatch-chair)" stroke="currentColor" stroke-width="1.8" />
+        <polygon points="22,145 136,138 126,178 22,178" fill="url(#hatch-chair)" stroke="currentColor" stroke-width="1.8" />
+        <!-- 椅子の木枠 -->
+        <path d="M 70,95 Q 110,95 125,120 Q 105,130 70,128 Z" fill="currentColor" />
+        <line x1="26" y1="178" x2="26" y2="200" stroke="currentColor" stroke-width="5" stroke-linecap="round" />
+        <line x1="125" y1="178" x2="125" y2="200" stroke="currentColor" stroke-width="5" stroke-linecap="round" />
+
+        <!-- 黒猫（コントラストの強いシルエット） -->
+        <!-- 胴体としっぽ -->
+        <path d="M 64,135 C 46,130 38,112 42,92 C 45,78 56,74 64,74 C 72,74 82,82 80,100 C 78,118 88,146 102,160 C 96,165 82,166 72,158 Z" fill="currentColor" />
+        <path d="M 82,130 Q 120,115 116,92 Q 110,92 106,105 Q 102,122 82,136 Z" fill="currentColor" />
+        <!-- 白い胸元 -->
+        <path d="M 62,90 Q 64,125 72,150 Q 58,120 62,90 Z" fill="#f8f3e4" />
+        <!-- 頭・三角耳・大きな目 -->
+        <path d="M 38,64 L 32,40 L 48,52 Q 60,45 72,52 L 88,38 L 84,62 Q 88,74 78,84 Q 60,94 44,82 Z" fill="currentColor" />
+        <ellipse cx="48" cy="68" rx="6" ry="8" fill="#f8f3e4" />
+        <ellipse cx="72" cy="68" rx="6" ry="8" fill="#f8f3e4" />
+        <circle cx="50" cy="69" r="3.5" fill="currentColor" />
+        <circle cx="70" cy="69" r="3.5" fill="currentColor" />
+
+        <!-- 銘記（文字） -->
+        <text x="135" y="42" font-family="serif" font-size="14" font-weight="bold" fill="currentColor" letter-spacing="2">第五高等學校</text>
+        <text x="108" y="60" font-family="sans-serif" font-size="9" font-weight="bold" fill="currentColor">Memorial Museum</text>
+        <text x="108" y="73" font-family="sans-serif" font-size="8" fill="currentColor">Kumamoto Univ.</text>
+
+        <!-- 右下：角印（落款） -->
+        <g transform="translate(142, 134)">
+          <rect width="52" height="52" rx="3" fill="none" stroke="currentColor" stroke-width="2.5" />
+          <rect x="3" y="3" width="46" height="46" rx="2" fill="none" stroke="currentColor" stroke-width="1" />
+          <text x="26" y="23" font-family="serif" font-size="13" font-weight="bold" text-anchor="middle" fill="currentColor">五高</text>
+          <text x="26" y="42" font-family="serif" font-size="13" font-weight="bold" text-anchor="middle" fill="currentColor">記念</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- 3. ラフカディオ・ハーン -->
+  <div class="orihon-sample">
+    <div class="caption">第三の囁き（記念館）<span>ラフカディオ・ハーン・九州精神</span></div>
+    <div class="stamp-frame">
+      <svg viewBox="0 0 200 270" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <!-- 洋風銅版画エッチングの横線ハッチング -->
+          <pattern id="hatch-hearn" width="4" height="4" patternUnits="userSpaceOnUse">
+            <line x1="0" y1="2" x2="4" y2="2" stroke="currentColor" stroke-width="1.2" />
+          </pattern>
+        </defs>
+
+        <!-- 外枠・洋風アーチ枠 -->
+        <rect x="6" y="6" width="188" height="258" rx="4" fill="none" stroke="currentColor" stroke-width="3" />
+        <path d="M 12,24 Q 100,8 188,24 L 188,252 L 12,252 Z" fill="none" stroke="currentColor" stroke-width="1" />
+
+        <!-- 上部：英文メッセージ（タイポグラフィ） -->
+        <g font-family="serif" fill="currentColor" font-size="8.5" line-height="1.4">
+          <text x="20" y="40">"I think the future</text>
+          <text x="20" y="52">greatness of Japan</text>
+          <text x="20" y="64">will depend on the</text>
+          <text x="20" y="76">preservation of the</text>
+          <text x="20" y="88" font-weight="bold">Kyushu or Kumamoto</text>
+          <text x="20" y="100" font-weight="bold">spirit..."</text>
+        </g>
+
+        <!-- 左下：ハーンの横顔（シャープなシルエット＋ハッチング） -->
+        <!-- 着物の肩周り（エッチングハッチング） -->
+        <path d="M 18,212 L 18,175 C 22,150 48,145 68,148 C 88,150 110,165 118,212 Z" fill="url(#hatch-hearn)" stroke="currentColor" stroke-width="2" />
+        <polygon points="52,158 65,188 78,188 62,158" fill="#f8f3e4" stroke="currentColor" stroke-width="1.5" />
+
+        <!-- 印象的な横顔ライン -->
+        <path d="M 40,118 C 40,82 56,76 74,76 C 88,76 96,86 92,106 C 96,110 102,116 98,124 C 95,128 88,128 84,136 C 80,144 68,148 54,144 C 42,138 40,128 40,118 Z" fill="#f8f3e4" stroke="currentColor" stroke-width="2" />
+        <!-- 髪の毛（流れるウェーブ） -->
+        <path d="M 42,106 C 42,82 56,76 74,76 C 86,76 94,84 90,102 C 82,90 74,86 64,88 C 52,90 46,98 42,106 Z" fill="currentColor" />
+        <!-- 口髭・目元（横顔） -->
+        <path d="M 88,114 L 95,116" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+        <ellipse cx="86" cy="126" rx="6" ry="2.5" fill="currentColor" transform="rotate(-10 86 126)" />
+
+        <!-- 下部：銘板プレート -->
+        <g transform="translate(18, 218)">
+          <rect width="164" height="22" rx="4" fill="#f8f3e4" stroke="currentColor" stroke-width="2" />
+          <text x="82" y="15" font-family="serif" font-size="11" font-weight="bold" text-anchor="middle" fill="currentColor" letter-spacing="1">Lafcadio Hearn (小泉八雲)</text>
+        </g>
+        <text x="100" y="250" font-family="serif" font-size="9" text-anchor="middle" fill="currentColor" letter-spacing="1">熊本大学五高記念館</text>
+      </svg>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
