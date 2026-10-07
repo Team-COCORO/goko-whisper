@@ -3,6 +3,7 @@ interface Env {
   ASSETS: Fetcher;
   STAFF_PIN: string;
   ADMIN_TOKEN: string;
+  STAMP_TOKEN: string;
 }
 
 type TokenRow = {
@@ -234,6 +235,39 @@ async function handleVerify(request: Request, env: Env): Promise<Response> {
   return json(request, { result: "unknown_code" }, 404);
 }
 
+const STAMP_IDS = new Set(["spot1", "spot2", "spot3"]);
+
+async function handleStamp(request: Request, env: Env): Promise<Response> {
+  if (!isJsonRequest(request)) {
+    return json(request, { result: "invalid" }, 400);
+  }
+
+  let payload: unknown;
+  try {
+    payload = await request.json();
+  } catch {
+    return json(request, { result: "invalid" }, 400);
+  }
+
+  if (!payload || typeof payload !== "object") {
+    return json(request, { result: "invalid" }, 400);
+  }
+
+  const record = payload as { stamp?: unknown; token?: unknown };
+  const stamp = typeof record.stamp === "string" ? record.stamp : "";
+  const token = typeof record.token === "string" ? record.token : "";
+  const expected = env.STAMP_TOKEN ?? "";
+  if (
+    !STAMP_IDS.has(stamp) ||
+    !expected ||
+    !(await safeEqual(token, expected))
+  ) {
+    return json(request, { result: "invalid" }, 401);
+  }
+
+  return json(request, { result: "ok" });
+}
+
 async function handleSummary(request: Request, env: Env): Promise<Response> {
   const header = request.headers.get("Authorization") ?? "";
   const token = header.startsWith("Bearer ") ? header.slice("Bearer ".length) : "";
@@ -265,6 +299,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
     return new Response(null, { status: 204, headers: corsHeaders(request) });
   }
 
+  if (url.pathname === "/api/stamp/verify" && request.method === "POST") {
+    return handleStamp(request, env);
+  }
   if (url.pathname === "/api/token/issue" && request.method === "POST") {
     return handleIssue(request, env);
   }

@@ -23,7 +23,6 @@ Node.js と npm を使う。秘密は次の二つのファイルに置き、リ�
 `frontend/.env.local`
 
 ```bash
-VITE_STAMP_TOKEN=local-dev-token
 VITE_API_BASE_URL=http://127.0.0.1:8787
 ```
 
@@ -32,9 +31,10 @@ VITE_API_BASE_URL=http://127.0.0.1:8787
 ```bash
 STAFF_PIN=1234
 ADMIN_TOKEN=local-admin-token
+STAMP_TOKEN=local-dev-token
 ```
 
-`STAFF_PIN` は数字 4 桁。`VITE_STAMP_TOKEN` は、確認用 URL の `token` と一致させる。
+`STAFF_PIN` は数字 4 桁。確認用 URL の `token` は `STAMP_TOKEN` と一致させる。画面の JavaScript には入れない。QR を開いたとき、Worker の `/api/stamp/verify` が照合する。
 
 依存パッケージを入れ、ローカル D1 にマイグレーションを適用する。データベース名は `backend/wrangler.toml` の `goko-whispe-db`。確認プロンプトでは `Y` を入力する。
 
@@ -62,7 +62,7 @@ npm run dev
 
 ## 確認
 
-アドレス欄に、この順で開く。`token` は `frontend/.env.local` の値にする。
+アドレス欄に、この順で開く。`token` は `backend/.dev.vars` の `STAMP_TOKEN` にする。Worker が止まっていると、スタンプは付かない。
 
 1. `http://localhost:5173/?stamp=spot1&token=local-dev-token`  
    第一の囁きのあと、「次の声は、模擬店のどこかに眠っている。」
