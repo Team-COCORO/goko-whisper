@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { verifyStamp } from "../api";
 import type { Screen, StampRallyState, Tab, WhisperId } from "../types";
 
 const STORAGE_KEY = "goko-whisper";
@@ -146,17 +147,26 @@ function spotToId(stamp: string | null): WhisperId | null {
   return null;
 }
 
-function applyStampQuery(rally: StampRallyState): StampRallyState {
+type StampClaim = { stamp: string; id: WhisperId; token: string };
+
+let stampClaim: StampClaim | null | undefined;
+let stampVerify: Promise<boolean> | null = null;
+
+function claimStampQuery(): StampClaim | null {
+  if (stampClaim !== undefined) return stampClaim;
+
   const params = new URLSearchParams(window.location.search);
-  const id = spotToId(params.get("stamp"));
+  const stamp = params.get("stamp");
   const token = params.get("token");
-  const expected = import.meta.env.VITE_STAMP_TOKEN;
+  const id = spotToId(stamp);
+  if (params.has("stamp") || params.has("token")) stripStampQuery();
+  stampClaim = stamp && token && id ? { stamp, id, token } : null;
+  return stampClaim;
+}
 
-  if (!expected || token !== expected || !id || stampDone(rally, id)) {
-    return rally;
-  }
-
-  return { ...rally, pendingStamp: id };
+function confirmStamp(claim: StampClaim): Promise<boolean> {
+  if (!stampVerify) stampVerify = verifyStamp(claim.stamp, claim.token);
+  return stampVerify;
 }
 
 function allStamps(rally: StampRallyState): boolean {
@@ -207,10 +217,11 @@ let bootSnapshot: BootResult | null = null;
 
 function boot(): BootResult {
   if (bootSnapshot) return bootSnapshot;
+  claimStampQuery();
 
   try {
     const stored = parseRally(localStorage.getItem(STORAGE_KEY));
-    let rally = applyStampQuery(stored);
+    let rally = stored;
     if (
       allStamps(rally) &&
       rally.nickname.trim() &&
@@ -219,7 +230,6 @@ function boot(): BootResult {
       rally = { ...rally, goalUnlocked: true };
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(rally));
-    stripStampQuery();
     bootSnapshot = {
       storageBlocked: false,
       rally,
@@ -253,6 +263,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const sync = () => setIsAdmin(window.location.hash === "#admin");
     window.addEventListener("hashchange", sync);
     return () => window.removeEventListener("hashchange", sync);
+  }, []);
+
+  useEffect(() => {
+    const claim = claimStampQuery();
+    if (!claim) return;
+    let cancelled = false;
+    void (async () => {
+      const stored = bootSnapshot?.rally;
+      if (stored && stampDone(stored, claim.id)) return;
+      const ok = await confirmStamp(claim);
+      if (cancelled || !ok) return;
+      setRally((prev) => {
+        if (stampDone(prev, claim.id)) return prev;
+        const next = { ...prev, pendingStamp: claim.id };
+        try {
+          persistRally(next);
+        } catch {
+          setStorageBlocked(true);
+          return prev;
+        }
+        return next;
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const screen = deriveScreen(rally, whisperId, showGoal, isAdmin, soldOut);

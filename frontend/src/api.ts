@@ -81,6 +81,21 @@ export function issueToken(
   return flight;
 }
 
+export async function verifyStamp(stamp: string, token: string): Promise<boolean> {
+  try {
+    const response = await fetch(apiUrl("/api/stamp/verify"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stamp, token }),
+    });
+    if (!response.ok) return false;
+    const body = (await response.json()) as { result?: unknown };
+    return body.result === "ok";
+  } catch {
+    return false;
+  }
+}
+
 export async function verifyToken(
   code: string,
   pin: string,

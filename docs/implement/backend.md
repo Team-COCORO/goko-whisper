@@ -191,8 +191,9 @@ D1 バインディング名は `DB`。
 |------|------|
 | `STAFF_PIN` | 数字 4 桁。消込 |
 | `ADMIN_TOKEN` | `GET /api/admin/summary` |
+| `STAMP_TOKEN` | `POST /api/stamp/verify`。QR の `token` |
 
-ローカルの値は `backend/.dev.vars` に置く。このファイルは git に入れない。スタンプ URL の `token` はフロントの `VITE_STAMP_TOKEN` である。Workers はスタンプを受け取らない。
+ローカルの値は `backend/.dev.vars` に置く。このファイルは git に入れない。スタンプ URL の `token` は Worker の `STAMP_TOKEN` と `POST /api/stamp/verify` で照合する。画面の JavaScript には入れない。
 
 本番は同一オリジンなので、API に CORS ヘッダは付けない。`wrangler dev` と Vite（`http://localhost:5173` と `http://127.0.0.1:5173`）の組み合わせのときだけ、リクエストの `Origin` がそのどちらかならそれを返し、`OPTIONS` に応える。開発中のフロントは `VITE_API_BASE_URL` に Worker のローカル URL を入れる。
 

@@ -219,7 +219,7 @@ interface StampRallyState {
 
 1. `localStorage` を読む。壊れていれば初期値にし、`clientId` だけは維持できるなら維持する。
 2. `window.location.search` を読む。この読み取りは、クエリを消す `replaceState` より前に終える。
-3. `stamp` が `spot1` または `spot2` で、かつ `token` が `VITE_STAMP_TOKEN` と一致するときだけ、対応するフラグを `true` にして保存する。不一致のクエリは無視する。
+3. `stamp` が `spot1`、`spot2`、`spot3` のいずれかで、`POST /api/stamp/verify` が `token` を Worker の `STAMP_TOKEN` と一致と返したときだけ、対応する枠を押印待ちにする。不一致や通信失敗のクエリは無視する。
 4. `history.replaceState` でクエリを落とす。クエリは一度だけの入場券にする。
 5. 下の表で画面を決める。フラグがこの起動で `false` から `true` になったスタンプだけ、囁き演出を再生する。
 
@@ -229,8 +229,8 @@ interface StampRallyState {
 
 | 設置場所 | URL |
 |----------|-----|
-| チラシ / SNS | `https://<本番ホスト>/?stamp=spot1&token=<VITE_STAMP_TOKEN>` |
-| 模擬店 | `https://<本番ホスト>/?stamp=spot2&token=<VITE_STAMP_TOKEN>` |
+| チラシ / SNS | `https://<本番ホスト>/?stamp=spot1&token=<STAMP_TOKEN>` |
+| 模擬店 | `https://<本番ホスト>/?stamp=spot2&token=<STAMP_TOKEN>` |
 
 ### 画面の決め方
 
@@ -259,7 +259,7 @@ interface StampRallyState {
 
 `localStorage` の読み書きが例外になるブラウザ（プライベートモードなど）では、スタンプを保存したことにしない。「このブラウザでは記録を残せません。通常のタブで開いてください。」と出して止める。
 
-`VITE_STAMP_TOKEN` が空のビルドでは、どの `stamp` も付与しない。`stamp` は `spot1` と `spot2` の完全一致だけを見る。`replaceState` で消すのは `stamp` と `token` だけである。ハッシュと、それ以外のクエリは残す。
+`STAMP_TOKEN` が Worker に無いとき、どの `stamp` も付与しない。`stamp` は `spot1`、`spot2`、`spot3` の完全一致だけを見る。`replaceState` で消すのは `stamp` と `token` だけである。ハッシュと、それ以外のクエリは残す。トークンは画面の JavaScript に入れない。
 
 `startHomeAutoFlow`、`autoFlowActive`、800ms のタイマーは削除する。開発用にも残さない。
 
@@ -459,4 +459,4 @@ Phase 1 と Phase 2 の着手には不要である。
 - 未達のピンは真鍮のコイン、達成後は封蝋に朱肉のスタンプを足す
 - `id="building-goko"` の点灯の動きは Final で決める
 - 模擬店の実データは Phase 4。プレリリース2まではダミーカードを 1 件以上置く
-- 本番のホスト名と `VITE_STAMP_TOKEN` の値は、来場者向け QR を書き出すときに決める。開発は `frontend/.env.local`（`*.local` は無視される）に置く
+- 本番のホスト名と `STAMP_TOKEN` の値は、来場者向け QR を書き出すときに決める。開発は `backend/.dev.vars` に置く。本番は Worker の secret にする。
