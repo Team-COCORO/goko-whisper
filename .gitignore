@@ -1,1 +1,5 @@
+# macOS
+.DS_Store
+
+# ローカル用スタンドアロン（環境変数を含む）
 standalone/
