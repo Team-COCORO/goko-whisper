@@ -14,7 +14,7 @@ PC とスマホを、端末同士が遮断されていない同じ Wi-Fi に置�
 
 PC の LAN アドレスを見て、`frontend/.env.local` の `DEMO_HOST` に書く。この名前は `VITE_` で始まらないので、画面のビルドには入らない。macOS で Wi-Fi が `en0` のときは `ipconfig getifaddr en0` の値を書く。Wi-Fi が変わったら、この行だけを直す。
 
-フロントを、API が相対パスになるようにビルドする。`frontend/.env.local` の `VITE_API_BASE_URL=http://127.0.0.1:8787` は、そのままではビルドに焼き付く。ビルド時だけ空にする。スタンプ用トークンは `.env.local` の `VITE_STAMP_TOKEN` が入る。
+フロントを、API が相対パスになるようにビルドする。`frontend/.env.local` の `VITE_API_BASE_URL=http://127.0.0.1:8787` は、そのままではビルドに焼き付く。ビルド時だけ空にする。QR の `token` は `backend/.dev.vars` の `STAMP_TOKEN` と一致させる。画面の JavaScript には入れない。
 
 ```bash
 cd frontend
@@ -42,26 +42,27 @@ npx wrangler dev --ip "$DEMO_HOST" --port 8787
 
 ## QR
 
-PC の画面に、次の二つの URL の QR を出す。ホストは `DEMO_HOST`、トークンは同じファイルの `VITE_STAMP_TOKEN` である。
+PC の画面に、次の二つの URL の QR を出す。ホストは `DEMO_HOST`、トークンは `backend/.dev.vars` の `STAMP_TOKEN` である。
 
 | 置き場所 | URL |
 |----------|-----|
-| チラシ | `http://$DEMO_HOST:8787/?stamp=spot1&token=$VITE_STAMP_TOKEN` |
-| 模擬店 | `http://$DEMO_HOST:8787/?stamp=spot2&token=$VITE_STAMP_TOKEN` |
+| チラシ | `http://$DEMO_HOST:8787/?stamp=spot1&token=$STAMP_TOKEN` |
+| 模擬店 | `http://$DEMO_HOST:8787/?stamp=spot2&token=$STAMP_TOKEN` |
 
 このデモの QR は、URL をそのまま符号化した四角いコードである。誤り訂正 H や五高マークの入った印刷用 QR は Final で作る。
 
-トークンを外部の QR サイトへ送らない。リポジトリのルートで、LAN アドレスと `frontend/.env.local` のトークンから PNG を作る。`qrencode` が無いときは `brew install qrencode` を先に行う。
+トークンを外部の QR サイトへ送らない。リポジトリのルートで、LAN アドレスと `backend/.dev.vars` の `STAMP_TOKEN` から PNG を作る。`qrencode` が無いときは `brew install qrencode` を先に行う。
 
 ```bash
 set -a
 source frontend/.env.local
+source backend/.dev.vars
 set +a
 mkdir -p /tmp/goko-demo-qr
 qrencode -o /tmp/goko-demo-qr/spot1.png -s 12 -m 4 \
-  "http://${DEMO_HOST}:8787/?stamp=spot1&token=${VITE_STAMP_TOKEN}"
+  "http://${DEMO_HOST}:8787/?stamp=spot1&token=${STAMP_TOKEN}"
 qrencode -o /tmp/goko-demo-qr/spot2.png -s 12 -m 4 \
-  "http://${DEMO_HOST}:8787/?stamp=spot2&token=${VITE_STAMP_TOKEN}"
+  "http://${DEMO_HOST}:8787/?stamp=spot2&token=${STAMP_TOKEN}"
 open /tmp/goko-demo-qr
 ```
 

@@ -29,7 +29,7 @@
 自動進行を外し、標準カメラが開く URL でスタンプを残す。API はまだ呼ばない。
 
 - `AppContext` が `goko-whisper` を `localStorage` と同期する。`clientId`、ニックネーム、二つのスタンプ、`redeemed`、`rewardCode`、`issuedAt`。画面名は保存しない
-- `?stamp=spot1|spot2&token=` が `VITE_STAMP_TOKEN` と一致したときだけフラグを立て、`replaceState` で `stamp` と `token` を消す
+- `?stamp=spot1|spot2|spot3&token=` を `POST /api/stamp/verify` で Worker の `STAMP_TOKEN` と照合できたときだけフラグを立て、`replaceState` で `stamp` と `token` を消す
 - 画面はフラグから決める。初めて付いた囁きだけ再生する。片方だけなら案内に留まる。両方揃い名前が空なら、発行の前に名前を取る
 - 「声を刻む」、`startHomeAutoFlow`、戻る操作でのリセットは削除する
 - ゴールは未接続のまま、コード欄は空か「準備中」でよい。乱数の `generateCode()` は残さない

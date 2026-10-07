@@ -16,11 +16,11 @@
 
 | 置き場所 | URL |
 |----------|-----|
-| チラシ / SNS | `https://<ホスト>/?stamp=spot1&token=<VITE_STAMP_TOKEN>` |
-| 模擬店 | `https://<ホスト>/?stamp=spot2&token=<VITE_STAMP_TOKEN>` |
-| 五高記念館 | `https://<ホスト>/?stamp=spot3&token=<VITE_STAMP_TOKEN>` |
+| チラシ / SNS | `https://<ホスト>/?stamp=spot1&token=<STAMP_TOKEN>` |
+| 模擬店 | `https://<ホスト>/?stamp=spot2&token=<STAMP_TOKEN>` |
+| 五高記念館 | `https://<ホスト>/?stamp=spot3&token=<STAMP_TOKEN>` |
 
-`token` がビルド時の `VITE_STAMP_TOKEN` と一致したときだけ付く。クエリの無い URL、トークンの違う URL は、保存済みの進行を出すだけで、スタンプは増えない。開発用のトークンは `frontend/.env.local` にある。
+`token` を Worker の `STAMP_TOKEN` と照合できたときだけ付く。照合には通信が要る。クエリの無い URL、トークンの違う URL、通信できないときは、保存済みの進行を出すだけで、スタンプは増えない。開発用のトークンは `backend/.dev.vars` にある。
 
 ページを開いた直後に、`stamp` と `token` はアドレスから消える。着地した枠は、取得済みとは別に押印待ちとして残す。名前を残す前に開き直しても、押印待ちは残る。戻る操作では進行は消えない。来場者が進行を消すボタンはない。三箇所はどの順で読んでも、押印を始めた枠から取得済みになる。
 
