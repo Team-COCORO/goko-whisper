@@ -91,6 +91,16 @@ export function HomeStatus() {
     );
   }
 
+  if (screen === "herald") {
+    return (
+      <div className="card">
+        <div className="whisper">
+          {nickname.trim()}。名を、帳に記した。印を、この頁へ。
+        </div>
+      </div>
+    );
+  }
+
   if (screen === "askName" && pendingStamp) {
     return (
       <div className="card">

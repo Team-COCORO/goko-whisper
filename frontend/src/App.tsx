@@ -18,6 +18,8 @@ function sheetLabel(screen: Screen): string {
       return "案内";
     case "askName":
       return "名前を残す";
+    case "herald":
+      return "耳を澄ませ";
     case "goal":
       return "ゴール";
     case "redeemed":
@@ -31,7 +33,7 @@ function sheetLabel(screen: Screen): string {
 
 function sheetRatio(screen: Screen): number {
   if (screen === "goal" || screen === "whisper") return 0.6;
-  if (screen === "askName" || screen === "top") return 0.45;
+  if (screen === "askName" || screen === "herald" || screen === "top") return 0.45;
   return 0.38;
 }
 
