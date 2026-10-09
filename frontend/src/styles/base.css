@@ -767,11 +767,11 @@ input.pin {
 }
 
 .stamp-book.is-open {
-  animation: book-in 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: book-in 2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .stamp-book.is-closing {
-  animation: book-out 0.72s cubic-bezier(0.4, 0, 1, 1) forwards;
+  animation: book-out 1s cubic-bezier(0.4, 0, 1, 1) forwards;
 }
 
 .orihon-spread {
@@ -781,7 +781,6 @@ input.pin {
   width: min(86%, 340px);
   display: block;
   perspective: 1800px;
-  transform-style: preserve-3d;
   touch-action: none;
   user-select: none;
   background: #4a3c31;
@@ -795,6 +794,8 @@ input.pin {
 .orihon-page {
   position: absolute;
   inset: 0;
+  z-index: 1;
+  background: #ecdcb9;
 }
 
 .orihon-face {
@@ -838,6 +839,7 @@ input.pin {
 
 .orihon-face--back {
   transform: rotateY(180deg);
+  background: radial-gradient(ellipse at center, #f7f1e3 0%, #ecdcb9 80%, #cbb892 100%);
 }
 
 .orihon-paper {
@@ -984,39 +986,7 @@ input.pin {
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
 }
 
-.orihon-nudge {
-  position: absolute;
-  z-index: 4;
-  top: 50%;
-  width: 44px;
-  height: 72px;
-  margin: 0;
-  padding: 0;
-  transform: translateY(-50%);
-  border: 0;
-  border-radius: 999px;
-  background: rgba(22, 16, 12, 0.35);
-  color: #fff;
-  display: grid;
-  place-items: center;
-}
-
-.orihon-nudge--prev {
-  left: 2px;
-}
-
-.orihon-nudge--next {
-  right: 2px;
-}
-
-.orihon-nudge__icon {
-  width: 20px;
-  height: 20px;
-  pointer-events: none;
-}
-
-.orihon-dismiss:focus-visible,
-.orihon-nudge:focus-visible {
+.orihon-dismiss:focus-visible {
   outline: 2px solid #faf6f0;
   outline-offset: 2px;
 }
@@ -1032,7 +1002,7 @@ input.pin {
 }
 
 .seal--press {
-  animation: stamp-realistic-press 2.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: stamp-realistic-press 3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   will-change: transform, opacity;
 }
 
@@ -1041,15 +1011,15 @@ input.pin {
     opacity: 0;
     transform: translateY(-45px) scale(1.15) rotate(var(--tilt));
   }
-  32% {
+  33% {
     opacity: 0.7;
     transform: translateY(0) scale(0.96, 0.94) rotate(var(--tilt));
   }
-  48% {
+  50% {
     opacity: 1;
     transform: translateY(0) scale(1.02, 1.01) rotate(var(--tilt));
   }
-  65%,
+  67%,
   100% {
     opacity: 0.94;
     transform: translateY(0) scale(1) rotate(var(--tilt));

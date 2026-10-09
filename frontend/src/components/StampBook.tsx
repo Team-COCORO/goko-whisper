@@ -3,9 +3,13 @@ import type { AnimationEvent, CSSProperties, PointerEvent, TouchEvent, Transitio
 import type { WhisperId } from "../types";
 import { useApp } from "../context/AppContext";
 
-const PRESS_MS = 3000;
+const HERALD_MS = 3000;
+const BOOK_IN_MS = 2000;
+const BEAT_MS = 1000;
+const PRESS_MS = 4000;
 const HOLD_MS = 5000;
-const HERALD_MS = 1400;
+const IMPACT_MS = 1000;
+const TURN_MS = 1350;
 
 const FRAMES: {
   id: WhisperId;
@@ -15,22 +19,15 @@ const FRAMES: {
   tilt: number;
   stamp: string;
 }[] = [
-  { id: 1, label: "チラシ", act: "第一幕", volume: "一の巻", tilt: -1.2, stamp: "/stamps/夏目漱石.svg" },
-  { id: 2, label: "模擬店", act: "第二幕", volume: "二の巻", tilt: 0.8, stamp: "/stamps/猫（中）.svg" },
-  {
-    id: 3,
-    label: "五高記念館",
-    act: "第三幕",
-    volume: "三の巻",
-    tilt: -0.6,
-    stamp: "/stamps/\u30e9\u30d5\u30ab\u30c6\u3099\u30a3\u30aa\u30cf\u30fc\u30f3\uff08\u4e2d\uff09.svg",
-  },
+  { id: 1, label: "チラシ", act: "第一幕", volume: "一の巻", tilt: -1.2, stamp: "/stamps/soseki.svg" },
+  { id: 2, label: "模擬店", act: "第二幕", volume: "二の巻", tilt: 0.8, stamp: "/stamps/cat.svg" },
+  { id: 3, label: "五高記念館", act: "第三幕", volume: "三の巻", tilt: -0.6, stamp: "/stamps/heam.svg" },
 ];
 
 type PageIndex = 0 | 1 | 2;
 type TurnDir = "next" | "prev";
 
-type Phase = "press" | "hold" | "wait-close";
+type Phase = "open" | "press" | "hold" | "wait-close";
 
 type LivePress = {
   id: WhisperId;
@@ -44,6 +41,7 @@ type Bridge = {
   hideBook: () => void;
   showWhisper: (id: WhisperId, opensGoal?: boolean) => void;
   setBookLocked: (locked: boolean) => void;
+  beginPress: (id: WhisperId) => void;
 };
 
 let livePress: LivePress | null = null;
@@ -58,7 +56,7 @@ function prefersReducedMotion(): boolean {
 function armImpact(press: LivePress) {
   window.clearTimeout(impactTimer);
   if (press.phase !== "press" || prefersReducedMotion()) return;
-  const wait = 700 - (Date.now() - press.startedAt);
+  const wait = IMPACT_MS - (Date.now() - press.startedAt);
   if (wait < 0) return;
   const { id, startedAt } = press;
   impactTimer = window.setTimeout(() => {
@@ -74,10 +72,24 @@ function arm() {
   const current = livePress;
   if (!current || current.phase === "wait-close") return;
 
-  const duration = current.phase === "press" ? PRESS_MS : HOLD_MS;
+  const duration =
+    current.phase === "open"
+      ? BOOK_IN_MS + BEAT_MS
+      : current.phase === "press"
+        ? PRESS_MS
+        : HOLD_MS;
   const remain = Math.max(0, duration - (Date.now() - current.startedAt));
   timer = window.setTimeout(() => {
     if (!livePress || livePress.id !== current.id || livePress.phase !== current.phase) {
+      return;
+    }
+    if (current.phase === "open") {
+      livePress = { ...current, phase: "press", startedAt: Date.now() };
+      bridge?.beginPress(current.id);
+      bridge?.setBookLocked(true);
+      bridge?.bump();
+      arm();
+      armImpact(livePress);
       return;
     }
     if (current.phase === "press") {
@@ -117,12 +129,14 @@ function Paper({
   side,
   pressed,
   pressing,
+  quiet,
   face,
 }: {
   id: WhisperId;
   side: "left" | "right";
   pressed: boolean;
   pressing: boolean;
+  quiet?: boolean;
   face?: "front" | "back";
 }) {
   const frame = frameOf(id);
@@ -137,7 +151,7 @@ function Paper({
           <span className="orihon-spot">{frame.label}</span>
         </header>
         <div className={pressed ? "orihon-well orihon-well--on" : "orihon-well"}>
-          {!pressed && <span className="orihon-guide">QR読取りで押印</span>}
+          {!pressed && !quiet && <span className="orihon-guide">QR読取りで押印</span>}
           {pressed && <Seal frame={frame} pressing={pressing} />}
         </div>
         <footer className="orihon-foot">
@@ -150,21 +164,6 @@ function Paper({
         </footer>
       </div>
     </div>
-  );
-}
-
-function Chevron({ dir }: { dir: "prev" | "next" }) {
-  return (
-    <svg className="orihon-nudge__icon" viewBox="0 0 24 24" aria-hidden="true">
-      <path
-        d={dir === "prev" ? "M14 5 L8 12 L14 19" : "M10 5 L16 12 L10 19"}
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.75"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
   );
 }
 
@@ -211,6 +210,8 @@ export function StampBook() {
   const [presented, setPresented] = useState(bookOpen);
   const gesture = useRef<{ x: number; y: number; kind: "touch" | "pointer" } | null>(null);
   const swallowClick = useRef(false);
+  const turnOrigin = useRef<PageIndex>(0);
+  const turnSettled = useRef(false);
 
   const done = (id: WhisperId) => {
     if (id === 1) return stamp1Done;
@@ -224,24 +225,14 @@ export function StampBook() {
       hideBook,
       showWhisper,
       setBookLocked,
+      beginPress,
     };
   });
 
   useEffect(() => {
     if (livePress) {
-      const pendingDone =
-        pendingStamp === 1
-          ? stamp1Done
-          : pendingStamp === 2
-            ? stamp2Done
-            : pendingStamp === 3
-              ? stamp3Done
-              : true;
-      if (pendingStamp && livePress.id === pendingStamp && !pendingDone) {
-        beginPress(pendingStamp);
-      }
       openBook();
-      setBookLocked(livePress.phase === "press" || livePress.phase === "hold");
+      setBookLocked(livePress.phase === "open" || livePress.phase === "press" || livePress.phase === "hold");
       arm();
       armImpact(livePress);
       return;
@@ -257,16 +248,16 @@ export function StampBook() {
         ? willComplete
           ? "hold"
           : "wait-close"
-        : "press";
+        : "open";
       livePress = {
         id,
         phase: nextPhase,
         willComplete,
         startedAt: Date.now(),
       };
-      beginPress(id);
+      if (nextPhase !== "open") beginPress(id);
       openBook();
-      setBookLocked(nextPhase === "press" || nextPhase === "hold");
+      setBookLocked(nextPhase !== "wait-close");
       arm();
       armImpact(livePress);
       bridge?.bump();
@@ -304,17 +295,33 @@ export function StampBook() {
   }, [turning]);
 
   useEffect(() => {
+    if (!turning || !flipped) return;
+    const dir = turning;
+    const from = turnOrigin.current;
+    const wait = window.setTimeout(() => {
+      if (turnSettled.current) return;
+      turnSettled.current = true;
+      setPage((dir === "next" ? from + 1 : from - 1) as PageIndex);
+      setFlipped(false);
+      setTurning(null);
+    }, TURN_MS);
+    return () => window.clearTimeout(wait);
+  }, [turning, flipped]);
+
+  useEffect(() => {
     if (livePress) setPage(pageFor(livePress.id));
   });
 
   if (!bookOpen && !presented) return null;
 
   const finishTurn = (event: TransitionEvent<HTMLElement>) => {
-    if (event.target !== event.currentTarget || !turning || !flipped) return;
+    if (event.target !== event.currentTarget || !turning || !flipped || turnSettled.current) return;
     if (event.propertyName !== "transform" && event.propertyName !== "-webkit-transform") {
       return;
     }
-    setPage((turning === "next" ? displayed + 1 : displayed - 1) as PageIndex);
+    turnSettled.current = true;
+    const from = turnOrigin.current;
+    setPage((turning === "next" ? from + 1 : from - 1) as PageIndex);
     setFlipped(false);
     setTurning(null);
   };
@@ -327,7 +334,8 @@ export function StampBook() {
   const displayed: PageIndex = livePress ? pageFor(livePress.id) : page;
   const pressingNow = livePress?.phase === "press";
 
-  const locked = livePress?.phase === "press" || livePress?.phase === "hold";
+  const locked =
+    livePress?.phase === "open" || livePress?.phase === "press" || livePress?.phase === "hold";
 
   const finishClose = () => {
     const id = livePress?.phase === "wait-close" ? livePress.id : null;
@@ -346,6 +354,8 @@ export function StampBook() {
       setPage((dir === "next" ? displayed + 1 : displayed - 1) as PageIndex);
       return;
     }
+    turnOrigin.current = displayed;
+    turnSettled.current = false;
     setTurning(dir);
   };
 
@@ -411,15 +421,19 @@ export function StampBook() {
     settleGesture(start.x, start.y, event.clientX, event.clientY, event.currentTarget);
   };
 
-  const sheet = (id: WhisperId, side: "left" | "right", face?: "front" | "back") => (
-    <Paper
-      id={id}
-      side={side}
-      face={face}
-      pressed={done(id) || livePress?.id === id}
-      pressing={pressingNow && livePress?.id === id}
-    />
-  );
+  const sheet = (id: WhisperId, side: "left" | "right", face?: "front" | "back") => {
+    const arriving = livePress?.phase === "open" && livePress.id === id;
+    return (
+      <Paper
+        id={id}
+        side={side}
+        face={face}
+        pressed={(done(id) || livePress?.id === id) && !arriving}
+        pressing={pressingNow && livePress?.id === id}
+        quiet={arriving}
+      />
+    );
+  };
 
   const destination = (
     turning === "next" ? displayed + 1 : turning === "prev" ? displayed - 1 : displayed
@@ -427,9 +441,6 @@ export function StampBook() {
   const underId = idAt(turning === "next" ? destination : displayed);
   const leafId = idAt(turning === "prev" ? destination : displayed);
   const leafFlipped = turning === "prev" ? !flipped : flipped;
-
-  const canPrev = !livePress && !turning && displayed > 0;
-  const canNext = !livePress && !turning && displayed < 2;
 
   return (
     <div
@@ -452,26 +463,6 @@ export function StampBook() {
           </button>
         )}
       </div>
-      {canPrev && (
-        <button
-          className="orihon-nudge orihon-nudge--prev"
-          type="button"
-          aria-label="前の頁"
-          onClick={() => turnTo("prev")}
-        >
-          <Chevron dir="prev" />
-        </button>
-      )}
-      {canNext && (
-        <button
-          className="orihon-nudge orihon-nudge--next"
-          type="button"
-          aria-label="次の頁"
-          onClick={() => turnTo("next")}
-        >
-          <Chevron dir="next" />
-        </button>
-      )}
       <div
         className="orihon-spread"
         onTouchStart={onTouchStart}
@@ -499,6 +490,7 @@ export function StampBook() {
             onTransitionEnd={finishTurn}
           >
             {sheet(leafId, "left", "front")}
+            <div className="orihon-face orihon-face--back" />
           </article>
         )}
       </div>
