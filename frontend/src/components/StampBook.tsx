@@ -7,18 +7,27 @@ const PRESS_MS = 3000;
 const HOLD_MS = 5000;
 const HERALD_MS = 1400;
 
-const FRAMES: { id: WhisperId; label: string; tilt: number; stamp: string }[] = [
-  { id: 1, label: "チラシ", tilt: -1.2, stamp: "/stamps/夏目漱石.svg" },
-  { id: 2, label: "模擬店", tilt: 0.8, stamp: "/stamps/猫（中）.svg" },
+const FRAMES: {
+  id: WhisperId;
+  label: string;
+  act: string;
+  volume: string;
+  tilt: number;
+  stamp: string;
+}[] = [
+  { id: 1, label: "チラシ", act: "第一幕", volume: "一の巻", tilt: -1.2, stamp: "/stamps/夏目漱石.svg" },
+  { id: 2, label: "模擬店", act: "第二幕", volume: "二の巻", tilt: 0.8, stamp: "/stamps/猫（中）.svg" },
   {
     id: 3,
     label: "五高記念館",
+    act: "第三幕",
+    volume: "三の巻",
     tilt: -0.6,
     stamp: "/stamps/\u30e9\u30d5\u30ab\u30c6\u3099\u30a3\u30aa\u30cf\u30fc\u30f3\uff08\u4e2d\uff09.svg",
   },
 ];
 
-type Opening = 0 | 1;
+type PageIndex = 0 | 1 | 2;
 type TurnDir = "next" | "prev";
 
 type Phase = "press" | "hold" | "wait-close";
@@ -49,7 +58,7 @@ function prefersReducedMotion(): boolean {
 function armImpact(press: LivePress) {
   window.clearTimeout(impactTimer);
   if (press.phase !== "press" || prefersReducedMotion()) return;
-  const wait = 400 - (Date.now() - press.startedAt);
+  const wait = 700 - (Date.now() - press.startedAt);
   if (wait < 0) return;
   const { id, startedAt } = press;
   impactTimer = window.setTimeout(() => {
@@ -95,13 +104,12 @@ function frameOf(id: WhisperId) {
   return frame;
 }
 
-function leafId(opening: Opening, side: "left" | "right"): WhisperId {
-  if (opening === 0) return side === "left" ? 1 : 2;
-  return side === "left" ? 2 : 3;
+function pageFor(id: WhisperId): PageIndex {
+  return (id - 1) as PageIndex;
 }
 
-function openingFor(id: WhisperId): Opening {
-  return id === 3 ? 1 : 0;
+function idAt(index: PageIndex): WhisperId {
+  return (index + 1) as WhisperId;
 }
 
 function Paper({
@@ -122,15 +130,24 @@ function Paper({
     <div className={face ? `orihon-face is-${side} orihon-face--${face}` : `orihon-face is-${side}`}>
       <div className="orihon-paper">
         <div className="orihon-rule" />
+        <div className="orihon-rule orihon-rule--iron" />
         <div className="orihon-rule orihon-rule--inner" />
-        <span className="orihon-corner orihon-corner--tl" />
-        <span className="orihon-corner orihon-corner--tr" />
-        <span className="orihon-corner orihon-corner--bl" />
-        <span className="orihon-corner orihon-corner--br" />
-        <p className="orihon-vert">{frame.label}</p>
+        <header className="orihon-head">
+          <span className="orihon-act">{frame.act}</span>
+          <span className="orihon-spot">{frame.label}</span>
+        </header>
         <div className={pressed ? "orihon-well orihon-well--on" : "orihon-well"}>
+          {!pressed && <span className="orihon-guide">QR読取りで押印</span>}
           {pressed && <Seal frame={frame} pressing={pressing} />}
         </div>
+        <footer className="orihon-foot">
+          <span className="orihon-dots" aria-hidden="true">
+            {FRAMES.map((item) => (
+              <span key={item.id} className={item.id === frame.id ? "orihon-dot is-on" : "orihon-dot"} />
+            ))}
+          </span>
+          <span>{frame.volume}</span>
+        </footer>
       </div>
     </div>
   );
@@ -188,7 +205,7 @@ export function StampBook() {
     showWhisper,
   } = useApp();
   const [, bump] = useState(0);
-  const [opening, setOpening] = useState<Opening>(0);
+  const [page, setPage] = useState<PageIndex>(0);
   const [turning, setTurning] = useState<TurnDir | null>(null);
   const [flipped, setFlipped] = useState(false);
   const [presented, setPresented] = useState(bookOpen);
@@ -286,6 +303,10 @@ export function StampBook() {
     };
   }, [turning]);
 
+  useEffect(() => {
+    if (livePress) setPage(pageFor(livePress.id));
+  });
+
   if (!bookOpen && !presented) return null;
 
   const finishTurn = (event: TransitionEvent<HTMLElement>) => {
@@ -293,7 +314,7 @@ export function StampBook() {
     if (event.propertyName !== "transform" && event.propertyName !== "-webkit-transform") {
       return;
     }
-    setOpening(turning === "next" ? 1 : 0);
+    setPage((turning === "next" ? displayed + 1 : displayed - 1) as PageIndex);
     setFlipped(false);
     setTurning(null);
   };
@@ -303,7 +324,7 @@ export function StampBook() {
     if (event.animationName === "book-out") setPresented(false);
   };
 
-  const displayed: Opening = livePress ? openingFor(livePress.id) : opening;
+  const displayed: PageIndex = livePress ? pageFor(livePress.id) : page;
   const pressingNow = livePress?.phase === "press";
 
   const locked = livePress?.phase === "press" || livePress?.phase === "hold";
@@ -319,10 +340,10 @@ export function StampBook() {
 
   const turnTo = (dir: TurnDir) => {
     if (livePress || turning) return;
-    if (dir === "next" && displayed === 1) return;
+    if (dir === "next" && displayed === 2) return;
     if (dir === "prev" && displayed === 0) return;
     if (prefersReducedMotion()) {
-      setOpening(dir === "next" ? 1 : 0);
+      setPage((dir === "next" ? displayed + 1 : displayed - 1) as PageIndex);
       return;
     }
     setTurning(dir);
@@ -400,16 +421,15 @@ export function StampBook() {
     />
   );
 
-  const destination: Opening = turning === "next" ? 1 : turning === "prev" ? 0 : displayed;
-  const underLeft = leafId(turning === "prev" ? destination : displayed, "left");
-  const underRight = leafId(turning === "next" ? destination : displayed, "right");
-  const flipSide = turning === "next" ? "right" : "left";
-  const frontId = leafId(displayed, flipSide);
-  const backSide = flipSide === "right" ? "left" : "right";
-  const backId = leafId(destination, backSide);
+  const destination = (
+    turning === "next" ? displayed + 1 : turning === "prev" ? displayed - 1 : displayed
+  ) as PageIndex;
+  const underId = idAt(turning === "next" ? destination : displayed);
+  const leafId = idAt(turning === "prev" ? destination : displayed);
+  const leafFlipped = turning === "prev" ? !flipped : flipped;
 
-  const canPrev = !livePress && !turning && displayed === 1;
-  const canNext = !livePress && !turning && displayed === 0;
+  const canPrev = !livePress && !turning && displayed > 0;
+  const canNext = !livePress && !turning && displayed < 2;
 
   return (
     <div
@@ -425,24 +445,18 @@ export function StampBook() {
         if (event.target === event.currentTarget) requestClose();
       }}
     >
-      {!locked && (
-        <button className="orihon-dismiss" type="button" aria-label="閉じる" onClick={requestClose}>
-          <svg viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="M6 6 L18 18 M18 6 L6 18"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
-      )}
+      <div className="orihon-toolbar">
+        {!locked && (
+          <button className="orihon-dismiss" type="button" onClick={requestClose}>
+            閉じる
+          </button>
+        )}
+      </div>
       {canPrev && (
         <button
           className="orihon-nudge orihon-nudge--prev"
           type="button"
-          aria-label="前の見開き"
+          aria-label="前の頁"
           onClick={() => turnTo("prev")}
         >
           <Chevron dir="prev" />
@@ -452,7 +466,7 @@ export function StampBook() {
         <button
           className="orihon-nudge orihon-nudge--next"
           type="button"
-          aria-label="次の見開き"
+          aria-label="次の頁"
           onClick={() => turnTo("next")}
         >
           <Chevron dir="next" />
@@ -471,24 +485,20 @@ export function StampBook() {
           gesture.current = null;
         }}
       >
-        <article className="orihon-page" aria-label={`${frameOf(underLeft).label}の頁`}>
-          {sheet(underLeft, "left")}
-        </article>
-        <article className="orihon-page" aria-label={`${frameOf(underRight).label}の頁`}>
-          {sheet(underRight, "right")}
+        <article className="orihon-page" aria-label={`${frameOf(underId).label}の頁`}>
+          {sheet(underId, "left")}
         </article>
         {turning && (
           <article
             className={
-              flipped
-                ? `orihon-leaf orihon-leaf--flip orihon-leaf--${flipSide} is-flipped`
-                : `orihon-leaf orihon-leaf--flip orihon-leaf--${flipSide}`
+              leafFlipped
+                ? "orihon-leaf orihon-leaf--flip is-flipped"
+                : "orihon-leaf orihon-leaf--flip"
             }
             aria-hidden="true"
             onTransitionEnd={finishTurn}
           >
-            {sheet(frontId, flipSide, "front")}
-            {sheet(backId, backSide, "back")}
+            {sheet(leafId, "left", "front")}
           </article>
         )}
       </div>
@@ -497,21 +507,20 @@ export function StampBook() {
 }
 
 export function StampBookButton() {
-  const { bookOpen, screen, openBook } = useApp();
+  const { bookOpen, screen, openBook, stamp1Done, stamp2Done, stamp3Done } = useApp();
   if (bookOpen || screen === "admin") return null;
+  const done = [stamp1Done, stamp2Done, stamp3Done].filter(Boolean).length;
 
   return (
     <button
       className="stamp-fab"
       type="button"
-      aria-label="スタンプ帳"
+      aria-label={`スタンプ帳、${done}つ`}
       onClick={openBook}
     >
-      <span className="stamp-fab__book" aria-hidden="true">
-        <span className="stamp-fab__spine" />
-        <span className="stamp-fab__slip" />
-        <span className="stamp-fab__mark" />
-      </span>
+      <span className="stamp-fab__spine" aria-hidden="true" />
+      <span className="stamp-fab__label">スタンプ帖</span>
+      <span className="stamp-fab__badge">{done}/3</span>
     </button>
   );
 }
