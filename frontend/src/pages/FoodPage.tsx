@@ -56,14 +56,14 @@ export function FoodPage() {
 
   return (
     <div className="menu-page">
+      <div className="menu-shop">
+        <span className="menu-shop__name">五高喫茶</span>
+        <span className="menu-shop__place">場所：本館中庭</span>
+      </div>
       <h1>お品書き</h1>
       <p className="sub">
         <Phrased text="囁きは、このお店のどこかに眠っている。" />
       </p>
-      <div className="menu-shop">
-        <span className="menu-shop__name">五高茶屋</span>
-        <span className="menu-shop__place">場所：本館中庭</span>
-      </div>
       <div className="menu-list">
         {ITEMS.map((item) => (
           <button

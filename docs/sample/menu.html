@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<title>食品・お品書き</title>
+<title>五高喫茶・お品書き</title>
 <style>
   :root {
     --bg-base: #f6f1e8;
@@ -11,6 +11,7 @@
     --navy-main: #1f3144;
     --brand-red: #8b3a2b; /* 弁柄・朱色 */
     --brass-gold: #c5a059;
+    --sage-green: #687e6c; /* シールの若草色 */
     --border-card: #d9cfbe;
     --text-sub: #5c554e;
     --font-serif: "HiraMinProN-W3", "游明朝", "YuMincho", "MS P明朝", serif;
@@ -34,11 +35,10 @@
     overflow: hidden;
   }
 
-  /* 画面全体のスクロール領域 */
   .page-scroll-area {
     flex: 1;
     overflow-y: auto;
-    padding: 24px 20px 20px;
+    padding: 20px 20px 24px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -79,59 +79,145 @@
     border: 1px solid var(--brass-gold);
   }
 
-  /* タイトル・ヘッダー */
-  .header-group {
+  /* ヘッダー・店舗エンブレム */
+  .shop-header {
     text-align: center;
-    margin-bottom: 18px;
+    margin-bottom: 14px;
     width: 100%;
     max-width: 360px;
-  }
-  .page-title {
-    margin: 0 0 6px;
-    font-size: 26px;
-    font-weight: bold;
-    color: var(--brand-red);
-    letter-spacing: 0.25em;
-    text-indent: 0.25em;
-  }
-  .page-subtext {
-    margin: 0;
-    font-size: 13px;
-    color: var(--text-sub);
-    letter-spacing: 0.08em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
-  /* 模擬店の屋号・場所 */
+  /* カップシール連動エンブレム */
+  .seal-emblem {
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    border: 2px dashed var(--sage-green);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 8px;
+    background: #faf7f0;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    position: relative;
+  }
+  .seal-emblem::after {
+    content: "";
+    position: absolute;
+    inset: 3px;
+    border-radius: 50%;
+    border: 1px solid rgba(104, 126, 108, 0.4);
+  }
+  .seal-emblem-cats {
+    font-size: 18px;
+    line-height: 1;
+    color: var(--sage-green);
+  }
+  .seal-emblem-sub {
+    font-size: 6px;
+    letter-spacing: 0.08em;
+    color: var(--brand-red);
+    margin-top: 2px;
+  }
+
+  .shop-meta-tag {
+    font-size: 11px;
+    color: var(--sage-green);
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+  }
+  .shop-title-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 4px;
+  }
+  .shop-booth-num {
+    font-size: 14px;
+    font-weight: bold;
+    color: var(--brand-red);
+    border: 1px solid var(--brand-red);
+    border-radius: 12px;
+    padding: 0 6px;
+  }
+  .shop-title {
+    margin: 0;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--navy-main);
+    letter-spacing: 0.15em;
+  }
+  .shop-org {
+    margin: 0;
+    font-size: 11px;
+    color: var(--text-sub);
+    letter-spacing: 0.05em;
+  }
+
+  /* 看板帯・案内マップ呼び出し */
   .shop-banner {
     width: 100%;
     max-width: 360px;
+    border-top: 1px dashed var(--border-card);
     border-bottom: 1px dashed var(--border-card);
-    padding-bottom: 8px;
-    margin-bottom: 16px;
+    padding: 7px 4px;
+    margin: 10px 0 16px;
     display: flex;
     justify-content: space-between;
-    align-items: baseline;
+    align-items: center;
   }
-  .shop-name {
-    font-size: 15px;
-    font-weight: bold;
-    letter-spacing: 0.1em;
-  }
-  .shop-place {
-    font-size: 11px;
+  .shop-place-text {
+    font-size: 11.5px;
     color: var(--text-sub);
   }
+  .map-link-btn {
+    font-size: 11px;
+    color: var(--brand-red);
+    background: none;
+    border: 1px solid var(--brand-red);
+    border-radius: 4px;
+    padding: 2px 8px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .map-link-btn:active {
+    background: rgba(139, 58, 43, 0.08);
+  }
 
-  /* メニューリスト */
+  /* お品書きセクション見出し */
+  .menu-heading {
+    text-align: center;
+    margin-bottom: 14px;
+  }
+  .menu-title {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: bold;
+    color: var(--brand-red);
+    letter-spacing: 0.2em;
+    text-indent: 0.2em;
+  }
+  .menu-whisper-hint {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-sub);
+    letter-spacing: 0.05em;
+  }
+
+  /* メニュー一覧 */
   .menu-list {
     width: 100%;
     max-width: 360px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
+    gap: 12px;
   }
 
-  /* お品書きカード */
   .menu-card {
     background: var(--paper-card);
     border: 1px solid var(--border-card);
@@ -146,19 +232,16 @@
   }
   .menu-card:active {
     transform: scale(0.98);
-    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
   }
 
-  /* サムネイル（1:1 正方形） */
   .menu-thumb-wrap {
-    width: 88px;
-    height: 88px;
+    width: 86px;
+    height: 86px;
     border-radius: 6px;
     overflow: hidden;
     background-color: #eae4da;
     border: 1px solid var(--border-card);
     flex-shrink: 0;
-    position: relative;
   }
   .menu-thumb-img {
     width: 100%;
@@ -167,7 +250,6 @@
     display: block;
   }
 
-  /* テキスト情報 */
   .menu-info {
     flex: 1;
     display: flex;
@@ -178,14 +260,13 @@
     margin: 0;
     font-size: 15px;
     font-weight: bold;
-    letter-spacing: 0.05em;
     color: var(--navy-main);
   }
   .menu-desc-short {
     margin: 4px 0 0;
     font-size: 12px;
     color: var(--text-sub);
-    line-height: 1.5;
+    line-height: 1.45;
     display: -webkit-box;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
@@ -193,16 +274,12 @@
     overflow: hidden;
   }
   .menu-tap-hint {
-    margin-top: 4px;
-    font-size: 11px;
+    font-size: 10.5px;
     color: var(--brand-red);
-    letter-spacing: 0.05em;
     align-self: flex-end;
   }
 
-  /* -----------------------------------------------
-   * 詳細モーダル
-   * ----------------------------------------------- */
+  /* モーダル */
   .modal-scrim {
     position: fixed;
     inset: 0;
@@ -233,7 +310,7 @@
     opacity: 0;
     pointer-events: none;
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
-    padding: 18px 16px 16px;
+    padding: 16px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -244,7 +321,6 @@
     pointer-events: auto;
   }
 
-  /* モーダル画像（4:3 アスペクト比で画面を圧迫しない） */
   .modal-img-wrap {
     width: 100%;
     aspect-ratio: 4 / 3;
@@ -252,7 +328,7 @@
     overflow: hidden;
     background: #eae4da;
     border: 1px solid var(--border-card);
-    margin-bottom: 12px;
+    margin-bottom: 10px;
   }
   .modal-img {
     width: 100%;
@@ -262,22 +338,20 @@
   }
 
   .modal-title {
-    margin: 0 0 8px;
-    font-size: 17px;
+    margin: 0 0 6px;
+    font-size: 16px;
     font-weight: bold;
     color: var(--navy-main);
-    letter-spacing: 0.08em;
-    text-align: center;
     border-bottom: 1.5px solid var(--brand-red);
-    padding-bottom: 4px;
+    padding-bottom: 3px;
     width: 100%;
+    text-align: center;
   }
   .modal-desc {
     margin: 0 0 14px;
-    font-size: 12.5px;
+    font-size: 12px;
     color: var(--text-sub);
-    line-height: 1.65;
-    letter-spacing: 0.03em;
+    line-height: 1.6;
     text-align: justify;
   }
 
@@ -286,14 +360,10 @@
     color: #f7f1e3;
     border: 1px solid var(--brass-gold);
     border-radius: 4px;
-    padding: 6px 20px;
+    padding: 5px 18px;
     font-size: 12px;
     font-family: inherit;
     cursor: pointer;
-    letter-spacing: 0.1em;
-  }
-  .modal-close-btn:active {
-    transform: scale(0.96);
   }
 
   /* 下部ナビゲーション */
@@ -334,22 +404,38 @@
   </div>
 
   <div class="page-scroll-area">
-    <div class="header-group">
-      <h1 class="page-title">模擬店</h1>
-      <p class="page-subtext">囁きは、この中のどこかに眠っている。</p>
-    </div>
+    
+    <!-- 店舗情報ヘッダー（カップシール連携） -->
+    <header class="shop-header">
+      <div class="seal-emblem">
+        <span class="seal-emblem-cats">🐾 🐈 🐈</span>
+        <span class="seal-emblem-sub">EST. 1887</span>
+      </div>
+      <span class="shop-meta-tag">キャンパスミュージアム推進機構</span>
+      <div class="shop-title-row">
+        <span class="shop-booth-num">18ばん</span>
+        <h1 class="shop-title">五高喫茶</h1>
+      </div>
+      <p class="shop-org">チームCOCORO</p>
+    </header>
 
-    <!-- 単一模擬店情報 -->
+    <!-- 看板・案内マップ動線 -->
     <div class="shop-banner">
-      <span class="shop-name">五高茶屋</span>
-      <span class="shop-place">場所：本館中庭</span>
+      <span class="shop-place-text">場所：文法棟前・サブステージ脇</span>
+      <button class="map-link-btn" onclick="openMapModal()">案内図 ≫</button>
     </div>
 
-    <!-- お品書き（2品表示） -->
+    <!-- お品書き見出し -->
+    <div class="menu-heading">
+      <h2 class="menu-title">お品書き</h2>
+      <p class="menu-whisper-hint">囁きは、このお店のどこかに眠っている。</p>
+    </div>
+
+    <!-- メニューリスト -->
     <div class="menu-list">
       
       <!-- 1品目：碧空クリームソーダ -->
-      <div class="menu-card" onclick="openModal('soda_blue')">
+      <div class="menu-card" onclick="openMenuModal('soda_blue')">
         <div class="menu-thumb-wrap">
           <img src="/images/soda_blue.webp" 
                alt="碧空クリームソーダ" 
@@ -358,14 +444,14 @@
                decoding="async">
         </div>
         <div class="menu-info">
-          <h2 class="menu-name">碧空クリームソーダ</h2>
+          <h3 class="menu-name">碧空クリームソーダ</h3>
           <p class="menu-desc-short">澄んだ青のグラデーションが目を惹く、爽やかな炭酸ソーダにバニラアイスを添えて。</p>
           <span class="menu-tap-hint">詳細を見る ≫</span>
         </div>
       </div>
 
       <!-- 2品目：新緑メロンソーダ -->
-      <div class="menu-card" onclick="openModal('soda_green')">
+      <div class="menu-card" onclick="openMenuModal('soda_green')">
         <div class="menu-thumb-wrap">
           <img src="/images/soda_green.webp" 
                alt="新緑メロンソーダ" 
@@ -374,7 +460,7 @@
                decoding="async">
         </div>
         <div class="menu-info">
-          <h2 class="menu-name">新緑メロンソーダ</h2>
+          <h3 class="menu-name">新緑メロンソーダ</h3>
           <p class="menu-desc-short">昔懐かしい喫茶の味わい。鮮やかなエメラルドグリーンと真っ赤なチェリーが彩る王道の一杯。</p>
           <span class="menu-tap-hint">詳細を見る ≫</span>
         </div>
@@ -383,7 +469,7 @@
     </div>
   </div>
 
-  <!-- 詳細モーダル -->
+  <!-- 詳細モーダル（商品 / 案内図 共通） -->
   <div id="modal-scrim" class="modal-scrim" onclick="closeModal()"></div>
   <div id="detail-modal" class="detail-modal">
     <div class="modal-img-wrap">
@@ -411,24 +497,34 @@
   </nav>
 
   <script>
-    // メニュー詳細データ
     const MENU_DATA = {
       soda_blue: {
         title: "碧空（あおぞら）クリームソーダ",
         img: "/images/soda_blue.webp",
-        desc: "深い青から空色へと移ろう美しいグラデーションが特徴の一杯。シュワシュワと弾ける爽快な炭酸に、溶け出すバニラアイスのまろやかさが溶け合います。散策の合間のひと休みにどうぞ。"
+        desc: "深い青から空色へと移ろうグラデーションが目を惹く一杯。カップには五高喫茶特製の記念シールが貼られています。シュワシュワ弾ける炭酸とアイスのまろやかさをお楽しみください。"
       },
       soda_green: {
         title: "新緑（しんりょく）メロンソーダ",
         img: "/images/soda_green.webp",
-        desc: "明治の喫茶文化の黎明期を思わせる、鮮やかな緑色が眩しい王道のメロンクリームソーダ。真っ赤なチェリーがアクセント。アイスをすくって楽しむもよし、少し溶かしてミルキーな味わいにするもよしの一品です。"
+        desc: "明治の洋食喫茶文化を想起させる王道のメロンソーダ。赤いチェリーと特製猫シールが目印です。散策の合間のひと休みにどうぞ。"
+      },
+      map: {
+        title: "出店場所（18ばんブース）",
+        img: "/images/shop_map.webp",
+        desc: "五高記念館と文法棟の間、ロータリー・サブステージ付近に出店しています。ブースの案内板やカップのどこかに『囁き』の手がかりが隠されています。"
       }
     };
 
-    function openModal(itemId) {
-      const data = MENU_DATA[itemId];
-      if (!data) return;
+    function openMenuModal(key) {
+      showModal(MENU_DATA[key]);
+    }
 
+    function openMapModal() {
+      showModal(MENU_DATA.map);
+    }
+
+    function showModal(data) {
+      if (!data) return;
       document.getElementById('modal-img').src = data.img;
       document.getElementById('modal-img').alt = data.title;
       document.getElementById('modal-title').textContent = data.title;

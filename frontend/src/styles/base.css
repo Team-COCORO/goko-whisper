@@ -171,22 +171,27 @@ body {
 
 .menu-shop {
   display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 12px;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
   border-bottom: 1px dashed #d9cfbe;
-  padding-bottom: 8px;
-  margin-bottom: 16px;
+  padding: 6px 72px 10px;
+  margin-bottom: 4px;
+  text-align: center;
 }
 
 .menu-shop__name {
-  font-size: 15px;
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: 0.1em;
+  letter-spacing: 0.22em;
+  text-indent: 0.22em;
+  line-height: 1.4;
+  color: #1f3144;
 }
 
 .menu-shop__place {
-  font-size: 12px;
+  font-size: 13px;
+  letter-spacing: 0.08em;
   color: #5c554e;
 }
 
