@@ -154,8 +154,19 @@ body {
   margin: 0 auto;
 }
 
+.menu-page .sub,
+.menu-name,
+.menu-short,
+.menu-detail h2,
+.menu-detail p {
+  line-break: strict;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 .menu-page .sub {
   padding-inline: 72px;
+  line-height: 1.7;
 }
 
 .menu-shop {
@@ -318,7 +329,7 @@ body {
   font-size: 14px;
   line-height: 1.65;
   letter-spacing: 0.03em;
-  text-align: justify;
+  text-align: left;
   color: #5c554e;
 }
 

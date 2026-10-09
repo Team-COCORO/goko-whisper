@@ -1,4 +1,24 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+
+const BREAK_AFTER =
+  /[、。！？）)]|(?:から|まで|より|は|が|を|に|で(?!す)|と|も|へ|の|な|て(?!い))/g;
+
+function Phrased({ text }: { text: string }) {
+  const nodes: ReactNode[] = [];
+  let last = 0;
+  let key = 0;
+  for (const match of text.matchAll(BREAK_AFTER)) {
+    const index = match.index ?? 0;
+    const end = index + match[0].length;
+    if (end <= last || end >= text.length) continue;
+    nodes.push(text.slice(last, end));
+    nodes.push(<wbr key={key} />);
+    key += 1;
+    last = end;
+  }
+  nodes.push(text.slice(last));
+  return nodes;
+}
 
 const ITEMS = [
   {
@@ -37,7 +57,9 @@ export function FoodPage() {
   return (
     <div className="menu-page">
       <h1>お品書き</h1>
-      <p className="sub">囁きは、この中のどこかに眠っている。</p>
+      <p className="sub">
+        <Phrased text="囁きは、このお店のどこかに眠っている。" />
+      </p>
       <div className="menu-shop">
         <span className="menu-shop__name">五高茶屋</span>
         <span className="menu-shop__place">場所：本館中庭</span>
@@ -54,8 +76,12 @@ export function FoodPage() {
               <img src={item.image} alt="" width={88} height={88} />
             </span>
             <span className="menu-info">
-              <span className="menu-name">{item.name}</span>
-              <span className="menu-short">{item.short}</span>
+              <span className="menu-name">
+                <Phrased text={item.name} />
+              </span>
+              <span className="menu-short">
+                <Phrased text={item.short} />
+              </span>
               <span className="menu-hint">詳細を見る ≫</span>
             </span>
           </button>
@@ -73,8 +99,12 @@ export function FoodPage() {
             <div className="menu-detail__photo">
               <img src={open.image} alt={open.title} />
             </div>
-            <h2 id="menu-detail-title">{open.title}</h2>
-            <p>{open.desc}</p>
+            <h2 id="menu-detail-title">
+              <Phrased text={open.title} />
+            </h2>
+            <p>
+              <Phrased text={open.desc} />
+            </p>
             <button className="menu-detail__close" type="button" onClick={() => setOpenId(null)}>
               閉じる
             </button>
