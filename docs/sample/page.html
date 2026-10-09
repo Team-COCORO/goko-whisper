@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>五高スタンプ帖</title>
+<style>
+  :root {
+    --bg-dark: #1f1915;
+    --paper-base: #f7f1e3;
+    --paper-edge: #cbb892;
+    --stamp-red: #8b3a2b;
+    --navy-iron: #2c3e50;
+    --brass-gold: #c5a059;
+    --overlay: rgba(22, 16, 12, 0.75);
+    --font-serif: "HiraMinProN-W3", "游明朝", "YuMincho", "MS P明朝", serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100dvh;
+    background-color: var(--bg-dark);
+    font-family: var(--font-serif);
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .book-trigger-btn {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    width: 52px;
+    height: 72px;
+    background: var(--navy-iron);
+    border: 2px solid var(--brass-gold);
+    border-radius: 3px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--paper-base);
+    z-index: 100;
+  }
+  .book-trigger-btn .spine {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 8px;
+    background: #1a252f;
+    border-right: 1px solid var(--brass-gold);
+  }
+  .book-trigger-btn .label {
+    writing-mode: vertical-rl;
+    font-size: 10px;
+    font-weight: bold;
+    letter-spacing: 0.15em;
+    margin-left: 6px;
+  }
+  .book-trigger-btn .badge {
+    position: absolute;
+    bottom: -4px;
+    background: var(--stamp-red);
+    color: #fff;
+    font-size: 8px;
+    padding: 1px 4px;
+    border-radius: 8px;
+    border: 1px solid var(--brass-gold);
+  }
+
+  .scrim {
+    position: fixed;
+    inset: 0;
+    background: var(--overlay);
+    backdrop-filter: blur(2px);
+    z-index: 900;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .scrim.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .orihon-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    width: 88%;
+    max-width: 360px;
+    height: 72dvh;
+    max-height: 520px;
+    z-index: 1000;
+    transform: translate(-50%, 100vh) scale(0.95);
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.35s ease;
+    display: flex;
+    flex-direction: column;
+    perspective: 1800px;
+  }
+  
+  .orihon-container.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .close-stamp-btn {
+    position: absolute;
+    top: -42px;
+    right: 0;
+    background: var(--paper-base);
+    border: 2px solid var(--stamp-red);
+    color: var(--stamp-red);
+    padding: 3px 12px;
+    font-size: 12px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    border-radius: 4px;
+    z-index: 1002;
+  }
+
+  .orihon-book {
+    flex: 1;
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    border-radius: 4px;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.4), inset 0 0 0 3px var(--brass-gold);
+    background: #4a3c31;
+    border: 4px solid var(--navy-iron);
+  }
+
+  .orihon-page {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, var(--paper-base) 0%, #ecdcb9 80%, var(--paper-edge) 100%);
+    padding: 16px 14px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform-origin: left center;
+    transition: transform 0.65s cubic-bezier(0.25, 1, 0.5, 1), box-shadow 0.65s;
+    box-shadow: inset 6px 0 15px rgba(0,0,0,0.08), 0 5px 15px rgba(0,0,0,0.15);
+    border-radius: 2px;
+  }
+
+  .orihon-page::after {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border: 1.5px solid var(--navy-iron);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+  .orihon-page-border-inner {
+    position: absolute;
+    inset: 11px;
+    border: 0.8px dashed var(--navy-iron);
+    border-radius: 1px;
+    pointer-events: none;
+  }
+  .orihon-page::before {
+    content: "";
+    position: absolute;
+    inset: 5px;
+    border: 2px double var(--brass-gold);
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  /* めくられた状態 */
+  .orihon-page.flipped {
+    transform: rotateY(-180deg);
+    pointer-events: none;
+  }
+
+  .page-header {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px dashed rgba(44, 62, 80, 0.3);
+    padding-bottom: 4px;
+    z-index: 10;
+  }
+  .page-header .stage-count {
+    font-size: 12px;
+    font-weight: bold;
+    color: var(--navy-iron);
+    background: rgba(44, 62, 80, 0.08);
+    padding: 2px 6px;
+    border-radius: 8px;
+  }
+  .page-header .spot-name {
+    font-size: 13px;
+    font-weight: bold;
+    color: var(--navy-iron);
+    letter-spacing: 0.15em;
+  }
+
+  .orihon-well {
+    position: relative;
+    width: 86%;
+    flex: 1;
+    margin: 8px 0;
+    border: 1.5px dashed rgba(44, 62, 80, 0.25);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.15);
+    z-index: 5;
+    overflow: hidden;
+  }
+  .orihon-well.on {
+    border-color: transparent;
+    background: transparent;
+  }
+
+  .digital-stamp {
+    width: 92%;
+    height: 92%;
+    object-fit: contain;
+    filter: drop-shadow(0 1px 1.5px rgba(139, 58, 43, 0.22));
+    color: var(--stamp-red);
+    opacity: 0;
+    transform: scale(0.5);
+    pointer-events: none;
+    transition: transform 0.3s, opacity 0.3s;
+  }
+  
+  .digital-stamp.active {
+    opacity: 0.94;
+    transform: scale(1) rotate(var(--stamp-tilt, -1deg));
+  }
+
+  .digital-stamp.pressing {
+    animation: stamp-impact 1.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  }
+
+  @keyframes stamp-impact {
+    0% {
+      opacity: 0;
+      transform: translateY(-40px) scale(1.18) rotate(var(--stamp-tilt, 0deg));
+    }
+    30% {
+      opacity: 0.75;
+      transform: translateY(0) scale(0.96, 0.93) rotate(var(--stamp-tilt, 0deg));
+    }
+    45% {
+      opacity: 1;
+      transform: translateY(0) scale(1.02, 1.01) rotate(var(--stamp-tilt, 0deg));
+    }
+    62%, 100% {
+      opacity: 0.94;
+      transform: translateY(0) scale(1) rotate(var(--stamp-tilt, 0deg));
+    }
+  }
+
+  .well-guide {
+    position: absolute;
+    color: rgba(44, 62, 80, 0.4);
+    font-size: 11px;
+    text-align: center;
+    pointer-events: none;
+    line-height: 1.5;
+  }
+
+  .page-footer {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 12px;
+    padding-top: 4px;
+    border-top: 1px dashed rgba(44, 62, 80, 0.2);
+    z-index: 10;
+  }
+  .page-footer .dots {
+    display: flex;
+    gap: 5px;
+  }
+  .page-footer .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: rgba(44, 62, 80, 0.2);
+  }
+  .page-footer .dot.active {
+    background: var(--navy-iron);
+  }
+  .page-footer .foot-label {
+    font-size: 10px;
+    color: var(--navy-iron);
+    font-weight: bold;
+  }
+
+  .orihon-edge-btn {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 25%;
+    z-index: 1001;
+    cursor: pointer;
+  }
+  .orihon-edge-btn-left { left: 0; }
+  .orihon-edge-btn-right { right: 0; }
+
+  .swipe-tip {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: var(--paper-base);
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    z-index: 1005;
+    background: rgba(0,0,0,0.55);
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+  .swipe-tip.show { opacity: 0.9; }
+
+  .demo-controls {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 10;
+  }
+  .demo-btn {
+    background: var(--brass-gold);
+    border: 1px solid var(--paper-base);
+    color: var(--bg-dark);
+    font-size: 12px;
+    font-weight: bold;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+  <div class="demo-controls">
+    <button class="demo-btn" onclick="openBook()">開く</button>
+    <button class="demo-btn" style="background: var(--stamp-red); color: white;" onclick="triggerDemoStamp()">この頁に押印</button>
+  </div>
+
+  <div class="book-trigger-btn" onclick="openBook()">
+    <div class="spine"></div>
+    <div class="label">スタンプ帖</div>
+    <div id="badge-count" class="badge">0/3</div>
+  </div>
+
+  <div id="orihon-scrim" class="scrim" onclick="closeBook()"></div>
+
+  <div id="orihon-box" class="orihon-container">
+    <button class="close-stamp-btn" onclick="closeBook()">
+      <span>閉じる</span>
+    </button>
+
+    <div class="orihon-book">
+      <!-- めくりタップ領域 -->
+      <div class="orihon-edge-btn orihon-edge-btn-left" onclick="turnPrev()"></div>
+      <div class="orihon-edge-btn orihon-edge-btn-right" onclick="turnNext()"></div>
+
+      <!-- 第一幕：夏目漱石 -->
+      <div id="page-1" class="orihon-page">
+        <div class="orihon-page-border-inner"></div>
+        <div class="page-header">
+          <span class="stage-count">第一幕</span>
+          <span class="spot-name">チラシ</span>
+        </div>
+        <div class="orihon-well" id="well-1">
+          <div class="well-guide" id="guide-1">QR読取りで押印</div>
+          <img src="/stamps/spot1.svg" class="digital-stamp" id="stamp-1" style="--stamp-tilt: -1.2deg;" alt="夏目漱石">
+        </div>
+        <div class="page-footer">
+          <div class="dots"><div class="dot active"></div><div class="dot"></div><div class="dot"></div></div>
+          <span class="foot-label">一の巻</span>
+        </div>
+      </div>
+
+      <!-- 第二幕：猫とコップ -->
+      <div id="page-2" class="orihon-page">
+        <div class="orihon-page-border-inner"></div>
+        <div class="page-header">
+          <span class="stage-count">第二幕</span>
+          <span class="spot-name">模擬店</span>
+        </div>
+        <div class="orihon-well" id="well-2">
+          <div class="well-guide" id="guide-2">QR読取りで押印</div>
+          <img src="/stamps/spot2.svg" class="digital-stamp" id="stamp-2" style="--stamp-tilt: 0.8deg;" alt="水を舐める猫">
+        </div>
+        <div class="page-footer">
+          <div class="dots"><div class="dot"></div><div class="dot active"></div><div class="dot"></div></div>
+          <span class="foot-label">二の巻</span>
+        </div>
+      </div>
+
+      <!-- 第三幕：ラフカディオ・ハーン -->
+      <div id="page-3" class="orihon-page">
+        <div class="orihon-page-border-inner"></div>
+        <div class="page-header">
+          <span class="stage-count">第三幕</span>
+          <span class="spot-name">五高記念館</span>
+        </div>
+        <div class="orihon-well" id="well-3">
+          <div class="well-guide" id="guide-3">QR読取りで押印</div>
+          <img src="/stamps/spot3.svg" class="digital-stamp" id="stamp-3" style="--stamp-tilt: -0.6deg;" alt="ラフカディオ・ハーン">
+        </div>
+        <div class="page-footer">
+          <div class="dots"><div class="dot"></div><div class="dot"></div><div class="dot active"></div></div>
+          <span class="foot-label">三の巻</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="swipe-tip" class="swipe-tip">
+    <span>左右へめくって下さい ≫</span>
+  </div>
+
+  <script>
+    let isOpen = false;
+    let currentPage = 1;
+    const maxPages = 3;
+    let isTransitioning = false;
+    const acquiredStamps = { 1: false, 2: false, 3: false };
+
+    let touchStartX = 0;
+    let touchStartY = 0;
+
+    // 重なり順（z-index）を動的に正確に更新する関数
+    function updatePageLayers() {
+      for (let i = 1; i <= maxPages; i++) {
+        const page = document.getElementById(`page-${i}`);
+        if (i < currentPage) {
+          // すでにめくられた過去ページ
+          page.style.zIndex = i;
+        } else if (i === currentPage) {
+          // 現在表示中のページ（最前面）
+          page.style.zIndex = 10;
+        } else {
+          // これからめくる未来ページ（奥側へ順に配置）
+          page.style.zIndex = 10 - i;
+        }
+      }
+    }
+
+    function openBook() {
+      if (isOpen) return;
+      isOpen = true;
+      updatePageLayers();
+      document.getElementById('orihon-scrim').classList.add('show');
+      document.getElementById('orihon-box').classList.add('show');
+    }
+
+    function closeBook() {
+      if (!isOpen) return;
+      isOpen = false;
+      document.getElementById('orihon-scrim').classList.remove('show');
+      document.getElementById('orihon-box').classList.remove('show');
+    }
+
+    // 次へ進む
+    function turnNext() {
+      if (isTransitioning || currentPage >= maxPages) return;
+      isTransitioning = true;
+      
+      const turningPage = document.getElementById(`page-${currentPage}`);
+      
+      // めくっている最中はこのページを一番上（z-index: 20）にする
+      turningPage.style.zIndex = 20;
+      turningPage.classList.add('flipped');
+      
+      currentPage++;
+      
+      // アニメーション完了後にレイヤー順を正規化
+      setTimeout(() => {
+        updatePageLayers();
+        isTransitioning = false;
+      }, 650);
+    }
+
+    // 前に戻る
+    function turnPrev() {
+      if (isTransitioning || currentPage <= 1) return;
+      isTransitioning = true;
+      
+      currentPage--;
+      const returningPage = document.getElementById(`page-${currentPage}`);
+      
+      // 戻す最中はこのページを最前面にする
+      returningPage.style.zIndex = 20;
+      returningPage.classList.remove('flipped');
+      
+      setTimeout(() => {
+        updatePageLayers();
+        isTransitioning = false;
+      }, 650);
+    }
+
+    function triggerDemoStamp() {
+      const p = currentPage;
+      if (acquiredStamps[p]) return;
+      
+      openBook();
+      
+      setTimeout(() => {
+        acquiredStamps[p] = true;
+        const well = document.getElementById(`well-${p}`);
+        const guide = document.getElementById(`guide-${p}`);
+        const stamp = document.getElementById(`stamp-${p}`);
+        
+        guide.style.display = 'none';
+        well.classList.add('on');
+        stamp.classList.add('pressing');
+        stamp.classList.add('active');
+
+        setTimeout(() => {
+          if (navigator.vibrate) {
+            try { navigator.vibrate(35); } catch(e){}
+          }
+        }, 300);
+
+        const count = Object.values(acquiredStamps).filter(Boolean).length;
+        document.getElementById('badge-count').textContent = `${count}/3`;
+      }, 400);
+    }
+
+    // スワイプ判定
+    const bookEl = document.getElementById('orihon-box');
+    bookEl.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
+
+    bookEl.addEventListener('touchend', (e) => {
+      if (isTransitioning) return;
+      const diffX = e.changedTouches[0].clientX - touchStartX;
+      const diffY = e.changedTouches[0].clientY - touchStartY;
+
+      if (Math.abs(diffX) > 40 && Math.abs(diffY) < 60) {
+        if (diffX < 0) {
+          turnNext();
+        } else {
+          turnPrev();
+        }
+      }
+      if (diffY > 70 && Math.abs(diffX) < 50) {
+        closeBook();
+      }
+    }, { passive: true });
+
+    // 初期化
+    updatePageLayers();
+  </script>
+</body>
+</html>
