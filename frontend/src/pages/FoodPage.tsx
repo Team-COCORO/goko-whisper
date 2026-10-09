@@ -27,7 +27,7 @@ const ITEMS = [
     title: "碧空（あおぞら）クリームソーダ",
     image: "/menu/blue_soda.webp",
     short: "澄んだ青のグラデーションが目を惹く、爽やかな炭酸ソーダにバニラアイスを添えて。",
-    desc: "深い青から空色へと移ろう美しいグラデーションが特徴の一杯。シュワシュワと弾ける爽快な炭酸に、溶け出すバニラアイスのまろやかさが溶け合います。散策の合間のひと休みにどうぞ。",
+    desc: "深い青から空色へと移ろうグラデーションが目を惹く一杯。カップには五高喫茶特製の記念シールが貼られています。シュワシュワ弾ける炭酸とアイスのまろやかさをお楽しみください。",
   },
   {
     id: "soda_green",
@@ -35,15 +35,23 @@ const ITEMS = [
     title: "新緑（しんりょく）メロンソーダ",
     image: "/menu/melon_soda.webp",
     short: "昔懐かしい喫茶の味わい。鮮やかなエメラルドグリーンと真っ赤なチェリーが彩る王道の一杯。",
-    desc: "明治の喫茶文化の黎明期を思わせる、鮮やかな緑色が眩しい王道のメロンクリームソーダ。真っ赤なチェリーがアクセント。アイスをすくって楽しむもよし、少し溶かしてミルキーな味わいにするもよしの一品です。",
+    desc: "明治の洋食喫茶文化を想起させる王道のメロンソーダ。赤いチェリーと特製猫シールが目印です。散策の合間のひと休みにどうぞ。",
   },
 ] as const;
 
 type ItemId = (typeof ITEMS)[number]["id"];
+type OpenId = ItemId | "map";
+
+const MAP = {
+  title: "出店場所（18ばんブース）",
+  image: "/menu/shop_map.jpg",
+  desc: "五高記念館と文法棟の間、ロータリー・サブステージ付近に出店しています。ブースの案内板やカップのどこかに『囁き』の手がかりが隠されています。",
+};
 
 export function FoodPage() {
-  const [openId, setOpenId] = useState<ItemId | null>(null);
-  const open = ITEMS.find((item) => item.id === openId) ?? null;
+  const [openId, setOpenId] = useState<OpenId | null>(null);
+  const item = ITEMS.find((entry) => entry.id === openId);
+  const open = openId === "map" ? MAP : item ?? null;
 
   useEffect(() => {
     if (!open) return;
@@ -56,9 +64,24 @@ export function FoodPage() {
 
   return (
     <div className="menu-page">
-      <div className="menu-shop">
-        <span className="menu-shop__name">五高喫茶</span>
-        <span className="menu-shop__place">場所：本館中庭</span>
+      <header className="menu-shop">
+        <img
+          className="menu-seal"
+          src="/menu/goko_kissaten_seal.jpeg"
+          alt="五高喫茶のカップシール。レース枠の中に猫の親子"
+          width={148}
+          height={148}
+        />
+        <div className="menu-shop__title">
+          <span className="menu-shop__booth">18ばん</span>
+          <span className="menu-shop__name">五高喫茶</span>
+        </div>
+      </header>
+      <div className="menu-place">
+        <span>場所：文法棟前・サブステージ脇</span>
+        <button type="button" onClick={() => setOpenId("map")}>
+          案内図 ≫
+        </button>
       </div>
       <h1>お品書き</h1>
       <p className="sub">
