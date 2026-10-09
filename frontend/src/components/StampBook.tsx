@@ -403,8 +403,8 @@ export function StampBook() {
     if (!start || start.kind !== "touch") return;
     const touch = event.changedTouches[0];
     if (!touch) return;
-    event.preventDefault();
     settleGesture(start.x, start.y, touch.clientX, touch.clientY, event.currentTarget);
+    event.preventDefault();
   };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
@@ -416,8 +416,8 @@ export function StampBook() {
 
   const onPointerUp = (event: PointerEvent<HTMLDivElement>) => {
     const start = gesture.current;
-    gesture.current = null;
     if (!start || start.kind !== "pointer") return;
+    gesture.current = null;
     settleGesture(start.x, start.y, event.clientX, event.clientY, event.currentTarget);
   };
 
@@ -468,12 +468,12 @@ export function StampBook() {
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
         onTouchCancel={() => {
-          gesture.current = null;
+          if (gesture.current?.kind === "touch") gesture.current = null;
         }}
         onPointerDown={onPointerDown}
         onPointerUp={onPointerUp}
         onPointerCancel={() => {
-          gesture.current = null;
+          if (gesture.current?.kind === "pointer") gesture.current = null;
         }}
       >
         <article className="orihon-page" aria-label={`${frameOf(underId).label}の頁`}>
