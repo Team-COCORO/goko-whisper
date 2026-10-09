@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>食品・お品書き</title>
+<style>
+  :root {
+    --bg-base: #f6f1e8;
+    --paper-card: #fbf9f4;
+    --navy-main: #1f3144;
+    --brand-red: #8b3a2b; /* 弁柄・朱色 */
+    --brass-gold: #c5a059;
+    --border-card: #d9cfbe;
+    --text-sub: #5c554e;
+    --font-serif: "HiraMinProN-W3", "游明朝", "YuMincho", "MS P明朝", serif;
+  }
+
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    height: 100dvh;
+    background-color: var(--bg-base);
+    font-family: var(--font-serif);
+    color: var(--navy-main);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* 画面全体のスクロール領域 */
+  .page-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 20px 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* 右上固定：スタンプ帖アイコン */
+  .book-trigger-btn {
+    position: fixed;
+    top: 12px;
+    right: 14px;
+    width: 44px;
+    height: 60px;
+    background: #243444;
+    border: 1.5px solid var(--brass-gold);
+    border-radius: 2px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #f7f1e3;
+    z-index: 100;
+  }
+  .book-trigger-btn .label {
+    writing-mode: vertical-rl;
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 0.15em;
+  }
+  .book-trigger-btn .badge {
+    position: absolute;
+    bottom: -5px;
+    background: var(--brand-red);
+    color: #fff;
+    font-size: 8px;
+    padding: 1px 4px;
+    border-radius: 6px;
+    border: 1px solid var(--brass-gold);
+  }
+
+  /* タイトル・ヘッダー */
+  .header-group {
+    text-align: center;
+    margin-bottom: 18px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .page-title {
+    margin: 0 0 6px;
+    font-size: 26px;
+    font-weight: bold;
+    color: var(--brand-red);
+    letter-spacing: 0.25em;
+    text-indent: 0.25em;
+  }
+  .page-subtext {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-sub);
+    letter-spacing: 0.08em;
+  }
+
+  /* 模擬店の屋号・場所 */
+  .shop-banner {
+    width: 100%;
+    max-width: 360px;
+    border-bottom: 1px dashed var(--border-card);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+  }
+  .shop-name {
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+  }
+  .shop-place {
+    font-size: 11px;
+    color: var(--text-sub);
+  }
+
+  /* メニューリスト */
+  .menu-list {
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  /* お品書きカード */
+  .menu-card {
+    background: var(--paper-card);
+    border: 1px solid var(--border-card);
+    border-radius: 8px;
+    padding: 12px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+    display: flex;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    position: relative;
+  }
+  .menu-card:active {
+    transform: scale(0.98);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* サムネイル（1:1 正方形） */
+  .menu-thumb-wrap {
+    width: 88px;
+    height: 88px;
+    border-radius: 6px;
+    overflow: hidden;
+    background-color: #eae4da;
+    border: 1px solid var(--border-card);
+    flex-shrink: 0;
+    position: relative;
+  }
+  .menu-thumb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  /* テキスト情報 */
+  .menu-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .menu-name {
+    margin: 0;
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+    color: var(--navy-main);
+  }
+  .menu-desc-short {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: var(--text-sub);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+  .menu-tap-hint {
+    margin-top: 4px;
+    font-size: 11px;
+    color: var(--brand-red);
+    letter-spacing: 0.05em;
+    align-self: flex-end;
+  }
+
+  /* -----------------------------------------------
+   * 詳細モーダル
+   * ----------------------------------------------- */
+  .modal-scrim {
+    position: fixed;
+    inset: 0;
+    background: rgba(22, 16, 12, 0.65);
+    backdrop-filter: blur(2px);
+    z-index: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .modal-scrim.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .detail-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -45%) scale(0.95);
+    width: 88%;
+    max-width: 330px;
+    background: radial-gradient(ellipse at center, #fbf9f4 0%, #f4ede1 100%);
+    border: 2px solid var(--brass-gold);
+    border-radius: 6px;
+    box-shadow: 0 16px 32px rgba(0,0,0,0.35);
+    z-index: 510;
+    opacity: 0;
+    pointer-events: none;
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease;
+    padding: 18px 16px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .detail-modal.show {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  /* モーダル画像（4:3 アスペクト比で画面を圧迫しない） */
+  .modal-img-wrap {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 4px;
+    overflow: hidden;
+    background: #eae4da;
+    border: 1px solid var(--border-card);
+    margin-bottom: 12px;
+  }
+  .modal-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .modal-title {
+    margin: 0 0 8px;
+    font-size: 17px;
+    font-weight: bold;
+    color: var(--navy-main);
+    letter-spacing: 0.08em;
+    text-align: center;
+    border-bottom: 1.5px solid var(--brand-red);
+    padding-bottom: 4px;
+    width: 100%;
+  }
+  .modal-desc {
+    margin: 0 0 14px;
+    font-size: 12.5px;
+    color: var(--text-sub);
+    line-height: 1.65;
+    letter-spacing: 0.03em;
+    text-align: justify;
+  }
+
+  .modal-close-btn {
+    background: var(--navy-main);
+    color: #f7f1e3;
+    border: 1px solid var(--brass-gold);
+    border-radius: 4px;
+    padding: 6px 20px;
+    font-size: 12px;
+    font-family: inherit;
+    cursor: pointer;
+    letter-spacing: 0.1em;
+  }
+  .modal-close-btn:active {
+    transform: scale(0.96);
+  }
+
+  /* 下部ナビゲーション */
+  .bottom-nav {
+    height: 64px;
+    background: var(--navy-main);
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    border-top: 1px solid rgba(197, 160, 89, 0.3);
+    z-index: 50;
+    flex-shrink: 0;
+  }
+  .nav-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: rgba(246, 241, 232, 0.65);
+    text-decoration: none;
+    font-size: 11px;
+    gap: 4px;
+  }
+  .nav-item.active {
+    color: var(--brass-gold);
+  }
+  .nav-icon {
+    font-size: 18px;
+    line-height: 1;
+  }
+</style>
+</head>
+<body>
+
+  <!-- 右上スタンプ帖ボタン -->
+  <div class="book-trigger-btn">
+    <div class="label">スタンプ帖</div>
+    <div class="badge">0/3</div>
+  </div>
+
+  <div class="page-scroll-area">
+    <div class="header-group">
+      <h1 class="page-title">模擬店</h1>
+      <p class="page-subtext">囁きは、この中のどこかに眠っている。</p>
+    </div>
+
+    <!-- 単一模擬店情報 -->
+    <div class="shop-banner">
+      <span class="shop-name">五高茶屋</span>
+      <span class="shop-place">場所：本館中庭</span>
+    </div>
+
+    <!-- お品書き（2品表示） -->
+    <div class="menu-list">
+      
+      <!-- 1品目：碧空クリームソーダ -->
+      <div class="menu-card" onclick="openModal('soda_blue')">
+        <div class="menu-thumb-wrap">
+          <img src="/images/soda_blue.webp" 
+               alt="碧空クリームソーダ" 
+               class="menu-thumb-img" 
+               loading="eager" 
+               decoding="async">
+        </div>
+        <div class="menu-info">
+          <h2 class="menu-name">碧空クリームソーダ</h2>
+          <p class="menu-desc-short">澄んだ青のグラデーションが目を惹く、爽やかな炭酸ソーダにバニラアイスを添えて。</p>
+          <span class="menu-tap-hint">詳細を見る ≫</span>
+        </div>
+      </div>
+
+      <!-- 2品目：新緑メロンソーダ -->
+      <div class="menu-card" onclick="openModal('soda_green')">
+        <div class="menu-thumb-wrap">
+          <img src="/images/soda_green.webp" 
+               alt="新緑メロンソーダ" 
+               class="menu-thumb-img" 
+               loading="eager" 
+               decoding="async">
+        </div>
+        <div class="menu-info">
+          <h2 class="menu-name">新緑メロンソーダ</h2>
+          <p class="menu-desc-short">昔懐かしい喫茶の味わい。鮮やかなエメラルドグリーンと真っ赤なチェリーが彩る王道の一杯。</p>
+          <span class="menu-tap-hint">詳細を見る ≫</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 詳細モーダル -->
+  <div id="modal-scrim" class="modal-scrim" onclick="closeModal()"></div>
+  <div id="detail-modal" class="detail-modal">
+    <div class="modal-img-wrap">
+      <img id="modal-img" src="" alt="" class="modal-img">
+    </div>
+    <h3 id="modal-title" class="modal-title"></h3>
+    <p id="modal-desc" class="modal-desc"></p>
+    <button class="modal-close-btn" onclick="closeModal()">閉じる</button>
+  </div>
+
+  <!-- フッターナビゲーション -->
+  <nav class="bottom-nav">
+    <a href="#" class="nav-item">
+      <span class="nav-icon">🧭</span>
+      <span>ホーム</span>
+    </a>
+    <a href="#" class="nav-item active">
+      <span class="nav-icon">🍵</span>
+      <span>食品</span>
+    </a>
+    <a href="#" class="nav-item">
+      <span class="nav-icon">⭐</span>
+      <span>プレゼント</span>
+    </a>
+  </nav>
+
+  <script>
+    // メニュー詳細データ
+    const MENU_DATA = {
+      soda_blue: {
+        title: "碧空（あおぞら）クリームソーダ",
+        img: "/images/soda_blue.webp",
+        desc: "深い青から空色へと移ろう美しいグラデーションが特徴の一杯。シュワシュワと弾ける爽快な炭酸に、溶け出すバニラアイスのまろやかさが溶け合います。散策の合間のひと休みにどうぞ。"
+      },
+      soda_green: {
+        title: "新緑（しんりょく）メロンソーダ",
+        img: "/images/soda_green.webp",
+        desc: "明治の喫茶文化の黎明期を思わせる、鮮やかな緑色が眩しい王道のメロンクリームソーダ。真っ赤なチェリーがアクセント。アイスをすくって楽しむもよし、少し溶かしてミルキーな味わいにするもよしの一品です。"
+      }
+    };
+
+    function openModal(itemId) {
+      const data = MENU_DATA[itemId];
+      if (!data) return;
+
+      document.getElementById('modal-img').src = data.img;
+      document.getElementById('modal-img').alt = data.title;
+      document.getElementById('modal-title').textContent = data.title;
+      document.getElementById('modal-desc').textContent = data.desc;
+
+      document.getElementById('modal-scrim').classList.add('show');
+      document.getElementById('detail-modal').classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-scrim').classList.remove('show');
+      document.getElementById('detail-modal').classList.remove('show');
+    }
+  </script>
+</body>
+</html>
