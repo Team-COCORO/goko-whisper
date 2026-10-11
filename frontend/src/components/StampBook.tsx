@@ -590,8 +590,8 @@ export function StampBook() {
 }
 
 export function StampBookButton() {
-  const { bookOpen, screen, openBook, stamp1Done, stamp2Done, stamp3Done } = useApp();
-  if (bookOpen || screen === "admin") return null;
+  const { bookOpen, screen, activeTab, openBook, stamp1Done, stamp2Done, stamp3Done } = useApp();
+  if (bookOpen || screen === "admin" || activeTab === "present") return null;
   const done = [stamp1Done, stamp2Done, stamp3Done].filter(Boolean).length;
 
   return (
