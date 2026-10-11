@@ -48,6 +48,7 @@ let livePress: LivePress | null = null;
 let bridge: Bridge | null = null;
 let timer = 0;
 let impactTimer = 0;
+let guideSeen = false;
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -188,6 +189,83 @@ function Seal({
   );
 }
 
+function stopGuide(event: { stopPropagation: () => void }) {
+  event.stopPropagation();
+}
+
+function GuideHand({ motion }: { motion: "swipe" | "tap" }) {
+  return (
+    <svg
+      className={motion === "swipe" ? "book-guide__hand is-swipe" : "book-guide__hand is-tap"}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+      <path d="M8 13v-8.5a1.5 1.5 0 0 1 3 0v7.5" />
+      <path d="M11 11.5v-2a1.5 1.5 0 1 1 3 0v2.5" />
+      <path d="M14 10.5a1.5 1.5 0 0 1 3 0v1.5" />
+      <path d="M17 11.5a1.5 1.5 0 0 1 3 0v4.5a6 6 0 0 1 -6 6h-2h.208a6 6 0 0 1 -5.012 -2.7a69.74 69.74 0 0 1 -.196 -.3c-.312 -.479 -1.407 -2.388 -3.286 -5.728a1.5 1.5 0 0 1 .536 -2.022a1.867 1.867 0 0 1 2.28 .28l1.47 1.47" />
+    </svg>
+  );
+}
+
+function PageGuide({ open, onDismiss }: { open: boolean; onDismiss: () => void }) {
+  return (
+    <div
+      className={open ? "book-guide is-on" : "book-guide"}
+      role="button"
+      tabIndex={open ? 0 : -1}
+      aria-label="操作ガイドを閉じる"
+      aria-hidden={!open}
+      onClick={(event) => {
+        stopGuide(event);
+        onDismiss();
+      }}
+      onTouchStart={stopGuide}
+      onTouchEnd={(event) => {
+        stopGuide(event);
+        onDismiss();
+      }}
+      onPointerDown={stopGuide}
+      onPointerUp={stopGuide}
+      onKeyDown={(event) => {
+        if (event.key !== "Enter" && event.key !== " ") return;
+        event.preventDefault();
+        onDismiss();
+      }}
+    >
+      <div className="book-guide__head">折本のめくり方</div>
+      <div className="book-guide__body">
+        <div className="book-guide__zone">
+          <div className="book-guide__icon">
+            <svg className="book-guide__arrow" viewBox="0 0 24 24" aria-hidden="true">
+              <line x1="19" y1="12" x2="5" y2="12" />
+              <polyline points="12 19 5 12 12 5" />
+            </svg>
+            <GuideHand motion="swipe" />
+          </div>
+          <div className="book-guide__title">横スワイプ</div>
+          <div className="book-guide__sub">左右に払ってめくる</div>
+        </div>
+        <div className="book-guide__zone">
+          <div className="book-guide__icon">
+            <div className="book-guide__ripple" />
+            <GuideHand motion="tap" />
+          </div>
+          <div className="book-guide__title">端をタップ</div>
+          <div className="book-guide__sub">左右の端を押して送る</div>
+        </div>
+      </div>
+      <div className="book-guide__foot">画面をタップして閉じる</div>
+    </div>
+  );
+}
+
 export function StampBook() {
   const {
     nickname,
@@ -208,6 +286,7 @@ export function StampBook() {
   const [turning, setTurning] = useState<TurnDir | null>(null);
   const [flipped, setFlipped] = useState(false);
   const [presented, setPresented] = useState(bookOpen);
+  const [guideOn, setGuideOn] = useState(false);
   const gesture = useRef<{ x: number; y: number; kind: "touch" | "pointer" } | null>(null);
   const swallowClick = useRef(false);
   const turnOrigin = useRef<PageIndex>(0);
@@ -279,7 +358,18 @@ export function StampBook() {
       setPresented(true);
       return;
     }
+    setGuideOn(false);
     if (prefersReducedMotion()) setPresented(false);
+  }, [bookOpen]);
+
+  useEffect(() => {
+    if (!bookOpen || guideSeen || livePress) return;
+    const wait = window.setTimeout(() => {
+      if (livePress) return;
+      guideSeen = true;
+      setGuideOn(true);
+    }, prefersReducedMotion() ? 0 : BOOK_IN_MS);
+    return () => window.clearTimeout(wait);
   }, [bookOpen]);
 
   useEffect(() => {
@@ -389,7 +479,7 @@ export function StampBook() {
   };
 
   const onTouchStart = (event: TouchEvent<HTMLDivElement>) => {
-    if (locked || turning || livePress || event.touches.length !== 1) {
+    if (guideOn || locked || turning || livePress || event.touches.length !== 1) {
       gesture.current = null;
       return;
     }
@@ -409,7 +499,7 @@ export function StampBook() {
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
     if (event.pointerType === "touch" || event.button !== 0) return;
-    if (locked || turning || livePress) return;
+    if (guideOn || locked || turning || livePress) return;
     gesture.current = { x: event.clientX, y: event.clientY, kind: "pointer" };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
@@ -479,6 +569,7 @@ export function StampBook() {
         <article className="orihon-page" aria-label={`${frameOf(underId).label}の頁`}>
           {sheet(underId, "left")}
         </article>
+        <PageGuide open={guideOn} onDismiss={() => setGuideOn(false)} />
         {turning && (
           <article
             className={
