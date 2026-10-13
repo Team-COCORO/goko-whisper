@@ -153,7 +153,7 @@ async function handleIssue(request: Request, env: Env): Promise<Response> {
 
   if (
     !nickname ||
-    nickname.length > 20 ||
+    nickname.length > 10 ||
     !CLIENT_ID_RE.test(clientId)
   ) {
     return json(request, { result: "invalid" }, 400);

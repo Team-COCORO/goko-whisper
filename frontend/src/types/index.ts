@@ -4,7 +4,6 @@ export type Screen =
   | "top"
   | "whisper"
   | "guide"
-  | "askName"
   | "herald"
   | "goal"
   | "redeemed"

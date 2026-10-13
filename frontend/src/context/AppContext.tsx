@@ -197,12 +197,10 @@ function deriveScreen(
     return "goal";
   }
   if (whisperId) return "whisper";
-  if (!rally.nickname.trim() && rally.pendingStamp) return "askName";
-  if (rally.nickname.trim() && rally.pendingStamp) return "herald";
+  if (rally.pendingStamp) return "herald";
   const anyStamp = rally.stamp1Done || rally.stamp2Done || rally.stamp3Done;
   if (!anyStamp && !rally.pendingStamp) return "top";
   if (!allStamps(rally)) return "guide";
-  if (!rally.nickname.trim()) return "askName";
   if (!rally.rewardCode && soldOut) return "soldOut";
   return "top";
 }
@@ -356,7 +354,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const saveNickname = useCallback(
     (name: string) => {
       const nickname = name.trim();
-      if (!nickname || nickname.length > 20 || rally.rewardCode) return;
+      if (!nickname || nickname.length > 10 || rally.rewardCode) return;
 
       const next = { ...rally, nickname };
       try {

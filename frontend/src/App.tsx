@@ -8,6 +8,7 @@ import { AppProvider, useApp } from "./context/AppContext";
 import { AdminPage } from "./pages/AdminPage";
 import { FoodPage } from "./pages/FoodPage";
 import { PresentPage } from "./pages/PresentPage";
+import { WelcomePage } from "./pages/WelcomePage";
 import type { Screen } from "./types";
 
 function sheetLabel(screen: Screen): string {
@@ -16,8 +17,6 @@ function sheetLabel(screen: Screen): string {
       return "囁き";
     case "guide":
       return "案内";
-    case "askName":
-      return "名前を残す";
     case "herald":
       return "耳を澄ませ";
     case "goal":
@@ -33,7 +32,7 @@ function sheetLabel(screen: Screen): string {
 
 function sheetRatio(screen: Screen): number {
   if (screen === "goal" || screen === "whisper") return 0.6;
-  if (screen === "askName" || screen === "herald" || screen === "top") return 0.45;
+  if (screen === "herald" || screen === "top") return 0.45;
   return 0.38;
 }
 
@@ -97,7 +96,7 @@ function TabContent() {
 }
 
 function AppShell() {
-  const { storageBlocked } = useApp();
+  const { storageBlocked, screen, nickname } = useApp();
 
   if (storageBlocked) {
     return (
@@ -110,6 +109,14 @@ function AppShell() {
           </div>
         </main>
         <BottomNav />
+      </div>
+    );
+  }
+
+  if (screen !== "admin" && !nickname.trim()) {
+    return (
+      <div className="app-shell">
+        <WelcomePage />
       </div>
     );
   }
