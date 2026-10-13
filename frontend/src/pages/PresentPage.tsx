@@ -86,8 +86,10 @@ export function PresentPage() {
       <div className="present-place">
         <div>
           <p className="present-place__label">交換場所（スタンプラリーゴール）</p>
-          <p className="present-place__name">ラフカディオ・ハーン像そば</p>
-          <p className="present-place__booth">18ばん 五高喫茶ブース</p>
+          <p className="present-place__spot">
+            <span className="menu-shop__booth">18ばん</span>
+            <span className="present-place__name">五高喫茶ブース</span>
+          </p>
         </div>
         <button type="button" onClick={() => setMapOpen(true)}>
           案内図 ≫
