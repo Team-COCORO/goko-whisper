@@ -14,7 +14,9 @@ export type WhisperId = 1 | 2 | 3;
 
 export type WhisperContent = {
   label: string;
-  text: string;
+  seal: string;
+  phrases: string[];
+  source: string;
   hint: string;
 };
 

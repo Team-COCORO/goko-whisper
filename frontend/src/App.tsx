@@ -66,7 +66,10 @@ function HomeStage() {
           refitRef.current();
         }}
       >
-        <p className="sub">あなたは、五高の声を聞いたことがありますか。</p>
+        <p className="sub">
+          <span className="u-nowrap">あなたは、</span>
+          <span className="u-nowrap">五高の声を聞いたことがありますか。</span>
+        </p>
         <HomeStatus />
       </BottomSheet>
     </main>
