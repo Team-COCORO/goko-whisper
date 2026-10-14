@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { StampNotice } from "../components/StampNotice";
 import { useApp } from "../context/AppContext";
 
 const NICKNAME_MAX = 10;
@@ -11,6 +12,7 @@ export function WelcomePage() {
   return (
     <main className="welcome">
       <div className="welcome-card">
+        <StampNotice />
         <h1 className="welcome-title">五高の囁き</h1>
         <div className="welcome-lead">スマホでめぐる歴史スタンプラリー</div>
 

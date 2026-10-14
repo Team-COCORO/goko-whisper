@@ -7,10 +7,11 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { verifyStamp } from "../api";
+import { verifyStamp, type StampVerifyResult } from "../api";
 import type { Screen, StampRallyState, Tab, WhisperId } from "../types";
 
 const STORAGE_KEY = "goko-whisper";
+const STAMP_CLAIM_KEY = "goko-stamp-claim";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -50,6 +51,8 @@ type AppContextValue = {
   showWhisper: (id: WhisperId, opensGoal?: boolean) => void;
   dismissWhisper: () => void;
   openGoal: () => void;
+  stampNotice: "retry" | "invalid" | null;
+  retryStamp: () => void;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -150,23 +153,80 @@ function spotToId(stamp: string | null): WhisperId | null {
 type StampClaim = { stamp: string; id: WhisperId; token: string };
 
 let stampClaim: StampClaim | null | undefined;
-let stampVerify: Promise<boolean> | null = null;
+let stampVerify: Promise<StampVerifyResult> | null = null;
+
+function claimFromParts(stamp: string | null, token: string | null): StampClaim | null {
+  const id = spotToId(stamp);
+  if (!stamp || !token || !id) return null;
+  return { stamp, id, token };
+}
+
+function readStoredClaim(): StampClaim | null {
+  try {
+    const raw = sessionStorage.getItem(STAMP_CLAIM_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as { stamp?: unknown; token?: unknown };
+    const stamp = typeof parsed.stamp === "string" ? parsed.stamp : null;
+    const token = typeof parsed.token === "string" ? parsed.token : null;
+    return claimFromParts(stamp, token);
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredClaim(claim: StampClaim) {
+  try {
+    sessionStorage.setItem(
+      STAMP_CLAIM_KEY,
+      JSON.stringify({ stamp: claim.stamp, token: claim.token }),
+    );
+  } catch {
+    // タブを閉じるまでメモリ上の claim で再送する。
+  }
+}
+
+function clearStoredClaim() {
+  try {
+    sessionStorage.removeItem(STAMP_CLAIM_KEY);
+  } catch {
+    // 保存できない環境では消すものがない。
+  }
+}
 
 function claimStampQuery(): StampClaim | null {
   if (stampClaim !== undefined) return stampClaim;
 
   const params = new URLSearchParams(window.location.search);
-  const stamp = params.get("stamp");
-  const token = params.get("token");
-  const id = spotToId(stamp);
-  if (params.has("stamp") || params.has("token")) stripStampQuery();
-  stampClaim = stamp && token && id ? { stamp, id, token } : null;
+  const fromUrl = claimFromParts(params.get("stamp"), params.get("token"));
+  if (params.has("stamp") || params.has("token")) {
+    if (fromUrl) writeStoredClaim(fromUrl);
+    else clearStoredClaim();
+    stripStampQuery();
+    stampClaim = fromUrl;
+    return stampClaim;
+  }
+
+  stampClaim = readStoredClaim();
   return stampClaim;
 }
 
-function confirmStamp(claim: StampClaim): Promise<boolean> {
-  if (!stampVerify) stampVerify = verifyStamp(claim.stamp, claim.token);
+function confirmStamp(claim: StampClaim): Promise<StampVerifyResult> {
+  if (!stampVerify) {
+    const flight = verifyStamp(claim.stamp, claim.token).finally(() => {
+      if (stampVerify === flight) stampVerify = null;
+    });
+    stampVerify = flight;
+  }
   return stampVerify;
+}
+
+async function resolveStamp(claim: StampClaim): Promise<StampVerifyResult | "done"> {
+  const stored = bootSnapshot?.rally;
+  if (stored && stampDone(stored, claim.id)) {
+    clearStoredClaim();
+    return "done";
+  }
+  return confirmStamp(claim);
 }
 
 function allStamps(rally: StampRallyState): boolean {
@@ -256,6 +316,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(
     () => window.location.hash === "#admin",
   );
+  const [stampNotice, setStampNotice] = useState<"retry" | "invalid" | null>(
+    null,
+  );
 
   useEffect(() => {
     const sync = () => setIsAdmin(window.location.hash === "#admin");
@@ -263,31 +326,69 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("hashchange", sync);
   }, []);
 
+  const acceptStamp = useCallback((claim: StampClaim) => {
+    let saved = false;
+    setRally((prev) => {
+      if (stampDone(prev, claim.id)) {
+        saved = true;
+        return prev;
+      }
+      const next = { ...prev, pendingStamp: claim.id };
+      try {
+        persistRally(next);
+        saved = true;
+      } catch {
+        setStorageBlocked(true);
+        return prev;
+      }
+      return next;
+    });
+    return saved;
+  }, []);
+
+  const applyStampResult = useCallback(
+    (result: StampVerifyResult | "done", claim: StampClaim) => {
+      if (result === "done") return;
+      if (result === "ok") {
+        const saved = acceptStamp(claim);
+        if (saved) clearStoredClaim();
+        setStampNotice(saved ? null : "retry");
+        return;
+      }
+      if (result === "invalid") {
+        clearStoredClaim();
+        stampClaim = null;
+        setStampNotice("invalid");
+        return;
+      }
+      setStampNotice("retry");
+    },
+    [acceptStamp],
+  );
+
   useEffect(() => {
     const claim = claimStampQuery();
     if (!claim) return;
     let cancelled = false;
     void (async () => {
-      const stored = bootSnapshot?.rally;
-      if (stored && stampDone(stored, claim.id)) return;
-      const ok = await confirmStamp(claim);
-      if (cancelled || !ok) return;
-      setRally((prev) => {
-        if (stampDone(prev, claim.id)) return prev;
-        const next = { ...prev, pendingStamp: claim.id };
-        try {
-          persistRally(next);
-        } catch {
-          setStorageBlocked(true);
-          return prev;
-        }
-        return next;
-      });
+      const result = await resolveStamp(claim);
+      if (cancelled) return;
+      applyStampResult(result, claim);
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [applyStampResult]);
+
+  const retryStamp = useCallback(() => {
+    const claim = claimStampQuery();
+    if (!claim) return;
+    setStampNotice(null);
+    void (async () => {
+      const result = await resolveStamp(claim);
+      applyStampResult(result, claim);
+    })();
+  }, [applyStampResult]);
 
   const screen = deriveScreen(rally, whisperId, showGoal, isAdmin, soldOut);
 
@@ -430,6 +531,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       showWhisper,
       dismissWhisper,
       openGoal,
+      stampNotice,
+      retryStamp,
     }),
     [
       storageBlocked,
@@ -459,6 +562,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       showWhisper,
       dismissWhisper,
       openGoal,
+      stampNotice,
+      retryStamp,
     ],
   );
 

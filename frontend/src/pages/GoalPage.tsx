@@ -148,6 +148,7 @@ export function GoalPage() {
         </p>
         <input
           className="pin"
+          type="password"
           inputMode="numeric"
           autoComplete="off"
           maxLength={4}

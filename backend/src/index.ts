@@ -21,6 +21,10 @@ const DEV_ORIGINS = new Set([
 const CLIENT_ID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 
+const BLOCKED_CLIENT_ID = "00000000-0000-4000-8000-000000000000";
+
+const MAX_BODY_BYTES = 4096;
+
 const INSERT_TOKEN = `
 INSERT INTO tokens (client_id, code, nickname, status, issued_at)
 SELECT ?1, ?2, ?3, 'issued', ?4
@@ -28,8 +32,15 @@ WHERE (SELECT COUNT(*) FROM tokens)
       < (SELECT CAST(value AS INTEGER) FROM settings WHERE key = 'reward_limit')
 `;
 
+function securityHeaders(headers: Headers): void {
+  headers.set("X-Content-Type-Options", "nosniff");
+  headers.set("X-Frame-Options", "DENY");
+  headers.set("Referrer-Policy", "no-referrer");
+}
+
 function corsHeaders(request: Request): Headers {
   const headers = new Headers();
+  securityHeaders(headers);
   const origin = request.headers.get("Origin");
   if (origin && DEV_ORIGINS.has(origin)) {
     headers.set("Access-Control-Allow-Origin", origin);
@@ -51,6 +62,48 @@ function isJsonRequest(request: Request): boolean {
   return type.toLowerCase().startsWith("application/json");
 }
 
+async function readJson(
+  request: Request,
+): Promise<{ ok: true; payload: unknown } | { ok: false }> {
+  if (!isJsonRequest(request)) return { ok: false };
+
+  const declared = request.headers.get("Content-Length");
+  if (declared !== null) {
+    const size = Number(declared);
+    if (!Number.isFinite(size) || size > MAX_BODY_BYTES) return { ok: false };
+  }
+
+  const reader = request.body?.getReader();
+  if (!reader) return { ok: false };
+
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    if (!value) continue;
+    total += value.byteLength;
+    if (total > MAX_BODY_BYTES) {
+      await reader.cancel();
+      return { ok: false };
+    }
+    chunks.push(value);
+  }
+
+  const buf = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    buf.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  try {
+    return { ok: true, payload: JSON.parse(new TextDecoder().decode(buf)) };
+  } catch {
+    return { ok: false };
+  }
+}
+
 async function safeEqual(a: string, b: string): Promise<boolean> {
   const enc = new TextEncoder();
   const [left, right] = await Promise.all([
@@ -64,7 +117,15 @@ async function safeEqual(a: string, b: string): Promise<boolean> {
 }
 
 function drawCode(): string {
-  return String(1000 + Math.floor(Math.random() * 9000));
+  const span = 900_000;
+  const buf = new Uint32Array(1);
+  const limit = Math.floor(0x1_0000_0000 / span) * span;
+  let value = 0;
+  do {
+    crypto.getRandomValues(buf);
+    value = buf[0];
+  } while (value >= limit);
+  return String(100_000 + (value % span));
 }
 
 function errorText(error: unknown): string {
@@ -131,16 +192,9 @@ async function issueToken(
 }
 
 async function handleIssue(request: Request, env: Env): Promise<Response> {
-  if (!isJsonRequest(request)) {
-    return json(request, { result: "invalid" }, 400);
-  }
-
-  let payload: unknown;
-  try {
-    payload = await request.json();
-  } catch {
-    return json(request, { result: "invalid" }, 400);
-  }
+  const parsed = await readJson(request);
+  if (!parsed.ok) return json(request, { result: "invalid" }, 400);
+  const payload = parsed.payload;
 
   if (!payload || typeof payload !== "object") {
     return json(request, { result: "invalid" }, 400);
@@ -154,7 +208,8 @@ async function handleIssue(request: Request, env: Env): Promise<Response> {
   if (
     !nickname ||
     nickname.length > 10 ||
-    !CLIENT_ID_RE.test(clientId)
+    !CLIENT_ID_RE.test(clientId) ||
+    clientId === BLOCKED_CLIENT_ID
   ) {
     return json(request, { result: "invalid" }, 400);
   }
@@ -165,16 +220,9 @@ async function handleIssue(request: Request, env: Env): Promise<Response> {
 }
 
 async function handleVerify(request: Request, env: Env): Promise<Response> {
-  if (!isJsonRequest(request)) {
-    return json(request, { result: "invalid" }, 400);
-  }
-
-  let payload: unknown;
-  try {
-    payload = await request.json();
-  } catch {
-    return json(request, { result: "invalid" }, 400);
-  }
+  const parsed = await readJson(request);
+  if (!parsed.ok) return json(request, { result: "invalid" }, 400);
+  const payload = parsed.payload;
 
   if (!payload || typeof payload !== "object") {
     return json(request, { result: "invalid" }, 400);
@@ -187,7 +235,7 @@ async function handleVerify(request: Request, env: Env): Promise<Response> {
   if (!/^\d{4}$/.test(pin) || !(await safeEqual(pin, env.STAFF_PIN))) {
     return json(request, { result: "invalid_pin" }, 401);
   }
-  if (!/^\d{4}$/.test(code)) {
+  if (!/^\d{4}$|^\d{6}$/.test(code)) {
     return json(request, { result: "unknown_code" }, 404);
   }
 
@@ -238,16 +286,9 @@ async function handleVerify(request: Request, env: Env): Promise<Response> {
 const STAMP_IDS = new Set(["spot1", "spot2", "spot3"]);
 
 async function handleStamp(request: Request, env: Env): Promise<Response> {
-  if (!isJsonRequest(request)) {
-    return json(request, { result: "invalid" }, 400);
-  }
-
-  let payload: unknown;
-  try {
-    payload = await request.json();
-  } catch {
-    return json(request, { result: "invalid" }, 400);
-  }
+  const parsed = await readJson(request);
+  if (!parsed.ok) return json(request, { result: "invalid" }, 400);
+  const payload = parsed.payload;
 
   if (!payload || typeof payload !== "object") {
     return json(request, { result: "invalid" }, 400);
@@ -321,6 +362,13 @@ export default {
     if (url.pathname.startsWith("/api/")) {
       return handleApi(request, env);
     }
-    return env.ASSETS.fetch(request);
+    const response = await env.ASSETS.fetch(request);
+    const headers = new Headers(response.headers);
+    securityHeaders(headers);
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
   },
 };
