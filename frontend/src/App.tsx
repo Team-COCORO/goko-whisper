@@ -4,6 +4,7 @@ import { BottomSheet } from "./components/BottomSheet";
 import { CampusMap } from "./components/CampusMap";
 import { HomeStatus } from "./components/HomeStatus";
 import { StampBook, StampBookButton } from "./components/StampBook";
+import { StampNotice } from "./components/StampNotice";
 import { AppProvider, useApp } from "./context/AppContext";
 import { AdminPage } from "./pages/AdminPage";
 import { FoodPage } from "./pages/FoodPage";
@@ -66,6 +67,7 @@ function HomeStage() {
           refitRef.current();
         }}
       >
+        <StampNotice />
         <p className="sub">
           <span className="u-nowrap">あなたは、</span>
           <span className="u-nowrap">五高の声を聞いたことがありますか。</span>

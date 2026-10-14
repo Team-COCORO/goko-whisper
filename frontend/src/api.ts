@@ -17,10 +17,20 @@ export type Summary = {
 };
 
 const issueFlights = new Map<string, Promise<IssueResponse>>();
+const API_TIMEOUT_MS = 10_000;
+
+export type StampVerifyResult = "ok" | "invalid" | "error";
 
 function apiUrl(path: string): string {
   const base = import.meta.env.VITE_API_BASE_URL ?? "";
   return `${base}${path}`;
+}
+
+function fetchApi(path: string, init?: RequestInit): Promise<Response> {
+  return fetch(apiUrl(path), {
+    ...init,
+    signal: AbortSignal.timeout(API_TIMEOUT_MS),
+  });
 }
 
 async function readResult(response: Response): Promise<string> {
@@ -37,7 +47,7 @@ async function postIssue(
   clientId: string,
 ): Promise<IssueResponse> {
   try {
-    const response = await fetch(apiUrl("/api/token/issue"), {
+    const response = await fetchApi("/api/token/issue", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ nickname, clientId }),
@@ -81,18 +91,22 @@ export function issueToken(
   return flight;
 }
 
-export async function verifyStamp(stamp: string, token: string): Promise<boolean> {
+export async function verifyStamp(
+  stamp: string,
+  token: string,
+): Promise<StampVerifyResult> {
   try {
-    const response = await fetch(apiUrl("/api/stamp/verify"), {
+    const response = await fetchApi("/api/stamp/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ stamp, token }),
     });
-    if (!response.ok) return false;
+    if (response.status === 401) return "invalid";
+    if (!response.ok) return "error";
     const body = (await response.json()) as { result?: unknown };
-    return body.result === "ok";
+    return body.result === "ok" ? "ok" : "invalid";
   } catch {
-    return false;
+    return "error";
   }
 }
 
@@ -101,7 +115,7 @@ export async function verifyToken(
   pin: string,
 ): Promise<VerifyResponse> {
   try {
-    const response = await fetch(apiUrl("/api/token/verify"), {
+    const response = await fetchApi("/api/token/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code, pin }),
@@ -125,7 +139,7 @@ export async function fetchSummary(
   token: string,
 ): Promise<{ ok: true; summary: Summary } | { ok: false; unauthorized: boolean }> {
   try {
-    const response = await fetch(apiUrl("/api/admin/summary"), {
+    const response = await fetchApi("/api/admin/summary", {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (response.status === 401) return { ok: false, unauthorized: true };
