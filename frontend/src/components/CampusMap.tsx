@@ -1,5 +1,6 @@
 import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
 import { useApp } from "../context/AppContext";
+import { MAP_PLACES, type PlaceId } from "../data/places";
 
 const MAP_W = 320;
 const MAP_H = 240;
@@ -21,6 +22,7 @@ type SpotProps = {
   labelX?: number;
   labelY: number;
   href: string;
+  colorHref: string;
   imageX: number;
   imageY: number;
   imageW: number;
@@ -35,6 +37,7 @@ function Spot({
   labelX = 0,
   labelY,
   href,
+  colorHref,
   imageX,
   imageY,
   imageW,
@@ -47,8 +50,8 @@ function Spot({
         <circle className="pulse-circle" cx={0} cy={0} fill="none" stroke="#E15F41" />
       )}
       <image
-        className={done ? "building-illust unlocked" : "building-illust locked"}
-        href={href}
+        className={done ? "building-illust" : "building-illust locked"}
+        href={done ? colorHref : href}
         x={imageX}
         y={imageY}
         width={imageW}
@@ -81,12 +84,16 @@ function Mystery({ x, y, href }: { x: number; y: number; href: string }) {
   );
 }
 
+const TAP_PX = 10;
+const FINGER_PX = 22;
+
 type Props = {
   insetRef: RefObject<number>;
   refitRef: MutableRefObject<() => void>;
+  onPick: (id: PlaceId | null) => void;
 };
 
-export function CampusMap({ insetRef, refitRef }: Props) {
+export function CampusMap({ insetRef, refitRef, onPick }: Props) {
   const { stamp1Done, stamp2Done, stamp3Done } = useApp();
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -96,6 +103,8 @@ export function CampusMap({ insetRef, refitRef }: Props) {
     zoomOut: () => {},
     fit: () => {},
   });
+  const onPickRef = useRef(onPick);
+  onPickRef.current = onPick;
 
   useEffect(() => {
     const wrap = wrapRef.current;
@@ -107,6 +116,7 @@ export function CampusMap({ insetRef, refitRef }: Props) {
     let userAdjusted = false;
     const pointers = new Map<number, [number, number]>();
     let pinchDistance = 0;
+    let tap: { id: number; x: number; y: number; moved: boolean } | null = null;
 
     const pixelRatio = () => wrap.clientWidth / MAP_W;
 
@@ -174,11 +184,33 @@ export function CampusMap({ insetRef, refitRef }: Props) {
       return [px / ratio, py / ratio];
     };
 
+    const pickAt = (px: number, py: number) => {
+      const ratio = pixelRatio();
+      if (ratio <= 0 || view.k <= 0) return;
+      const [ux, uy] = toUser(px, py);
+      const cx = (ux - view.x) / view.k;
+      const cy = (uy - view.y) / view.k;
+      const unitPx = ratio * view.k;
+      let best: { id: PlaceId; distance: number } | null = null;
+      for (const place of MAP_PLACES) {
+        const radius = Math.max(FINGER_PX / unitPx, place.half);
+        const distance = Math.hypot(cx - place.x, cy - place.y);
+        if (distance <= radius && (!best || distance < best.distance)) {
+          best = { id: place.id, distance };
+        }
+      }
+      onPickRef.current(best?.id ?? null);
+    };
+
     const onDown = (event: PointerEvent) => {
       if ((event.target as Element | null)?.closest(".mz")) return;
       wrap.setPointerCapture(event.pointerId);
-      pointers.set(event.pointerId, point(event));
-      if (pointers.size === 2) {
+      const here = point(event);
+      pointers.set(event.pointerId, here);
+      if (pointers.size === 1) {
+        tap = { id: event.pointerId, x: here[0], y: here[1], moved: false };
+      } else {
+        tap = null;
         const [a, b] = [...pointers.values()];
         pinchDistance = Math.hypot(a[0] - b[0], a[1] - b[1]);
       }
@@ -190,13 +222,16 @@ export function CampusMap({ insetRef, refitRef }: Props) {
       const prev = pointers.get(event.pointerId);
       if (!prev) return;
       if (pointers.size === 1) {
+        if (tap && tap.id === event.pointerId && !tap.moved) {
+          const travel = Math.hypot(next[0] - tap.x, next[1] - tap.y);
+          if (travel < TAP_PX) return;
+          tap.moved = true;
+          userAdjusted = true;
+        }
         const [ux, uy] = toUser(next[0], next[1]);
         const [px, py] = toUser(prev[0], prev[1]);
-        const dx = ux - px;
-        const dy = uy - py;
-        if (dx !== 0 || dy !== 0) userAdjusted = true;
-        view.x += dx;
-        view.y += dy;
+        view.x += ux - px;
+        view.y += uy - py;
         pointers.set(event.pointerId, next);
         apply();
         return;
@@ -212,8 +247,12 @@ export function CampusMap({ insetRef, refitRef }: Props) {
     };
 
     const onUp = (event: PointerEvent) => {
+      const here = point(event);
+      const endedTap = tap?.id === event.pointerId ? tap : null;
       pointers.delete(event.pointerId);
       pinchDistance = 0;
+      if (tap?.id === event.pointerId) tap = null;
+      if (endedTap && !endedTap.moved && pointers.size === 0) pickAt(here[0], here[1]);
     };
 
     const onWheel = (event: WheelEvent) => {
@@ -238,6 +277,12 @@ export function CampusMap({ insetRef, refitRef }: Props) {
       apply();
     };
 
+    const onCancel = (event: PointerEvent) => {
+      pointers.delete(event.pointerId);
+      pinchDistance = 0;
+      if (tap?.id === event.pointerId) tap = null;
+    };
+
     const observer = new ResizeObserver(() => {
       syncFit();
     });
@@ -248,7 +293,7 @@ export function CampusMap({ insetRef, refitRef }: Props) {
     wrap.addEventListener("pointerdown", onDown);
     wrap.addEventListener("pointermove", onMove);
     wrap.addEventListener("pointerup", onUp);
-    wrap.addEventListener("pointercancel", onUp);
+    wrap.addEventListener("pointercancel", onCancel);
     wrap.addEventListener("wheel", onWheel, { passive: false });
     wrap.addEventListener("dblclick", onDblClick);
 
@@ -258,7 +303,7 @@ export function CampusMap({ insetRef, refitRef }: Props) {
       wrap.removeEventListener("pointerdown", onDown);
       wrap.removeEventListener("pointermove", onMove);
       wrap.removeEventListener("pointerup", onUp);
-      wrap.removeEventListener("pointercancel", onUp);
+      wrap.removeEventListener("pointercancel", onCancel);
       wrap.removeEventListener("wheel", onWheel);
       wrap.removeEventListener("dblclick", onDblClick);
     };
@@ -293,6 +338,7 @@ export function CampusMap({ insetRef, refitRef }: Props) {
             label="化学実験場"
             labelY={18}
             href="/maps/chemical_laboratory.svg"
+            colorHref="/maps/chemical_laboratory-color.svg"
             imageX={-28}
             imageY={-20}
             imageW={56}
@@ -305,6 +351,7 @@ export function CampusMap({ insetRef, refitRef }: Props) {
             label="五高記念館"
             labelY={24}
             href="/maps/goko.svg"
+            colorHref="/maps/goko-color.svg"
             imageX={-36}
             imageY={-24}
             imageW={72}
@@ -318,6 +365,7 @@ export function CampusMap({ insetRef, refitRef }: Props) {
             labelX={30}
             labelY={17}
             href="/maps/goko-cafe.svg"
+            colorHref="/maps/goko-cafe-color.svg"
             imageX={2}
             imageY={-35}
             imageW={48}
