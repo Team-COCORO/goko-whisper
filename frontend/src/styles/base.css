@@ -838,6 +838,19 @@ input.pin {
   filter: sepia(0.3) saturate(2.5) hue-rotate(330deg) drop-shadow(0 4px 6px rgba(120, 113, 108, 0.4));
 }
 
+.mystery-illust {
+  filter: brightness(0) opacity(0.45);
+  pointer-events: none;
+}
+
+.mystery-mark {
+  font-size: 14px;
+  font-weight: bold;
+  fill: #4a3f35;
+  pointer-events: none;
+  user-select: none;
+}
+
 .pulse-circle {
   animation: pulseRing 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
 }

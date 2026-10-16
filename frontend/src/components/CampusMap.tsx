@@ -62,6 +62,25 @@ function Spot({
   );
 }
 
+function PlaceName({ x, y, children }: { x: number; y: number; children: string }) {
+  return (
+    <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" className="map-label">
+      {children}
+    </text>
+  );
+}
+
+function Mystery({ x, y, href }: { x: number; y: number; href: string }) {
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <image className="mystery-illust" href={href} x={-14} y={-14} width={28} height={28} />
+      <text y={4} textAnchor="middle" className="mystery-mark">
+        ?
+      </text>
+    </g>
+  );
+}
+
 type Props = {
   insetRef: RefObject<number>;
   refitRef: MutableRefObject<() => void>;
@@ -305,6 +324,26 @@ export function CampusMap({ insetRef, refitRef }: Props) {
             imageH={48}
             done={stamp2Done}
           />
+          <Mystery x={133} y={207} href="/maps/akamon.svg" />
+          <Mystery x={148} y={109} href="/maps/heam-relief.svg" />
+          <PlaceName x={219} y={219}>
+            旧57号線
+          </PlaceName>
+          <PlaceName x={92} y={40}>
+            グラウンド
+          </PlaceName>
+          <PlaceName x={230} y={156}>
+            図書館
+          </PlaceName>
+          <PlaceName x={239} y={92}>
+            共用棟黒髪
+          </PlaceName>
+          <g transform="translate(126 164)">
+            <circle r={2.5} fill="#4a3f35" />
+            <text y={-8} textAnchor="middle" className="map-label">
+              メインステージ
+            </text>
+          </g>
           <g transform="translate(282 130)" pointerEvents="none" aria-hidden="true">
             <circle r={14} fill="#efe6da" stroke="#c5a059" strokeWidth={1} />
             <polygon points="0,-11 3.2,1.5 0,-1 -3.2,1.5" fill="#8b3a2b" />
