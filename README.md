@@ -1,6 +1,6 @@
 # 五高の囁き
 
-紫熊祭の来場者を五高記念館へ誘導するデジタルスタンプラリー。アカウントは作らない。スタンプの進行は端末の `localStorage` に残り、ゴールの4桁コードだけを API が発行する。
+紫熊祭の来場者を五高記念館へ誘導するデジタルスタンプラリー。アカウントは作らない。スタンプの進行は端末の `localStorage` に残り、ゴールの6桁コードだけを API が発行する。
 
 ## 使用技術
 
@@ -33,6 +33,8 @@ STAFF_PIN=1234
 ADMIN_TOKEN=local-admin-token
 STAMP_TOKEN=local-dev-token
 ```
+
+この3つの値はローカル確認用です。本番の `STAFF_PIN`、`ADMIN_TOKEN`、`STAMP_TOKEN` には使わないでください。
 
 `STAFF_PIN` は数字 4 桁。確認用 URL の `token` は `STAMP_TOKEN` と一致させる。画面の JavaScript には入れない。QR を開いたとき、Worker の `/api/stamp/verify` が照合する。
 
@@ -68,7 +70,7 @@ npm run dev
    第一の囁きのあと、「次の声は、模擬店のどこかに眠っている。」
 2. `http://localhost:5173/?stamp=spot2&token=local-dev-token`  
    第二の囁きのあと、名前を残す。
-3. 名前を残すと 4 桁が出る。通信できないときは「通信が必要です」となり、その場では番号を作らない。
+3. 名前を残すと 6 桁が出る。通信できないときは「通信が必要です」となり、その場では番号を作らない。再試行で同じ番号が返る。
 4. 同じ画面で `STAFF_PIN`（例では `1234`）を入れ、スライダーを行程の 85% 以上まで動かして離す。正しければ受取完了になる。
 5. 残数は `http://localhost:5173/#admin`。入力するトークンは `ADMIN_TOKEN`（例では `local-admin-token`）。
 

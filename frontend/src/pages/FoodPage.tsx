@@ -78,7 +78,7 @@ export function FoodPage() {
         </div>
       </header>
       <div className="menu-place">
-        <span>場所：文法棟前・サブステージ脇</span>
+        <span>場所：サブステージ横</span>
         <button type="button" onClick={() => setOpenId("map")}>
           案内図 ≫
         </button>

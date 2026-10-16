@@ -108,7 +108,7 @@ export function GoalPage() {
   if (issuing && !rewardCode) {
     return (
       <div className="card">
-        <p className="note">発行しています</p>
+        <p className="sheet-line">発行しています…</p>
       </div>
     );
   }
@@ -116,8 +116,8 @@ export function GoalPage() {
   if (issueError && !rewardCode) {
     return (
       <div className="card">
-        <p className="err">通信が必要です</p>
-        <button className="b" type="button" onClick={retryIssue}>
+        <p className="sheet-line is-alert">通信が必要です</p>
+        <button className="b alt" type="button" onClick={retryIssue}>
           再試行
         </button>
       </div>
@@ -127,7 +127,10 @@ export function GoalPage() {
   if (rewardCode && expired && !revealed) {
     return (
       <div className="card">
-        <p className="note">5 分が過ぎました。コードは隠されています。</p>
+        <p className="sheet-line is-alert">
+          <span className="u-nowrap">5 分が過ぎました。</span>
+          <span className="u-nowrap">コードは隠されています。</span>
+        </p>
         <button className="b" type="button" onClick={() => setRevealed(true)}>
           コードを再表示
         </button>
@@ -139,9 +142,13 @@ export function GoalPage() {
     return (
       <div className="card">
         <h2>スタッフ消込</h2>
-        <p className="field-label">数字 4 桁の暗証番号を入力</p>
+        <p className="sheet-lead">
+          <span className="u-nowrap">数字 4 桁の</span>
+          <span className="u-nowrap">暗証番号を入力</span>
+        </p>
         <input
           className="pin"
+          type="password"
           inputMode="numeric"
           autoComplete="off"
           maxLength={4}
@@ -153,15 +160,19 @@ export function GoalPage() {
           }
         />
         {verifyMessage && <p className="err">{verifyMessage}</p>}
-        <button
-          className="b"
-          type="button"
-          disabled={pin.length < 4 || verifying}
-          onClick={() => void finishRedeem()}
-        >
-          受け取り完了
-        </button>
-        <p className="note">4 桁そろうまで押せません</p>
+        <div className="btns">
+          <button
+            className="b"
+            type="button"
+            disabled={pin.length < 4 || verifying}
+            onClick={() => void finishRedeem()}
+          >
+            受け取り完了
+          </button>
+          <button className="b alt" type="button" onClick={() => setRedeeming(false)}>
+            戻る
+          </button>
+        </div>
       </div>
     );
   }
@@ -169,15 +180,22 @@ export function GoalPage() {
   if (showCode && rewardCode) {
     return (
       <div className="card">
-        <h2>{displayName} さん</h2>
-        <p className="closing">
-          あなたは今、百年前の声が聞こえた場所に立っている。
+        <h2 className="sheet-name">{displayName} さん</h2>
+        <p className="sheet-lead">
+          <span className="u-nowrap">あなたは今、</span>
+          <span className="u-nowrap">百年前の声が聞こえた</span>
+          <span className="u-nowrap">場所に立っている。</span>
         </p>
         <div className="code">{rewardCode}</div>
         <p className="note">
-          {issuedAt !== undefined && !expired
-            ? `残り ${remainLabel(issuedAt, now)}・スタッフに提示してください`
-            : "スタッフに提示してください"}
+          {issuedAt !== undefined && !expired ? (
+            <>
+              <span className="u-nowrap">残り {remainLabel(issuedAt, now)}</span>
+              <span className="u-nowrap">スタッフに提示してください</span>
+            </>
+          ) : (
+            <span className="u-nowrap">スタッフに提示してください</span>
+          )}
         </p>
         <button className="b alt" type="button" onClick={() => setRedeeming(true)}>
           スタッフ用：消込

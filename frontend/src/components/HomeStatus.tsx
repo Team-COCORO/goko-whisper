@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { WHISPERS } from "../data/whispers";
 import { useApp } from "../context/AppContext";
 import { GoalPage } from "../pages/GoalPage";
@@ -7,48 +6,34 @@ function inAppBrowser(): boolean {
   return /Line\/|Instagram|FBAN|FBAV|Twitter|MicroMessenger/i.test(navigator.userAgent);
 }
 
-function BrowserNote() {
-  const text = inAppBrowser()
-    ? "この画面では記録が残りません。右上のメニューから Safari または Chrome で開いてください。"
-    : "記録は、標準カメラ（Safari または Chrome）で開いたときだけ残ります。";
-  return <p className="note">{text}</p>;
+function Phrases({ parts }: { parts: string[] }) {
+  return parts.map((part, index) => (
+    <span key={`${index}-${part}`} className="u-nowrap">
+      {part}
+    </span>
+  ));
 }
 
-function NameFields({
-  prompt,
-  submitLabel,
-}: {
-  prompt?: string;
-  submitLabel: string;
-}) {
-  const { nickname, nicknameLocked, saveNickname } = useApp();
-  const [input, setInput] = useState(nickname);
-  const trimmed = input.trim();
-  const ready = trimmed.length > 0 && trimmed.length <= 20;
-
+function BrowserNote() {
+  const inApp = inAppBrowser();
+  const parts = inApp
+    ? [
+        "この画面では",
+        "記録が残りません。",
+        "右上のメニューから",
+        "Safari または Chrome で",
+        "開いてください。",
+      ]
+    : [
+        "記録は、",
+        "標準カメラ",
+        "（Safari または Chrome）で",
+        "開いたときだけ残ります。",
+      ];
   return (
-    <>
-      {prompt && <p className="err">{prompt}</p>}
-      <input
-        maxLength={20}
-        placeholder="旅人"
-        value={input}
-        disabled={nicknameLocked}
-        autoComplete="nickname"
-        aria-label="あなたの名"
-        onChange={(event) => setInput(event.target.value)}
-      />
-      {!nicknameLocked && (
-        <button
-          className="b"
-          type="button"
-          disabled={!ready}
-          onClick={() => saveNickname(input)}
-        >
-          {submitLabel}
-        </button>
-      )}
-    </>
+    <p className={inApp ? "sheet-caution is-in-app" : "sheet-caution"}>
+      <Phrases parts={parts} />
+    </p>
   );
 }
 
@@ -57,7 +42,6 @@ export function HomeStatus() {
     screen,
     nickname,
     whisperId,
-    pendingStamp,
     stamp1Done,
     stamp2Done,
     stamp3Done,
@@ -65,28 +49,44 @@ export function HomeStatus() {
   } = useApp();
 
   if (screen === "whisper" && whisperId) {
-    const text = WHISPERS[whisperId].text.replaceAll("\n", "");
+    const item = WHISPERS[whisperId];
     return (
-      <div className="card">
-        <h2>囁き</h2>
-        <div className="whisper">{text}</div>
-        <button className="b alt" type="button" onClick={dismissWhisper}>
-          閉じる
-        </button>
+      <div className="literary-card">
+        <div className="literary-card__head">
+          <span className="literary-card__index">{item.label}</span>
+          <span className="literary-card__seal">{item.seal}</span>
+        </div>
+        <p className="literary-card__body">
+          <Phrases parts={item.phrases} />
+        </p>
+        <div className="literary-card__foot">
+          <span className="literary-card__source">{item.source}</span>
+          <button className="literary-card__close" type="button" onClick={dismissWhisper}>
+            閉じる
+          </button>
+        </div>
       </div>
     );
   }
 
   if (screen === "guide") {
     const missing = [
-      !stamp1Done ? "チラシの QR" : "",
-      !stamp2Done ? "模擬店の QR" : "",
+      !stamp1Done ? "化学実験場の QR" : "",
+      !stamp2Done ? "五高喫茶（模擬店）の QR" : "",
       !stamp3Done ? "五高記念館の QR" : "",
     ].filter(Boolean);
     return (
       <div className="card">
-        <h2>案内</h2>
-        <p>まだ残っている声は、{missing.join("と")}です。</p>
+        <p className="sheet-line">
+          <Phrases
+            parts={[
+              "まだ残っている声は、",
+              ...missing.map((place, index) =>
+                index === missing.length - 1 ? `${place}です。` : `${place}と`,
+              ),
+            ]}
+          />
+        </p>
       </div>
     );
   }
@@ -94,32 +94,14 @@ export function HomeStatus() {
   if (screen === "herald") {
     return (
       <div className="card">
-        <div className="whisper">
-          {nickname.trim()}。名を、帳に記した。印を、この頁へ。
-        </div>
-      </div>
-    );
-  }
-
-  if (screen === "askName" && pendingStamp) {
-    return (
-      <div className="card">
-        <div className="whisper">
-          耳を澄ませ。百年の声が、まだここに漂っている。
-        </div>
-        <NameFields submitLabel="名前を残す" />
-        <BrowserNote />
-      </div>
-    );
-  }
-
-  if (screen === "askName") {
-    return (
-      <div className="card">
-        <NameFields
-          prompt="三つの声が揃った。名を残してから、先へ。"
-          submitLabel="名を残す"
-        />
+        <p className="sheet-line">
+          <Phrases
+            parts={[`${nickname.trim()}。`, "名を、帳に記した。", "印を、この頁へ。"]}
+          />
+        </p>
+        <p className="sheet-pending">
+          <Phrases parts={["3秒後に", "スタンプ帖が自動で開きます"]} />
+        </p>
       </div>
     );
   }
@@ -127,10 +109,9 @@ export function HomeStatus() {
   if (screen === "top") {
     return (
       <div className="card">
-        <div className="whisper">
-          耳を澄ませ。百年の声が、まだここに漂っている。
-        </div>
-        {!nickname.trim() && <NameFields submitLabel="名前を残す" />}
+        <p className="sheet-line">
+          <Phrases parts={["百年の声が、", "まだここに漂っている。"]} />
+        </p>
         <BrowserNote />
       </div>
     );
@@ -141,7 +122,9 @@ export function HomeStatus() {
   if (screen === "redeemed") {
     return (
       <div className="card">
-        <p className="err">受取は完了しています</p>
+        <p className="sheet-line">
+          <Phrases parts={["受取は完了しています"]} />
+        </p>
       </div>
     );
   }
@@ -149,8 +132,12 @@ export function HomeStatus() {
   if (screen === "soldOut") {
     return (
       <div className="card">
-        <p className="err">本日の配布は終了しました</p>
-        <p className="note">すでにコードをお持ちの方は、消込できます。</p>
+        <p className="sheet-line is-alert">
+          <Phrases parts={["本日の配布は終了しました"]} />
+        </p>
+        <p className="sheet-caution">
+          <Phrases parts={["すでにコードをお持ちの方は、", "消込できます。"]} />
+        </p>
       </div>
     );
   }

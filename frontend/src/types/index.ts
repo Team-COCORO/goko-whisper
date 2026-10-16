@@ -4,7 +4,6 @@ export type Screen =
   | "top"
   | "whisper"
   | "guide"
-  | "askName"
   | "herald"
   | "goal"
   | "redeemed"
@@ -15,7 +14,9 @@ export type WhisperId = 1 | 2 | 3;
 
 export type WhisperContent = {
   label: string;
-  text: string;
+  seal: string;
+  phrases: string[];
+  source: string;
   hint: string;
 };
 

@@ -1,7 +1,11 @@
 import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
+import { useApp } from "../context/AppContext";
+import { MAP_PLACES, type PlaceId } from "../data/places";
 
 const MAP_W = 320;
 const MAP_H = 240;
+const MIN_K = 0.8;
+const MAX_K = 5;
 
 type View = { k: number; x: number; y: number };
 
@@ -11,61 +15,118 @@ type MapApi = {
   fit: () => void;
 };
 
-function Pin({ x, y, label }: { x: number; y: number; label: string }) {
+type SpotProps = {
+  x: number;
+  y: number;
+  label: string;
+  labelX?: number;
+  labelY: number;
+  href: string;
+  colorHref: string;
+  imageX: number;
+  imageY: number;
+  imageW: number;
+  imageH: number;
+  done: boolean;
+};
+
+function Spot({
+  x,
+  y,
+  label,
+  labelX = 0,
+  labelY,
+  href,
+  colorHref,
+  imageX,
+  imageY,
+  imageW,
+  imageH,
+  done,
+}: SpotProps) {
   return (
-    <g>
-      <circle
-        cx={x}
-        cy={y}
-        r={11}
-        fill="#8b3a2b"
-        stroke="#faf6f0"
-        strokeWidth={2}
+    <g transform={`translate(${x} ${y})`}>
+      {!done && (
+        <circle className="pulse-circle" cx={0} cy={0} fill="none" stroke="#E15F41" />
+      )}
+      <image
+        className={done ? "building-illust" : "building-illust locked"}
+        href={done ? colorHref : href}
+        x={imageX}
+        y={imageY}
+        width={imageW}
+        height={imageH}
       />
-      <text
-        x={x}
-        y={y + 28}
-        fontSize={15}
-        fontWeight="bold"
-        textAnchor="middle"
-        fill="#2c2623"
-        stroke="#efe6da"
-        strokeWidth={3}
-        paintOrder="stroke"
-      >
+      <text x={labelX} y={labelY} textAnchor="middle" className="map-label">
         {label}
+      </text>
+      <circle cx={0} cy={0} r={2} fill="#c5a059" />
+    </g>
+  );
+}
+
+function PlaceName({ x, y, children }: { x: number; y: number; children: string }) {
+  return (
+    <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" className="map-label">
+      {children}
+    </text>
+  );
+}
+
+function Mystery({ x, y, href }: { x: number; y: number; href: string }) {
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <image className="mystery-illust" href={href} x={-14} y={-14} width={28} height={28} />
+      <text y={4} textAnchor="middle" className="mystery-mark">
+        ?
       </text>
     </g>
   );
 }
 
+const TAP_PX = 10;
+const FINGER_PX = 22;
+
 type Props = {
   insetRef: RefObject<number>;
   refitRef: MutableRefObject<() => void>;
+  onPick: (id: PlaceId | null) => void;
 };
 
-export function CampusMap({ insetRef, refitRef }: Props) {
+export function CampusMap({ insetRef, refitRef, onPick }: Props) {
+  const { stamp1Done, stamp2Done, stamp3Done } = useApp();
   const wrapRef = useRef<HTMLDivElement>(null);
+  const svgRef = useRef<SVGSVGElement>(null);
   const groupRef = useRef<SVGGElement>(null);
   const apiRef = useRef<MapApi>({
     zoomIn: () => {},
     zoomOut: () => {},
     fit: () => {},
   });
+  const onPickRef = useRef(onPick);
+  onPickRef.current = onPick;
 
   useEffect(() => {
     const wrap = wrapRef.current;
+    const svg = svgRef.current;
     const group = groupRef.current;
-    if (!wrap || !group) return;
+    if (!wrap || !svg || !group) return;
 
     const view: View = { k: 1, x: 0, y: 0 };
-    let fitK = 1;
     let userAdjusted = false;
     const pointers = new Map<number, [number, number]>();
     let pinchDistance = 0;
+    let tap: { id: number; x: number; y: number; moved: boolean } | null = null;
 
-    const visibleHeight = () =>
-      Math.max(120, wrap.clientHeight - (insetRef.current ?? 0));
+    const pixelRatio = () => wrap.clientWidth / MAP_W;
+
+    const viewBoxHeight = () => {
+      const ratio = pixelRatio();
+      if (ratio <= 0) return MAP_H;
+      const height = wrap.clientHeight / ratio;
+      svg.setAttribute("viewBox", `0 0 ${MAP_W} ${height}`);
+      return height;
+    };
 
     const axis = (pos: number, scale: number, size: number, content: number) => {
       const drawn = content * scale;
@@ -74,10 +135,9 @@ export function CampusMap({ insetRef, refitRef }: Props) {
     };
 
     const apply = () => {
-      const width = wrap.clientWidth;
-      const height = wrap.clientHeight;
-      view.x = axis(view.x, view.k, width, MAP_W);
-      view.y = axis(view.y, view.k, height, MAP_H);
+      const vbH = viewBoxHeight();
+      view.x = axis(view.x, view.k, MAP_W, MAP_W);
+      view.y = axis(view.y, view.k, vbH, MAP_H);
       group.setAttribute(
         "transform",
         `translate(${view.x} ${view.y}) scale(${view.k})`,
@@ -85,32 +145,28 @@ export function CampusMap({ insetRef, refitRef }: Props) {
     };
 
     const fit = () => {
-      const width = wrap.clientWidth;
-      const visibleH = visibleHeight();
-      fitK = Math.min(width / MAP_W, visibleH / MAP_H);
-      view.k = fitK;
-      view.x = (width - MAP_W * fitK) / 2;
-      view.y = Math.max(0, (visibleH - MAP_H * fitK) / 2);
+      const ratio = pixelRatio();
+      if (ratio <= 0) return;
+      const visiblePx = Math.max(80, wrap.clientHeight - (insetRef.current ?? 0));
+      view.k = 1;
+      view.x = 0;
+      view.y = (visiblePx / ratio - MAP_H) / 2;
       apply();
     };
 
-    const zoomAt = (factor: number, cx: number, cy: number) => {
+    const zoomAt = (factor: number, ux: number, uy: number) => {
       userAdjusted = true;
-      const next = Math.min(fitK * 5, Math.max(fitK, view.k * factor));
+      const next = Math.min(MAX_K, Math.max(MIN_K, view.k * factor));
       const applied = next / view.k;
-      view.x = cx - (cx - view.x) * applied;
-      view.y = cy - (cy - view.y) * applied;
+      view.x = ux - (ux - view.x) * applied;
+      view.y = uy - (uy - view.y) * applied;
       view.k = next;
       apply();
     };
 
-    const zoomBy = (factor: number) => {
-      zoomAt(factor, wrap.clientWidth / 2, visibleHeight() / 2);
-    };
-
     apiRef.current = {
-      zoomIn: () => zoomBy(1.5),
-      zoomOut: () => zoomBy(1 / 1.5),
+      zoomIn: () => zoomAt(1.2, MAP_W / 2, MAP_H / 2),
+      zoomOut: () => zoomAt(1 / 1.2, MAP_W / 2, MAP_H / 2),
       fit: () => {
         userAdjusted = false;
         fit();
@@ -122,11 +178,39 @@ export function CampusMap({ insetRef, refitRef }: Props) {
       return [event.clientX - rect.left, event.clientY - rect.top];
     };
 
+    const toUser = (px: number, py: number): [number, number] => {
+      const ratio = pixelRatio();
+      if (ratio <= 0) return [px, py];
+      return [px / ratio, py / ratio];
+    };
+
+    const pickAt = (px: number, py: number) => {
+      const ratio = pixelRatio();
+      if (ratio <= 0 || view.k <= 0) return;
+      const [ux, uy] = toUser(px, py);
+      const cx = (ux - view.x) / view.k;
+      const cy = (uy - view.y) / view.k;
+      const unitPx = ratio * view.k;
+      let best: { id: PlaceId; distance: number } | null = null;
+      for (const place of MAP_PLACES) {
+        const radius = Math.max(FINGER_PX / unitPx, place.half);
+        const distance = Math.hypot(cx - place.x, cy - place.y);
+        if (distance <= radius && (!best || distance < best.distance)) {
+          best = { id: place.id, distance };
+        }
+      }
+      onPickRef.current(best?.id ?? null);
+    };
+
     const onDown = (event: PointerEvent) => {
       if ((event.target as Element | null)?.closest(".mz")) return;
       wrap.setPointerCapture(event.pointerId);
-      pointers.set(event.pointerId, point(event));
-      if (pointers.size === 2) {
+      const here = point(event);
+      pointers.set(event.pointerId, here);
+      if (pointers.size === 1) {
+        tap = { id: event.pointerId, x: here[0], y: here[1], moved: false };
+      } else {
+        tap = null;
         const [a, b] = [...pointers.values()];
         pinchDistance = Math.hypot(a[0] - b[0], a[1] - b[1]);
       }
@@ -138,11 +222,16 @@ export function CampusMap({ insetRef, refitRef }: Props) {
       const prev = pointers.get(event.pointerId);
       if (!prev) return;
       if (pointers.size === 1) {
-        const dx = next[0] - prev[0];
-        const dy = next[1] - prev[1];
-        if (dx !== 0 || dy !== 0) userAdjusted = true;
-        view.x += dx;
-        view.y += dy;
+        if (tap && tap.id === event.pointerId && !tap.moved) {
+          const travel = Math.hypot(next[0] - tap.x, next[1] - tap.y);
+          if (travel < TAP_PX) return;
+          tap.moved = true;
+          userAdjusted = true;
+        }
+        const [ux, uy] = toUser(next[0], next[1]);
+        const [px, py] = toUser(prev[0], prev[1]);
+        view.x += ux - px;
+        view.y += uy - py;
         pointers.set(event.pointerId, next);
         apply();
         return;
@@ -151,25 +240,32 @@ export function CampusMap({ insetRef, refitRef }: Props) {
       const [a, b] = [...pointers.values()];
       const distance = Math.hypot(a[0] - b[0], a[1] - b[1]);
       if (pinchDistance > 0) {
-        zoomAt(distance / pinchDistance, (a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+        const [ux, uy] = toUser((a[0] + b[0]) / 2, (a[1] + b[1]) / 2);
+        zoomAt(distance / pinchDistance, ux, uy);
       }
       pinchDistance = distance;
     };
 
     const onUp = (event: PointerEvent) => {
+      const here = point(event);
+      const endedTap = tap?.id === event.pointerId ? tap : null;
       pointers.delete(event.pointerId);
       pinchDistance = 0;
+      if (tap?.id === event.pointerId) tap = null;
+      if (endedTap && !endedTap.moved && pointers.size === 0) pickAt(here[0], here[1]);
     };
 
     const onWheel = (event: WheelEvent) => {
       event.preventDefault();
       const [x, y] = point(event);
-      zoomAt(event.deltaY < 0 ? 1.2 : 1 / 1.2, x, y);
+      const [ux, uy] = toUser(x, y);
+      zoomAt(event.deltaY < 0 ? 1.2 : 1 / 1.2, ux, uy);
     };
 
     const onDblClick = (event: MouseEvent) => {
-      const rect = wrap.getBoundingClientRect();
-      zoomAt(1.8, event.clientX - rect.left, event.clientY - rect.top);
+      const [x, y] = point(event);
+      const [ux, uy] = toUser(x, y);
+      zoomAt(1.8, ux, uy);
     };
 
     const syncFit = () => {
@@ -178,9 +274,13 @@ export function CampusMap({ insetRef, refitRef }: Props) {
         fit();
         return;
       }
-      const visibleH = visibleHeight();
-      fitK = Math.min(wrap.clientWidth / MAP_W, visibleH / MAP_H);
       apply();
+    };
+
+    const onCancel = (event: PointerEvent) => {
+      pointers.delete(event.pointerId);
+      pinchDistance = 0;
+      if (tap?.id === event.pointerId) tap = null;
     };
 
     const observer = new ResizeObserver(() => {
@@ -193,7 +293,7 @@ export function CampusMap({ insetRef, refitRef }: Props) {
     wrap.addEventListener("pointerdown", onDown);
     wrap.addEventListener("pointermove", onMove);
     wrap.addEventListener("pointerup", onUp);
-    wrap.addEventListener("pointercancel", onUp);
+    wrap.addEventListener("pointercancel", onCancel);
     wrap.addEventListener("wheel", onWheel, { passive: false });
     wrap.addEventListener("dblclick", onDblClick);
 
@@ -203,7 +303,7 @@ export function CampusMap({ insetRef, refitRef }: Props) {
       wrap.removeEventListener("pointerdown", onDown);
       wrap.removeEventListener("pointermove", onMove);
       wrap.removeEventListener("pointerup", onUp);
-      wrap.removeEventListener("pointercancel", onUp);
+      wrap.removeEventListener("pointercancel", onCancel);
       wrap.removeEventListener("wheel", onWheel);
       wrap.removeEventListener("dblclick", onDblClick);
     };
@@ -211,29 +311,95 @@ export function CampusMap({ insetRef, refitRef }: Props) {
 
   return (
     <div className="mapw" ref={wrapRef} aria-label="キャンパスの見取り図">
-      <svg aria-hidden="true">
+      <svg ref={svgRef} viewBox={`0 0 ${MAP_W} ${MAP_H}`} preserveAspectRatio="xMidYMin meet">
         <g ref={groupRef}>
           <rect
             x={10}
             y={10}
             width={300}
             height={220}
-            fill="#efe6da"
+            fill="none"
             stroke="#c5a059"
-            strokeDasharray="4 3"
+            strokeWidth={1.5}
+            strokeDasharray="4 4"
           />
-          <rect x={30} y={30} width={70} height={40} fill="#c9a98f" />
-          <rect x={110} y={140} width={100} height={50} fill="#a95a48" />
-          <rect x={225} y={45} width={60} height={55} fill="#c9a98f" />
-          <rect x={35} y={150} width={50} height={50} fill="#d8cbb9" />
-          <path
-            d="M50 110H280M160 20V210"
-            stroke="#d8cbb9"
-            strokeWidth={8}
+          <image
+            href="/maps/map.svg"
+            x={10}
+            y={10}
+            width={300}
+            height={220}
+            preserveAspectRatio="xMidYMid slice"
+            opacity={0.65}
           />
-          <Pin x={65} y={50} label="第一の囁き" />
-          <Pin x={255} y={72} label="模擬店" />
-          <Pin x={160} y={165} label="五高記念館" />
+          <Spot
+            x={226}
+            y={36}
+            label="化学実験場"
+            labelY={18}
+            href="/maps/chemical_laboratory.svg"
+            colorHref="/maps/chemical_laboratory-color.svg"
+            imageX={-28}
+            imageY={-20}
+            imageW={56}
+            imageH={32}
+            done={stamp1Done}
+          />
+          <Spot
+            x={167}
+            y={30}
+            label="五高記念館"
+            labelY={24}
+            href="/maps/goko.svg"
+            colorHref="/maps/goko-color.svg"
+            imageX={-36}
+            imageY={-24}
+            imageW={72}
+            imageH={40}
+            done={stamp3Done}
+          />
+          <Spot
+            x={159}
+            y={97}
+            label="五高喫茶（模擬店）"
+            labelX={30}
+            labelY={17}
+            href="/maps/goko-cafe.svg"
+            colorHref="/maps/goko-cafe-color.svg"
+            imageX={2}
+            imageY={-35}
+            imageW={48}
+            imageH={48}
+            done={stamp2Done}
+          />
+          <Mystery x={133} y={207} href="/maps/akamon.svg" />
+          <Mystery x={148} y={109} href="/maps/heam-relief.svg" />
+          <PlaceName x={219} y={219}>
+            旧57号線
+          </PlaceName>
+          <PlaceName x={92} y={40}>
+            グラウンド
+          </PlaceName>
+          <PlaceName x={230} y={156}>
+            図書館
+          </PlaceName>
+          <PlaceName x={239} y={92}>
+            共用棟黒髪
+          </PlaceName>
+          <g transform="translate(126 164)">
+            <circle r={2.5} fill="#4a3f35" />
+            <text y={-8} textAnchor="middle" className="map-label">
+              メインステージ
+            </text>
+          </g>
+          <g transform="translate(282 130)" pointerEvents="none" aria-hidden="true">
+            <circle r={14} fill="#efe6da" stroke="#c5a059" strokeWidth={1} />
+            <polygon points="0,-11 3.2,1.5 0,-1 -3.2,1.5" fill="#8b3a2b" />
+            <polygon points="0,11 3.2,-1.5 0,1 -3.2,-1.5" fill="#4a3f35" />
+            <text y={-16} textAnchor="middle" className="map-label">
+              N
+            </text>
+          </g>
         </g>
       </svg>
       <div className="mz">
