@@ -12,7 +12,7 @@ export const WHISPERS: Record<WhisperId, WhisperContent> = {
       "私はこう考えた。",
     ],
     source: "夏目漱石『草枕』より",
-    hint: "次の声は、模擬店のどこかに眠っている。",
+    hint: "次の声は、五高喫茶（模擬店）のどこかに眠っている。",
   },
   2: {
     label: "第弐の囁き",

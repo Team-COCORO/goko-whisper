@@ -19,8 +19,8 @@ const FRAMES: {
   tilt: number;
   stamp: string;
 }[] = [
-  { id: 1, label: "チラシ", act: "第一幕", volume: "一の巻", tilt: -1.2, stamp: "/stamps/soseki.svg" },
-  { id: 2, label: "模擬店", act: "第二幕", volume: "二の巻", tilt: 0.8, stamp: "/stamps/cat.svg" },
+  { id: 1, label: "化学実験場", act: "第一幕", volume: "一の巻", tilt: -1.2, stamp: "/stamps/soseki.svg" },
+  { id: 2, label: "五高喫茶（模擬店）", act: "第二幕", volume: "二の巻", tilt: 0.8, stamp: "/stamps/cat.svg" },
   { id: 3, label: "五高記念館", act: "第三幕", volume: "三の巻", tilt: -0.6, stamp: "/stamps/heam.svg" },
 ];
 

@@ -71,8 +71,8 @@ export function HomeStatus() {
 
   if (screen === "guide") {
     const missing = [
-      !stamp1Done ? "チラシの QR" : "",
-      !stamp2Done ? "模擬店の QR" : "",
+      !stamp1Done ? "化学実験場の QR" : "",
+      !stamp2Done ? "五高喫茶（模擬店）の QR" : "",
       !stamp3Done ? "五高記念館の QR" : "",
     ].filter(Boolean);
     return (

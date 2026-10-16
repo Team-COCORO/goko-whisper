@@ -819,6 +819,42 @@ input.pin {
   height: 100%;
 }
 
+.map-label {
+  font-size: 6px;
+  font-weight: bold;
+  fill: #4a3f35;
+  paint-order: stroke;
+  stroke: #efe6da;
+  stroke-width: 1.5px;
+  pointer-events: none;
+  user-select: none;
+}
+
+.building-illust.locked {
+  filter: sepia(0.8) hue-rotate(340deg) saturate(0.3) opacity(0.85);
+}
+
+.building-illust.unlocked {
+  filter: sepia(0.3) saturate(2.5) hue-rotate(330deg) drop-shadow(0 4px 6px rgba(120, 113, 108, 0.4));
+}
+
+.pulse-circle {
+  animation: pulseRing 1.8s cubic-bezier(0.24, 0, 0.38, 1) infinite;
+}
+
+@keyframes pulseRing {
+  0% {
+    r: 6px;
+    opacity: 0.8;
+    stroke-width: 0.5px;
+  }
+  100% {
+    r: 20px;
+    opacity: 0;
+    stroke-width: 1.5px;
+  }
+}
+
 .mz {
   position: absolute;
   left: 8px;
