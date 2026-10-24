@@ -34,6 +34,12 @@ export type EnrollResponse =
 
 const enrollFlights = new Map<string, Promise<EnrollResponse>>();
 
+export type MergeResponse =
+  | { ok: true; student: EnrollStudent; redeemed: boolean }
+  | { ok: false; error: "invalid" | "mismatch" | "unavailable" | "error" };
+
+const mergeFlights = new Map<string, Promise<MergeResponse>>();
+
 function apiUrl(path: string): string {
   const base = import.meta.env.VITE_API_BASE_URL ?? "";
   return `${base}${path}`;
@@ -175,6 +181,79 @@ export function enrollStudent(
     enrollFlights.delete(key);
   });
   enrollFlights.set(key, flight);
+  return flight;
+}
+
+async function postMerge(
+  nickname: string,
+  telegramCode: string,
+  currentStamps: string[],
+): Promise<MergeResponse> {
+  try {
+    const response = await fetchApi("/api/student/merge", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nickname, telegramCode, currentStamps }),
+    });
+    const body = (await response.json()) as {
+      success?: unknown;
+      error?: unknown;
+      redeemed?: unknown;
+      student?: {
+        clientId?: unknown;
+        nickname?: unknown;
+        telegramCode?: unknown;
+        stamps?: unknown;
+      };
+    };
+    const student = body.student;
+    const stamps = Array.isArray(student?.stamps)
+      ? student.stamps.filter((item): item is string => typeof item === "string")
+      : null;
+    if (
+      response.ok &&
+      body.success === true &&
+      student &&
+      typeof student.clientId === "string" &&
+      typeof student.nickname === "string" &&
+      typeof student.telegramCode === "string" &&
+      stamps &&
+      typeof body.redeemed === "boolean"
+    ) {
+      return {
+        ok: true,
+        redeemed: body.redeemed,
+        student: {
+          clientId: student.clientId,
+          nickname: student.nickname,
+          telegramCode: student.telegramCode,
+          stamps,
+        },
+      };
+    }
+    if (response.status === 401 || body.error === "MISMATCH") {
+      return { ok: false, error: "mismatch" };
+    }
+    if (body.error === "INVALID") return { ok: false, error: "invalid" };
+    if (body.error === "UNAVAILABLE") return { ok: false, error: "unavailable" };
+    return { ok: false, error: "error" };
+  } catch {
+    return { ok: false, error: "error" };
+  }
+}
+
+export function mergeStudent(
+  nickname: string,
+  telegramCode: string,
+  currentStamps: string[],
+): Promise<MergeResponse> {
+  const key = `${nickname}:${telegramCode}:${currentStamps.join(",")}`;
+  const existing = mergeFlights.get(key);
+  if (existing) return existing;
+  const flight = postMerge(nickname, telegramCode, currentStamps).finally(() => {
+    mergeFlights.delete(key);
+  });
+  mergeFlights.set(key, flight);
   return flight;
 }
 

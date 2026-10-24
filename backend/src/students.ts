@@ -51,6 +51,9 @@ async function findStudent(
     .first<StudentRow>();
 }
 
+const TELEGRAM_CODE_RE = /^[0-7]-[0-7]-[0-7]-[0-7]$/;
+const STAMP_ORDER = ["spot1", "spot2", "spot3"];
+
 function drawTelegram(): string {
   const buf = new Uint8Array(4);
   crypto.getRandomValues(buf);
@@ -153,6 +156,99 @@ export async function handleEnroll(request: Request, env: Env): Promise<Response
   }
 
   return enrollError(request, "UNAVAILABLE", 503);
+}
+
+function readCurrentStamps(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  const stamps: string[] = [];
+  for (const item of value) {
+    if (typeof item !== "string" || !STAMP_IDS.has(item)) return null;
+    if (!stamps.includes(item)) stamps.push(item);
+  }
+  return stamps;
+}
+
+function unionStamps(saved: string[], incoming: string[]): string[] {
+  const present = new Set([...saved, ...incoming]);
+  return STAMP_ORDER.filter((id) => present.has(id));
+}
+
+async function findByTelegram(
+  db: D1Database,
+  nickname: string,
+  telegramCode: string,
+): Promise<StudentRow | null> {
+  return db
+    .prepare(
+      `SELECT client_id, nickname, telegram_code, stamps
+       FROM students
+       WHERE nickname = ? AND telegram_code = ?`,
+    )
+    .bind(nickname, telegramCode)
+    .first<StudentRow>();
+}
+
+async function isRedeemed(db: D1Database, clientId: string): Promise<boolean> {
+  const row = await db
+    .prepare("SELECT status FROM tokens WHERE client_id = ?")
+    .bind(clientId)
+    .first<{ status: string }>();
+  return row?.status === "redeemed";
+}
+
+async function writeUnion(
+  db: D1Database,
+  clientId: string,
+  incoming: string[],
+): Promise<StudentRow | null> {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const row = await findStudent(db, clientId);
+    if (!row) return null;
+    const stamps = JSON.stringify(unionStamps(parseStampList(row.stamps), incoming));
+    if (stamps === row.stamps) return { ...row, stamps };
+    const result = await db
+      .prepare(
+        `UPDATE students
+         SET stamps = ?1, updated_at = ?2
+         WHERE client_id = ?3 AND stamps = ?4`,
+      )
+      .bind(stamps, Date.now(), clientId, row.stamps)
+      .run();
+    if ((result.meta.changes ?? 0) > 0) return { ...row, stamps };
+  }
+  return null;
+}
+
+export async function handleMerge(request: Request, env: Env): Promise<Response> {
+  const parsed = await readJson(request);
+  if (!parsed.ok) return enrollError(request, "INVALID", 400);
+  const payload = parsed.payload;
+  if (!payload || typeof payload !== "object") {
+    return enrollError(request, "INVALID", 400);
+  }
+
+  const record = payload as {
+    nickname?: unknown;
+    telegramCode?: unknown;
+    currentStamps?: unknown;
+  };
+  const nickname = typeof record.nickname === "string" ? record.nickname.trim() : "";
+  const telegramCode = typeof record.telegramCode === "string" ? record.telegramCode : "";
+  const currentStamps = readCurrentStamps(record.currentStamps);
+  if (!nickname || nickname.length > 10 || !TELEGRAM_CODE_RE.test(telegramCode) || !currentStamps) {
+    return enrollError(request, "INVALID", 400);
+  }
+
+  const found = await findByTelegram(env.DB, nickname, telegramCode);
+  if (!found) return enrollError(request, "MISMATCH", 401);
+
+  const merged = await writeUnion(env.DB, found.client_id, currentStamps);
+  if (!merged) return enrollError(request, "UNAVAILABLE", 503);
+
+  return json(request, {
+    ...enrollBody(merged),
+    redeemed: await isRedeemed(env.DB, merged.client_id),
+  });
 }
 
 export async function handleStamp(request: Request, env: Env): Promise<Response> {

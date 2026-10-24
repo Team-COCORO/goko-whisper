@@ -60,7 +60,11 @@ export function EnrollPage({ onBack, withStamp = false }: EnrollPageProps) {
         <div className="welcome-lead">五高</div>
         <h1 className="welcome-title">入学手続き</h1>
         <p className="join-copy">
-          スタンプを記録するスタンプ帖を作ります。ニックネームを決めてください。本名は不要です。入学したあとは変更できません。
+          <span className="u-nowrap">スタンプを記録する</span>
+          <span className="u-nowrap">スタンプ帖を作ります。</span>
+          <span className="u-nowrap">ニックネームを決めてください。</span>
+          <span className="u-nowrap">本名は不要です。</span>
+          <span className="u-nowrap">入学したあとは変更できません。</span>
         </p>
         <label className="welcome-label" htmlFor="student-nickname">
           ニックネーム（10文字まで）
@@ -76,7 +80,8 @@ export function EnrollPage({ onBack, withStamp = false }: EnrollPageProps) {
           onChange={(event) => setInput(event.target.value)}
         />
         <p className="welcome-sub">
-          入学すると、別の画面でも続けられる4つのしるしが発行されます。自分では選べません。
+          <span className="u-nowrap">入学すると、別の画面でも続けられる</span>
+          <span className="u-nowrap">4つのしるしが発行されます。</span>
         </p>
         {error ? <p className="join-error">{error}</p> : null}
         <button className="welcome-start" type="button" disabled={!ready} onClick={() => void submit()}>

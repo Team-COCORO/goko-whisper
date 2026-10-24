@@ -10,25 +10,36 @@ const STAMP_PLACE: Record<WhisperId, string> = {
 type StampLandingPageProps = {
   pendingStamp: WhisperId;
   onEnroll: () => void;
+  onMerge: () => void;
 };
 
-export function StampLandingPage({ pendingStamp, onEnroll }: StampLandingPageProps) {
+export function StampLandingPage({ pendingStamp, onEnroll, onMerge }: StampLandingPageProps) {
   return (
     <main className="welcome welcome--scroll">
       <div className="welcome-card">
         <StampNotice />
         <div className="welcome-lead">{STAMP_PLACE[pendingStamp]}</div>
-        <h1 className="welcome-title">スタンプを見つけました</h1>
+        <h1 className="welcome-title">
+          <span className="u-nowrap">スタンプを</span>
+          <span className="u-nowrap">見つけました</span>
+        </h1>
+        <div className="shuin-badge" aria-hidden="true">
+          押印
+          <br />
+          待ち
+        </div>
         <p className="join-copy">
-          入学すると、この場所の印がスタンプ帖に残ります。別の画面で先に登録した方は、帳面を合わせます。
+          <span className="u-nowrap">入学すると、この場所の印が</span>
+          <span className="u-nowrap">スタンプ帖に残ります。</span>
+          <span className="u-nowrap">別の画面で先に登録した方は、</span>
+          <span className="u-nowrap">帳面を合わせます。</span>
         </p>
         <button className="welcome-start" type="button" onClick={onEnroll}>
           五高に入学する
         </button>
-        <button className="join-secondary" type="button" disabled>
+        <button className="join-secondary" type="button" onClick={onMerge}>
           帳面を合わせる
         </button>
-        <p className="welcome-sub">帳面を合わせる画面は、まだ開けません。</p>
       </div>
     </main>
   );

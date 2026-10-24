@@ -11,6 +11,7 @@ import { placeById, type PlaceId } from "./data/places";
 import { AdminPage } from "./pages/AdminPage";
 import { EnrollPage } from "./pages/EnrollPage";
 import { FoodPage } from "./pages/FoodPage";
+import { MergeNotice, MergePage } from "./pages/MergePage";
 import { PresentPage } from "./pages/PresentPage";
 import { ProloguePage } from "./pages/ProloguePage";
 import { StampLandingPage } from "./pages/StampLandingPage";
@@ -140,9 +141,16 @@ function TabContent() {
 }
 
 function StampJoinGate({ pendingStamp }: { pendingStamp: 1 | 2 | 3 }) {
-  const [enrolling, setEnrolling] = useState(false);
-  if (enrolling) return <EnrollPage withStamp onBack={() => setEnrolling(false)} />;
-  return <StampLandingPage pendingStamp={pendingStamp} onEnroll={() => setEnrolling(true)} />;
+  const [mode, setMode] = useState<"landing" | "enroll" | "merge">("landing");
+  if (mode === "enroll") return <EnrollPage withStamp onBack={() => setMode("landing")} />;
+  if (mode === "merge") return <MergePage onBack={() => setMode("landing")} />;
+  return (
+    <StampLandingPage
+      pendingStamp={pendingStamp}
+      onEnroll={() => setMode("enroll")}
+      onMerge={() => setMode("merge")}
+    />
+  );
 }
 
 function JoinGate() {
@@ -158,9 +166,11 @@ function AppShell() {
     hasJoined,
     pendingStamp,
     slipVisible,
+    mergeVisible,
     nickname,
     telegramCode,
     acknowledgeSlip,
+    acknowledgeMerge,
   } = useApp();
 
   if (storageBlocked) {
@@ -182,6 +192,14 @@ function AppShell() {
     return (
       <div className="app-shell">
         {pendingStamp ? <StampJoinGate pendingStamp={pendingStamp} /> : <JoinGate />}
+      </div>
+    );
+  }
+
+  if (screen !== "admin" && mergeVisible) {
+    return (
+      <div className="app-shell">
+        <MergeNotice onConfirm={acknowledgeMerge} />
       </div>
     );
   }

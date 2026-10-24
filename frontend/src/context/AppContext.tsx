@@ -46,7 +46,10 @@ type AppContextValue = {
   reserveClientForEnroll: () => boolean;
   readStampForEnroll: () => { initialStamp: string; token: string } | null;
   completeEnroll: (student: EnrollStudent) => boolean;
+  completeMerge: (student: EnrollStudent, redeemed: boolean) => boolean;
   acknowledgeSlip: () => void;
+  acknowledgeMerge: () => void;
+  mergeVisible: boolean;
   saveIssued: (code: string, issuedAt: number) => void;
   markRedeemed: () => void;
   markSoldOut: () => void;
@@ -384,6 +387,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       Boolean(initial.rally.telegramCode) &&
       slipOpenFor(initial.rally.clientId),
   );
+  const [mergeVisible, setMergeVisible] = useState(false);
 
   useEffect(() => {
     const sync = () => setIsAdmin(window.location.hash === "#admin");
@@ -577,6 +581,47 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return saved;
   }, []);
 
+  const completeMerge = useCallback((student: EnrollStudent, redeemed: boolean) => {
+    const nickname = student.nickname.trim();
+    const telegramCode = readTelegramCode(student.telegramCode);
+    const clientId = normalizeClientId(student.clientId);
+    if (!clientId || !nickname || nickname.length > 10 || !telegramCode || typeof redeemed !== "boolean") {
+      return false;
+    }
+
+    let saved = false;
+    setRally((prev) => {
+      if (prev.pendingStamp && !stampFlags(student.stamps, prev.pendingStamp)) return prev;
+      const stamp1Done = stampFlags(student.stamps, 1);
+      const stamp2Done = stampFlags(student.stamps, 2);
+      const stamp3Done = stampFlags(student.stamps, 3);
+      const next: StampRallyState = {
+        clientId,
+        nickname,
+        telegramCode,
+        hasJoined: true,
+        stamp1Done,
+        stamp2Done,
+        stamp3Done,
+        pendingStamp: null,
+        goalUnlocked: stamp1Done && stamp2Done && stamp3Done,
+        redeemed,
+      };
+      try {
+        persistRally(next);
+      } catch {
+        setStorageBlocked(true);
+        return prev;
+      }
+      stampClaim = null;
+      clearStoredClaim();
+      saved = true;
+      setMergeVisible(true);
+      return next;
+    });
+    return saved;
+  }, []);
+
   const saveIssued = useCallback(
     (code: string, issuedAt: number) => {
       if (rally.rewardCode) return;
@@ -613,6 +658,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSlipVisible(false);
   }, []);
 
+  const acknowledgeMerge = useCallback(() => {
+    setMergeVisible(false);
+  }, []);
+
   const value = useMemo(
     () => ({
       storageBlocked,
@@ -634,11 +683,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rewardCode: rally.rewardCode,
       issuedAt: rally.issuedAt,
       slipVisible,
+      mergeVisible,
       setActiveTab,
       reserveClientForEnroll,
       readStampForEnroll,
       completeEnroll,
+      completeMerge,
       acknowledgeSlip,
+      acknowledgeMerge,
       saveIssued,
       markRedeemed,
       markSoldOut,
@@ -669,10 +721,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rally.hasJoined,
       rally.telegramCode,
       slipVisible,
+      mergeVisible,
       reserveClientForEnroll,
       readStampForEnroll,
       completeEnroll,
+      completeMerge,
       acknowledgeSlip,
+      acknowledgeMerge,
       bookOpen,
       bookLocked,
       whisperId,
