@@ -13,7 +13,7 @@ import { EnrollPage } from "./pages/EnrollPage";
 import { FoodPage } from "./pages/FoodPage";
 import { PresentPage } from "./pages/PresentPage";
 import { ProloguePage } from "./pages/ProloguePage";
-import { StampHoldPage } from "./pages/StampHoldPage";
+import { StampLandingPage } from "./pages/StampLandingPage";
 import type { Screen } from "./types";
 
 function sheetLabel(screen: Screen, placeName: string | null): string {
@@ -139,6 +139,12 @@ function TabContent() {
   return <HomeStage />;
 }
 
+function StampJoinGate({ pendingStamp }: { pendingStamp: 1 | 2 | 3 }) {
+  const [enrolling, setEnrolling] = useState(false);
+  if (enrolling) return <EnrollPage withStamp onBack={() => setEnrolling(false)} />;
+  return <StampLandingPage pendingStamp={pendingStamp} onEnroll={() => setEnrolling(true)} />;
+}
+
 function JoinGate() {
   const [enrolling, setEnrolling] = useState(false);
   if (enrolling) return <EnrollPage onBack={() => setEnrolling(false)} />;
@@ -175,7 +181,7 @@ function AppShell() {
   if (screen !== "admin" && !hasJoined) {
     return (
       <div className="app-shell">
-        {pendingStamp ? <StampHoldPage pendingStamp={pendingStamp} /> : <JoinGate />}
+        {pendingStamp ? <StampJoinGate pendingStamp={pendingStamp} /> : <JoinGate />}
       </div>
     );
   }

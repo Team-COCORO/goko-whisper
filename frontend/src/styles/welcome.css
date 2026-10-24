@@ -224,6 +224,25 @@
   color: var(--nav);
 }
 
+.join-secondary {
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px;
+  background: transparent;
+  color: var(--welcome-sub);
+  border: 1.5px solid var(--welcome-border);
+  border-radius: 6px;
+  font-size: clamp(14.5px, 4vw, 16px);
+  font-weight: bold;
+  font-family: inherit;
+  letter-spacing: 0.06em;
+}
+
+.join-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .join-back {
   margin-top: 10px;
   border: none;

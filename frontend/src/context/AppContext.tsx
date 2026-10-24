@@ -44,6 +44,7 @@ type AppContextValue = {
   slipVisible: boolean;
   setActiveTab: (tab: Tab) => void;
   reserveClientForEnroll: () => boolean;
+  readStampForEnroll: () => { initialStamp: string; token: string } | null;
   completeEnroll: (student: EnrollStudent) => boolean;
   acknowledgeSlip: () => void;
   saveIssued: (code: string, issuedAt: number) => void;
@@ -392,7 +393,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const acceptStamp = useCallback((claim: StampClaim) => {
     let saved = false;
+    let joined = false;
     setRally((prev) => {
+      joined = prev.hasJoined;
       if (stampDone(prev, claim.id)) {
         saved = true;
         return prev;
@@ -407,16 +410,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       return next;
     });
-    return saved;
+    return { saved, joined };
   }, []);
 
   const applyStampResult = useCallback(
     (result: StampVerifyResult | "done", claim: StampClaim) => {
       if (result === "done") return;
       if (result === "ok") {
-        const saved = acceptStamp(claim);
-        if (saved) clearStoredClaim();
-        setStampNotice(saved ? null : "retry");
+        const accepted = acceptStamp(claim);
+        if (accepted.saved && accepted.joined) clearStoredClaim();
+        setStampNotice(accepted.saved ? null : "retry");
         return;
       }
       if (result === "invalid") {
@@ -517,7 +520,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const reserveClientForEnroll = useCallback(() => {
-    if (rally.hasJoined || rally.pendingStamp) return false;
+    if (rally.hasJoined) return false;
     try {
       persistRally(rally);
       return true;
@@ -527,6 +530,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   }, [rally]);
 
+  const readStampForEnroll = useCallback(() => {
+    if (!rally.pendingStamp) return null;
+    const claim = claimStampQuery();
+    if (!claim || claim.id !== rally.pendingStamp) return null;
+    return { initialStamp: claim.stamp, token: claim.token };
+  }, [rally.pendingStamp]);
+
   const completeEnroll = useCallback((student: EnrollStudent) => {
     const nickname = student.nickname.trim();
     const telegramCode = readTelegramCode(student.telegramCode);
@@ -535,7 +545,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     let saved = false;
     setRally((prev) => {
-      if (prev.pendingStamp) return prev;
+      if (prev.pendingStamp && !stampFlags(student.stamps, prev.pendingStamp)) return prev;
       const next: StampRallyState = {
         ...prev,
         clientId,
@@ -545,6 +555,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         stamp1Done: stampFlags(student.stamps, 1),
         stamp2Done: stampFlags(student.stamps, 2),
         stamp3Done: stampFlags(student.stamps, 3),
+        pendingStamp: null,
       };
       try {
         persistRally(next);
@@ -557,6 +568,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       } catch {
         // 再読込では控えを出せない。今の画面では出す。
       }
+      stampClaim = null;
+      clearStoredClaim();
       saved = true;
       setSlipVisible(true);
       return next;
@@ -623,6 +636,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       slipVisible,
       setActiveTab,
       reserveClientForEnroll,
+      readStampForEnroll,
       completeEnroll,
       acknowledgeSlip,
       saveIssued,
@@ -656,6 +670,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rally.telegramCode,
       slipVisible,
       reserveClientForEnroll,
+      readStampForEnroll,
       completeEnroll,
       acknowledgeSlip,
       bookOpen,

@@ -30,7 +30,7 @@ export type EnrollStudent = {
 
 export type EnrollResponse =
   | { ok: true; student: EnrollStudent }
-  | { ok: false; error: "invalid" | "unavailable" | "error" };
+  | { ok: false; error: "invalid" | "forbidden" | "unavailable" | "error" };
 
 const enrollFlights = new Map<string, Promise<EnrollResponse>>();
 
@@ -104,12 +104,20 @@ export function issueToken(
   return flight;
 }
 
-async function postEnroll(clientId: string, nickname: string): Promise<EnrollResponse> {
+async function postEnroll(
+  clientId: string,
+  nickname: string,
+  stamp?: { initialStamp: string; token: string },
+): Promise<EnrollResponse> {
   try {
     const response = await fetchApi("/api/student/enroll", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ clientId, nickname }),
+      body: JSON.stringify({
+        clientId,
+        nickname,
+        ...(stamp ? { initialStamp: stamp.initialStamp, token: stamp.token } : {}),
+      }),
     });
     const body = (await response.json()) as {
       success?: unknown;
@@ -121,6 +129,9 @@ async function postEnroll(clientId: string, nickname: string): Promise<EnrollRes
         stamps?: unknown;
       };
     };
+    if (response.status === 403 || body.error === "FORBIDDEN") {
+      return { ok: false, error: "forbidden" };
+    }
     const student = body.student;
     const stamps = Array.isArray(student?.stamps)
       ? student.stamps.filter((item): item is string => typeof item === "string")
@@ -152,13 +163,18 @@ async function postEnroll(clientId: string, nickname: string): Promise<EnrollRes
   }
 }
 
-export function enrollStudent(clientId: string, nickname: string): Promise<EnrollResponse> {
-  const existing = enrollFlights.get(clientId);
+export function enrollStudent(
+  clientId: string,
+  nickname: string,
+  stamp?: { initialStamp: string; token: string },
+): Promise<EnrollResponse> {
+  const key = `${clientId}:${stamp?.initialStamp ?? ""}`;
+  const existing = enrollFlights.get(key);
   if (existing) return existing;
-  const flight = postEnroll(clientId, nickname).finally(() => {
-    enrollFlights.delete(clientId);
+  const flight = postEnroll(clientId, nickname, stamp).finally(() => {
+    enrollFlights.delete(key);
   });
-  enrollFlights.set(clientId, flight);
+  enrollFlights.set(key, flight);
   return flight;
 }
 

@@ -6,35 +6,52 @@ const NICKNAME_MAX = 10;
 
 type EnrollPageProps = {
   onBack: () => void;
+  withStamp?: boolean;
 };
 
-export function EnrollPage({ onBack }: EnrollPageProps) {
-  const { clientId, pendingStamp, reserveClientForEnroll, completeEnroll } = useApp();
+export function EnrollPage({ onBack, withStamp = false }: EnrollPageProps) {
+  const { clientId, pendingStamp, reserveClientForEnroll, readStampForEnroll, completeEnroll } =
+    useApp();
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const name = input.trim();
-  const ready = name.length > 0 && name.length <= NICKNAME_MAX && !pendingStamp && !busy;
+  const ready =
+    name.length > 0 &&
+    name.length <= NICKNAME_MAX &&
+    !busy &&
+    (withStamp ? pendingStamp !== null : !pendingStamp);
 
   async function submit() {
     if (!ready) return;
     setBusy(true);
     setError("");
+    const stamp = withStamp ? readStampForEnroll() : null;
+    if (withStamp && !stamp) {
+      setBusy(false);
+      setError("QRを、もう一度スマホ本体のカメラで読み取ってください。");
+      return;
+    }
     if (!reserveClientForEnroll()) {
       setBusy(false);
       return;
     }
-    const result = await enrollStudent(clientId, name);
+    const result = await enrollStudent(clientId, name, stamp ?? undefined);
     if (!result.ok) {
       setBusy(false);
       setError(
         result.error === "invalid"
           ? "名前を確認してください。"
-          : "通信できませんでした。同じ名前でもう一度入学できます。",
+          : result.error === "forbidden"
+            ? "QRを、もう一度スマホ本体のカメラで読み取ってください。"
+            : "通信できませんでした。同じ名前でもう一度入学できます。",
       );
       return;
     }
-    if (!completeEnroll(result.student)) setBusy(false);
+    if (!completeEnroll(result.student)) {
+      setBusy(false);
+      setError("この場所の印を残せませんでした。QRを、もう一度読み取ってください。");
+    }
   }
 
   return (
@@ -66,7 +83,7 @@ export function EnrollPage({ onBack }: EnrollPageProps) {
           入学する
         </button>
         <button className="join-back" type="button" onClick={onBack} disabled={busy}>
-          案内に戻る
+          {withStamp ? "戻る" : "案内に戻る"}
         </button>
       </div>
     </main>
