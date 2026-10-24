@@ -7,11 +7,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { verifyStamp, type StampVerifyResult } from "../api";
+import { verifyStamp, type EnrollStudent, type StampVerifyResult } from "../api";
 import type { Screen, StampRallyState, Tab, WhisperId } from "../types";
 
 const STORAGE_KEY = "goko-whisper";
 const STAMP_CLAIM_KEY = "goko-stamp-claim";
+const SLIP_OPEN_KEY = "goko-slip-open";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -40,9 +41,11 @@ type AppContextValue = {
   telegramCode: string | null;
   rewardCode?: string;
   issuedAt?: number;
+  slipVisible: boolean;
   setActiveTab: (tab: Tab) => void;
-  saveNickname: (name: string) => void;
-  saveClientBeforeEnroll: () => void;
+  reserveClientForEnroll: () => boolean;
+  completeEnroll: (student: EnrollStudent) => boolean;
+  acknowledgeSlip: () => void;
   saveIssued: (code: string, issuedAt: number) => void;
   markRedeemed: () => void;
   markSoldOut: () => void;
@@ -294,6 +297,32 @@ function persistRally(next: StampRallyState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
 
+function slipOpenFor(clientId: string): boolean {
+  try {
+    return sessionStorage.getItem(SLIP_OPEN_KEY) === clientId;
+  } catch {
+    return false;
+  }
+}
+
+function markSlipOpen(clientId: string) {
+  sessionStorage.setItem(SLIP_OPEN_KEY, clientId);
+}
+
+function clearSlipOpen() {
+  try {
+    sessionStorage.removeItem(SLIP_OPEN_KEY);
+  } catch {
+    // 確認を消せなくても、この画面では地図へ進める。
+  }
+}
+
+function stampFlags(stamps: string[], id: WhisperId): boolean {
+  if (id === 1) return stamps.includes("spot1");
+  if (id === 2) return stamps.includes("spot2");
+  return stamps.includes("spot3");
+}
+
 // StrictMode は Provider を付け直す。付け直しのたびにクエリを読むと、
 // 先に保存した押印待ちが消える。起動処理は一度だけにする。
 let bootSnapshot: BootResult | null = null;
@@ -347,6 +376,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
   const [stampNotice, setStampNotice] = useState<"retry" | "invalid" | null>(
     null,
+  );
+  const [slipVisible, setSlipVisible] = useState(
+    () =>
+      initial.rally.hasJoined &&
+      Boolean(initial.rally.telegramCode) &&
+      slipOpenFor(initial.rally.clientId),
   );
 
   useEffect(() => {
@@ -481,33 +516,52 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setActiveTab("home");
   }, []);
 
-  const saveNickname = useCallback(
-    (name: string) => {
-      const nickname = name.trim();
-      if (!nickname || nickname.length > 10 || rally.rewardCode) return;
+  const reserveClientForEnroll = useCallback(() => {
+    if (rally.hasJoined || rally.pendingStamp) return false;
+    try {
+      persistRally(rally);
+      return true;
+    } catch {
+      setStorageBlocked(true);
+      return false;
+    }
+  }, [rally]);
 
-      const next = { ...rally, nickname, hasJoined: true };
+  const completeEnroll = useCallback((student: EnrollStudent) => {
+    const nickname = student.nickname.trim();
+    const telegramCode = readTelegramCode(student.telegramCode);
+    const clientId = normalizeClientId(student.clientId);
+    if (!clientId || !nickname || nickname.length > 10 || !telegramCode) return false;
+
+    let saved = false;
+    setRally((prev) => {
+      if (prev.pendingStamp) return prev;
+      const next: StampRallyState = {
+        ...prev,
+        clientId,
+        nickname,
+        telegramCode,
+        hasJoined: true,
+        stamp1Done: stampFlags(student.stamps, 1),
+        stamp2Done: stampFlags(student.stamps, 2),
+        stamp3Done: stampFlags(student.stamps, 3),
+      };
       try {
         persistRally(next);
       } catch {
         setStorageBlocked(true);
-        return;
+        return prev;
       }
-      setRally(next);
-    },
-    [rally],
-  );
-
-  const saveClientBeforeEnroll = useCallback(() => {
-    setRally((prev) => {
-      if (prev.hasJoined) return prev;
       try {
-        persistRally(prev);
+        markSlipOpen(next.clientId);
       } catch {
-        setStorageBlocked(true);
+        // 再読込では控えを出せない。今の画面では出す。
       }
-      return prev;
+      saved = true;
+      setSlipVisible(true);
+      return next;
     });
+    return saved;
   }, []);
 
   const saveIssued = useCallback(
@@ -541,6 +595,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSoldOut(true);
   }, []);
 
+  const acknowledgeSlip = useCallback(() => {
+    clearSlipOpen();
+    setSlipVisible(false);
+  }, []);
+
   const value = useMemo(
     () => ({
       storageBlocked,
@@ -561,9 +620,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       telegramCode: rally.telegramCode,
       rewardCode: rally.rewardCode,
       issuedAt: rally.issuedAt,
+      slipVisible,
       setActiveTab,
-      saveNickname,
-      saveClientBeforeEnroll,
+      reserveClientForEnroll,
+      completeEnroll,
+      acknowledgeSlip,
       saveIssued,
       markRedeemed,
       markSoldOut,
@@ -593,11 +654,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rally.clientId,
       rally.hasJoined,
       rally.telegramCode,
-      saveClientBeforeEnroll,
+      slipVisible,
+      reserveClientForEnroll,
+      completeEnroll,
+      acknowledgeSlip,
       bookOpen,
       bookLocked,
       whisperId,
-      saveNickname,
       saveIssued,
       markRedeemed,
       markSoldOut,

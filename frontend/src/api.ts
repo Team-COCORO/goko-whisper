@@ -21,6 +21,19 @@ const API_TIMEOUT_MS = 10_000;
 
 export type StampVerifyResult = "ok" | "invalid" | "error";
 
+export type EnrollStudent = {
+  clientId: string;
+  nickname: string;
+  telegramCode: string;
+  stamps: string[];
+};
+
+export type EnrollResponse =
+  | { ok: true; student: EnrollStudent }
+  | { ok: false; error: "invalid" | "unavailable" | "error" };
+
+const enrollFlights = new Map<string, Promise<EnrollResponse>>();
+
 function apiUrl(path: string): string {
   const base = import.meta.env.VITE_API_BASE_URL ?? "";
   return `${base}${path}`;
@@ -88,6 +101,64 @@ export function issueToken(
     issueFlights.delete(clientId);
   });
   issueFlights.set(clientId, flight);
+  return flight;
+}
+
+async function postEnroll(clientId: string, nickname: string): Promise<EnrollResponse> {
+  try {
+    const response = await fetchApi("/api/student/enroll", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId, nickname }),
+    });
+    const body = (await response.json()) as {
+      success?: unknown;
+      error?: unknown;
+      student?: {
+        clientId?: unknown;
+        nickname?: unknown;
+        telegramCode?: unknown;
+        stamps?: unknown;
+      };
+    };
+    const student = body.student;
+    const stamps = Array.isArray(student?.stamps)
+      ? student.stamps.filter((item): item is string => typeof item === "string")
+      : null;
+    if (
+      response.ok &&
+      body.success === true &&
+      student &&
+      typeof student.clientId === "string" &&
+      typeof student.nickname === "string" &&
+      typeof student.telegramCode === "string" &&
+      stamps
+    ) {
+      return {
+        ok: true,
+        student: {
+          clientId: student.clientId,
+          nickname: student.nickname,
+          telegramCode: student.telegramCode,
+          stamps,
+        },
+      };
+    }
+    if (body.error === "INVALID") return { ok: false, error: "invalid" };
+    if (body.error === "UNAVAILABLE") return { ok: false, error: "unavailable" };
+    return { ok: false, error: "error" };
+  } catch {
+    return { ok: false, error: "error" };
+  }
+}
+
+export function enrollStudent(clientId: string, nickname: string): Promise<EnrollResponse> {
+  const existing = enrollFlights.get(clientId);
+  if (existing) return existing;
+  const flight = postEnroll(clientId, nickname).finally(() => {
+    enrollFlights.delete(clientId);
+  });
+  enrollFlights.set(clientId, flight);
   return flight;
 }
 

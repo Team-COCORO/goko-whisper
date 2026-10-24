@@ -1,0 +1,74 @@
+import { useState } from "react";
+import { enrollStudent } from "../api";
+import { useApp } from "../context/AppContext";
+
+const NICKNAME_MAX = 10;
+
+type EnrollPageProps = {
+  onBack: () => void;
+};
+
+export function EnrollPage({ onBack }: EnrollPageProps) {
+  const { clientId, pendingStamp, reserveClientForEnroll, completeEnroll } = useApp();
+  const [input, setInput] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const name = input.trim();
+  const ready = name.length > 0 && name.length <= NICKNAME_MAX && !pendingStamp && !busy;
+
+  async function submit() {
+    if (!ready) return;
+    setBusy(true);
+    setError("");
+    if (!reserveClientForEnroll()) {
+      setBusy(false);
+      return;
+    }
+    const result = await enrollStudent(clientId, name);
+    if (!result.ok) {
+      setBusy(false);
+      setError(
+        result.error === "invalid"
+          ? "名前を確認してください。"
+          : "通信できませんでした。同じ名前でもう一度入学できます。",
+      );
+      return;
+    }
+    if (!completeEnroll(result.student)) setBusy(false);
+  }
+
+  return (
+    <main className="welcome welcome--scroll">
+      <div className="welcome-card">
+        <div className="welcome-lead">五高</div>
+        <h1 className="welcome-title">入学手続き</h1>
+        <p className="join-copy">
+          スタンプを記録するスタンプ帖を作ります。ニックネームを決めてください。本名は不要です。入学したあとは変更できません。
+        </p>
+        <label className="welcome-label" htmlFor="student-nickname">
+          ニックネーム（10文字まで）
+        </label>
+        <input
+          id="student-nickname"
+          className="welcome-name"
+          type="text"
+          maxLength={NICKNAME_MAX}
+          placeholder="例：そうせき"
+          autoComplete="nickname"
+          value={input}
+          onChange={(event) => setInput(event.target.value)}
+        />
+        <p className="welcome-sub">
+          入学すると、別の画面でも続けられる4つのしるしが発行されます。自分では選べません。
+        </p>
+        {error ? <p className="join-error">{error}</p> : null}
+        <button className="welcome-start" type="button" disabled={!ready} onClick={() => void submit()}>
+          入学する
+        </button>
+        <button className="join-back" type="button" onClick={onBack} disabled={busy}>
+          案内に戻る
+        </button>
+      </div>
+    </main>
+  );
+}

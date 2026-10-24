@@ -5,12 +5,15 @@ import { CampusMap } from "./components/CampusMap";
 import { HomeStatus } from "./components/HomeStatus";
 import { StampBook, StampBookButton } from "./components/StampBook";
 import { StampNotice } from "./components/StampNotice";
+import { TelegramSlip } from "./components/TelegramSlip";
 import { AppProvider, useApp } from "./context/AppContext";
 import { placeById, type PlaceId } from "./data/places";
 import { AdminPage } from "./pages/AdminPage";
+import { EnrollPage } from "./pages/EnrollPage";
 import { FoodPage } from "./pages/FoodPage";
 import { PresentPage } from "./pages/PresentPage";
-import { WelcomePage } from "./pages/WelcomePage";
+import { ProloguePage } from "./pages/ProloguePage";
+import { StampHoldPage } from "./pages/StampHoldPage";
 import type { Screen } from "./types";
 
 function sheetLabel(screen: Screen, placeName: string | null): string {
@@ -136,8 +139,23 @@ function TabContent() {
   return <HomeStage />;
 }
 
+function JoinGate() {
+  const [enrolling, setEnrolling] = useState(false);
+  if (enrolling) return <EnrollPage onBack={() => setEnrolling(false)} />;
+  return <ProloguePage onEnroll={() => setEnrolling(true)} />;
+}
+
 function AppShell() {
-  const { storageBlocked, screen, nickname } = useApp();
+  const {
+    storageBlocked,
+    screen,
+    hasJoined,
+    pendingStamp,
+    slipVisible,
+    nickname,
+    telegramCode,
+    acknowledgeSlip,
+  } = useApp();
 
   if (storageBlocked) {
     return (
@@ -154,10 +172,22 @@ function AppShell() {
     );
   }
 
-  if (screen !== "admin" && !nickname.trim()) {
+  if (screen !== "admin" && !hasJoined) {
     return (
       <div className="app-shell">
-        <WelcomePage />
+        {pendingStamp ? <StampHoldPage pendingStamp={pendingStamp} /> : <JoinGate />}
+      </div>
+    );
+  }
+
+  if (screen !== "admin" && slipVisible && telegramCode) {
+    return (
+      <div className="app-shell">
+        <TelegramSlip
+          nickname={nickname}
+          telegramCode={telegramCode}
+          onConfirm={acknowledgeSlip}
+        />
       </div>
     );
   }
