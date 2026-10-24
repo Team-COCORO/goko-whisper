@@ -181,6 +181,16 @@
   line-break: strict;
 }
 
+.join-copy--start {
+  text-align: left;
+}
+
+.join-copy--note {
+  margin-top: 10px;
+  margin-bottom: 0;
+  font-size: 14px;
+}
+
 .join-note-title {
   display: flex;
   align-items: center;
@@ -341,6 +351,7 @@
   font-weight: bold;
   font-family: inherit;
   letter-spacing: 0.06em;
+  white-space: nowrap;
 }
 
 .join-secondary:disabled {

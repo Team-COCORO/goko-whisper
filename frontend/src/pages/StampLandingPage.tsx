@@ -28,17 +28,21 @@ export function StampLandingPage({ pendingStamp, onEnroll, onMerge }: StampLandi
           <br />
           待ち
         </div>
-        <p className="join-copy">
-          <span className="u-nowrap">入学すると、この場所の印が</span>
-          <span className="u-nowrap">スタンプ帖に残ります。</span>
-          <span className="u-nowrap">別の画面で先に登録した方は、</span>
-          <span className="u-nowrap">帳面を合わせます。</span>
+        <p className="join-copy join-copy--start">
+          <span className="u-nowrap">百年前の声が聞こえました。</span>
+          <br />
+          <span className="u-nowrap">スタンプを押すには、</span>
+          <span className="u-nowrap">先に五高への「入学」</span>
+          <span className="u-nowrap">（ニックネームの登録）が必要です。</span>
+          <br />
+          <span className="u-nowrap">登録が済むと、</span>
+          <span className="u-nowrap">このスタンプはすぐに押されます。</span>
         </p>
         <button className="welcome-start" type="button" onClick={onEnroll}>
-          五高に入学する
+          はじめて参加する（入学する）
         </button>
         <button className="join-secondary" type="button" onClick={onMerge}>
-          帳面を合わせる
+          すでに登録した方（続きから）
         </button>
       </div>
     </main>
