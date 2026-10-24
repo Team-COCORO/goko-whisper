@@ -260,7 +260,7 @@ export async function handleStamp(request: Request, env: Env): Promise<Response>
     return json(request, { result: "invalid" }, 400);
   }
 
-  const record = payload as { stamp?: unknown; token?: unknown };
+  const record = payload as { stamp?: unknown; token?: unknown; clientId?: unknown };
   const stamp = typeof record.stamp === "string" ? record.stamp : "";
   const token = typeof record.token === "string" ? record.token : "";
   const expected = env.STAMP_TOKEN ?? "";
@@ -270,6 +270,15 @@ export async function handleStamp(request: Request, env: Env): Promise<Response>
     !(await safeEqual(token, expected))
   ) {
     return json(request, { result: "invalid" }, 401);
+  }
+
+  const clientId = typeof record.clientId === "string" ? record.clientId : "";
+  if (CLIENT_ID_RE.test(clientId) && clientId !== BLOCKED_CLIENT_ID) {
+    try {
+      await writeUnion(env.DB, clientId, [stamp]);
+    } catch {
+      // 更新に失敗しても、秘密が合っていれば押印は成立する。
+    }
   }
 
   return json(request, { result: "ok" });

@@ -185,7 +185,7 @@ function spotToId(stamp: string | null): WhisperId | null {
 type StampClaim = { stamp: string; id: WhisperId; token: string };
 
 let stampClaim: StampClaim | null | undefined;
-let stampVerify: Promise<StampVerifyResult> | null = null;
+let stampVerify: { key: string; flight: Promise<StampVerifyResult> } | null = null;
 
 function claimFromParts(stamp: string | null, token: string | null): StampClaim | null {
   const id = spotToId(stamp);
@@ -243,13 +243,15 @@ function claimStampQuery(): StampClaim | null {
 }
 
 function confirmStamp(claim: StampClaim): Promise<StampVerifyResult> {
-  if (!stampVerify) {
-    const flight = verifyStamp(claim.stamp, claim.token).finally(() => {
-      if (stampVerify === flight) stampVerify = null;
-    });
-    stampVerify = flight;
-  }
-  return stampVerify;
+  const rally = bootSnapshot?.rally;
+  const clientId = rally?.hasJoined ? rally.clientId : undefined;
+  const key = `${claim.stamp}:${clientId ?? ""}`;
+  if (stampVerify?.key === key) return stampVerify.flight;
+  const flight = verifyStamp(claim.stamp, claim.token, clientId).finally(() => {
+    if (stampVerify?.flight === flight) stampVerify = null;
+  });
+  stampVerify = { key, flight };
+  return flight;
 }
 
 async function resolveStamp(claim: StampClaim): Promise<StampVerifyResult | "done"> {
@@ -395,11 +397,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("hashchange", sync);
   }, []);
 
-  const acceptStamp = useCallback((claim: StampClaim) => {
+  const acceptStamp = useCallback((claim: StampClaim, onlyIfJoined = false) => {
     let saved = false;
     let joined = false;
     setRally((prev) => {
       joined = prev.hasJoined;
+      if (onlyIfJoined && !prev.hasJoined) return prev;
       if (stampDone(prev, claim.id)) {
         saved = true;
         return prev;
@@ -420,19 +423,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const applyStampResult = useCallback(
     (result: StampVerifyResult | "done", claim: StampClaim) => {
       if (result === "done") return;
-      if (result === "ok") {
-        const accepted = acceptStamp(claim);
+      if (result === "ok" || result === "error") {
+        const accepted = acceptStamp(claim, result === "error");
+        if (result === "error" && !accepted.joined) {
+          setStampNotice("retry");
+          return;
+        }
         if (accepted.saved && accepted.joined) clearStoredClaim();
         setStampNotice(accepted.saved ? null : "retry");
         return;
       }
-      if (result === "invalid") {
-        clearStoredClaim();
-        stampClaim = null;
-        setStampNotice("invalid");
-        return;
-      }
-      setStampNotice("retry");
+      clearStoredClaim();
+      stampClaim = null;
+      setStampNotice("invalid");
     },
     [acceptStamp],
   );

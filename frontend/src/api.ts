@@ -260,12 +260,15 @@ export function mergeStudent(
 export async function verifyStamp(
   stamp: string,
   token: string,
+  clientId?: string,
 ): Promise<StampVerifyResult> {
+  const payload: { stamp: string; token: string; clientId?: string } = { stamp, token };
+  if (clientId) payload.clientId = clientId;
   try {
     const response = await fetchApi("/api/stamp/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stamp, token }),
+      body: JSON.stringify(payload),
     });
     if (response.status === 401) return "invalid";
     if (!response.ok) return "error";
