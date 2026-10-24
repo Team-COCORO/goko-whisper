@@ -1303,9 +1303,9 @@ input.pin {
 .orihon-head {
   flex-direction: column;
   align-items: stretch;
-  gap: 6px;
+  gap: 2px;
   border-bottom: 1px dashed rgba(44, 62, 80, 0.3);
-  padding: 2px 6px 8px;
+  padding: 2px 6px 6px;
 }
 
 .orihon-act {
@@ -1322,6 +1322,18 @@ input.pin {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: 0.12em;
+  text-align: center;
+}
+
+.orihon-spot--slip {
+  letter-spacing: 0.06em;
+}
+
+.orihon-spot__sub {
+  color: #8c7d73;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
   text-align: center;
 }
 
@@ -1348,6 +1360,80 @@ input.pin {
 
 .orihon-dot.is-on {
   background: #2c3e50;
+}
+
+.orihon-telegram {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 6px 0;
+  overflow: hidden;
+}
+
+.orihon-telegram .u-nowrap {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.orihon-telegram__name {
+  margin: 0;
+  color: var(--brick);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.orihon-telegram__grid {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 4px 8px;
+  text-align: center;
+}
+
+.orihon-telegram__label {
+  display: block;
+  color: #8c7d73;
+  font-size: 13px;
+}
+
+.orihon-telegram .goko-icon {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto;
+}
+
+.orihon-telegram__word {
+  display: block;
+  color: #2c3e50;
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.orihon-telegram__note {
+  margin: 0;
+  color: #2c3e50;
+  font-size: 12px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.orihon-telegram__hint {
+  display: block;
+  margin-top: 2px;
+  color: #8c7d73;
+  font-size: 11px;
 }
 
 .orihon-well {

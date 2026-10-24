@@ -8,6 +8,31 @@ type TelegramSlipProps = {
   onConfirm: () => void;
 };
 
+export function TelegramCard({ telegramCode }: { telegramCode: string }) {
+  const words = telegramWords(telegramCode);
+  if (!words) return null;
+
+  return (
+    <div className="telegram-card">
+      <div className="telegram-header">
+        <span className="telegram-title">符丁</span>
+        <span className="telegram-stamp">控</span>
+      </div>
+      <ul className="join-codes">
+        {TELEGRAM_FRAMES.map((frame, index) => (
+          <li key={frame.label}>
+            <span className="join-codes-label">
+              {frame.label} · {frame.hint}
+            </span>
+            <TelegramIcon word={words[index]} />
+            <span className="join-codes-word">{words[index]}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 export function TelegramSlip({ nickname, telegramCode, onConfirm }: TelegramSlipProps) {
   const words = telegramWords(telegramCode);
   const [saved, setSaved] = useState(false);
@@ -30,23 +55,7 @@ export function TelegramSlip({ nickname, telegramCode, onConfirm }: TelegramSlip
           <span className="u-nowrap">ニックネームとこの4つで、</span>
           <span className="u-nowrap">これまでのスタンプを引き継げます。</span>
         </p>
-        <div className="telegram-card">
-          <div className="telegram-header">
-            <span className="telegram-title">符丁</span>
-            <span className="telegram-stamp">控</span>
-          </div>
-          <ul className="join-codes">
-            {TELEGRAM_FRAMES.map((frame, index) => (
-              <li key={frame.label}>
-                <span className="join-codes-label">
-                  {frame.label} · {frame.hint}
-                </span>
-                <TelegramIcon word={words[index]} />
-                <span className="join-codes-word">{words[index]}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <TelegramCard telegramCode={telegramCode} />
         <label className="join-check">
           <input
             type="checkbox"

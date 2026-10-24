@@ -8,8 +8,7 @@ const STAMPS = [
 ] as const;
 
 export function PresentPage() {
-  const { stamp1Done, stamp2Done, stamp3Done, goalUnlocked, screen, openGoal } =
-    useApp();
+  const { stamp1Done, stamp2Done, stamp3Done, goalUnlocked, screen, openGoal } = useApp();
   const [mapOpen, setMapOpen] = useState(false);
   const done = { stamp1Done, stamp2Done, stamp3Done };
   const count = STAMPS.filter((stamp) => done[stamp.key]).length;
