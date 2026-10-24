@@ -36,10 +36,13 @@ type AppContextValue = {
   whisperId: WhisperId | null;
   nicknameLocked: boolean;
   clientId: string;
+  hasJoined: boolean;
+  telegramCode: string | null;
   rewardCode?: string;
   issuedAt?: number;
   setActiveTab: (tab: Tab) => void;
   saveNickname: (name: string) => void;
+  saveClientBeforeEnroll: () => void;
   saveIssued: (code: string, issuedAt: number) => void;
   markRedeemed: () => void;
   markSoldOut: () => void;
@@ -57,10 +60,14 @@ type AppContextValue = {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
+const TELEGRAM_CODE_RE = /^[0-7]-[0-7]-[0-7]-[0-7]$/;
+
 function emptyRally(clientId: string): StampRallyState {
   return {
     clientId,
     nickname: "",
+    hasJoined: false,
+    telegramCode: null,
     stamp1Done: false,
     stamp2Done: false,
     stamp3Done: false,
@@ -74,10 +81,28 @@ function isUuid(value: unknown): value is string {
   return typeof value === "string" && UUID_RE.test(value);
 }
 
+function normalizeClientId(value: unknown): string | null {
+  if (!isUuid(value)) return null;
+  return value.toLowerCase();
+}
+
 function readClientId(value: unknown): string | null {
   if (!value || typeof value !== "object") return null;
-  const clientId = (value as { clientId?: unknown }).clientId;
-  return isUuid(clientId) ? clientId : null;
+  return normalizeClientId((value as { clientId?: unknown }).clientId);
+}
+
+function salvageClientId(raw: string): string | null {
+  const match = raw.match(/"clientId"\s*:\s*"([^"]+)"/);
+  return match ? normalizeClientId(match[1]) : null;
+}
+
+function readTelegramCode(value: unknown): string | null {
+  return typeof value === "string" && TELEGRAM_CODE_RE.test(value) ? value : null;
+}
+
+function readHasJoined(value: unknown, nickname: string): boolean {
+  if (typeof value === "boolean") return value;
+  return nickname.trim().length > 0;
 }
 
 function parseRally(raw: string | null): StampRallyState {
@@ -87,7 +112,7 @@ function parseRally(raw: string | null): StampRallyState {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return emptyRally(crypto.randomUUID());
+    return emptyRally(salvageClientId(raw) ?? crypto.randomUUID());
   }
 
   if (!parsed || typeof parsed !== "object") {
@@ -95,9 +120,7 @@ function parseRally(raw: string | null): StampRallyState {
   }
 
   const record = parsed as Record<string, unknown>;
-  const clientId = isUuid(record.clientId)
-    ? record.clientId
-    : crypto.randomUUID();
+  const clientId = normalizeClientId(record.clientId) ?? crypto.randomUUID();
 
   if (
     typeof record.nickname !== "string" ||
@@ -111,6 +134,8 @@ function parseRally(raw: string | null): StampRallyState {
   const rally: StampRallyState = {
     clientId,
     nickname: record.nickname,
+    hasJoined: readHasJoined(record.hasJoined, record.nickname),
+    telegramCode: readTelegramCode(record.telegramCode),
     stamp1Done: record.stamp1Done,
     stamp2Done: record.stamp2Done,
     stamp3Done: record.stamp3Done === true,
@@ -278,13 +303,17 @@ function boot(): BootResult {
   claimStampQuery();
 
   try {
-    const stored = parseRally(localStorage.getItem(STORAGE_KEY));
-    let rally = stored;
-    if (
-      allStamps(rally) &&
-      rally.nickname.trim() &&
-      !rally.pendingStamp
-    ) {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw == null) {
+      bootSnapshot = {
+        storageBlocked: false,
+        rally: emptyRally(crypto.randomUUID()),
+      };
+      return bootSnapshot;
+    }
+
+    let rally = parseRally(raw);
+    if (allStamps(rally) && rally.nickname.trim() && !rally.pendingStamp) {
       rally = { ...rally, goalUnlocked: true };
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(rally));
@@ -457,7 +486,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const nickname = name.trim();
       if (!nickname || nickname.length > 10 || rally.rewardCode) return;
 
-      const next = { ...rally, nickname };
+      const next = { ...rally, nickname, hasJoined: true };
       try {
         persistRally(next);
       } catch {
@@ -468,6 +497,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
     },
     [rally],
   );
+
+  const saveClientBeforeEnroll = useCallback(() => {
+    setRally((prev) => {
+      if (prev.hasJoined) return prev;
+      try {
+        persistRally(prev);
+      } catch {
+        setStorageBlocked(true);
+      }
+      return prev;
+    });
+  }, []);
 
   const saveIssued = useCallback(
     (code: string, issuedAt: number) => {
@@ -516,10 +557,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
       whisperId,
       nicknameLocked: Boolean(rally.rewardCode),
       clientId: rally.clientId,
+      hasJoined: rally.hasJoined,
+      telegramCode: rally.telegramCode,
       rewardCode: rally.rewardCode,
       issuedAt: rally.issuedAt,
       setActiveTab,
       saveNickname,
+      saveClientBeforeEnroll,
       saveIssued,
       markRedeemed,
       markSoldOut,
@@ -547,6 +591,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rally.rewardCode,
       rally.issuedAt,
       rally.clientId,
+      rally.hasJoined,
+      rally.telegramCode,
+      saveClientBeforeEnroll,
       bookOpen,
       bookLocked,
       whisperId,
