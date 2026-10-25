@@ -2,12 +2,13 @@ export type IssueResponse =
   | { result: "issued"; code: string; issuedAt: number }
   | { result: "sold_out" }
   | { result: "invalid" }
+  | { result: "forbidden" }
   | { result: "unavailable" }
   | { result: "error" };
 
 export type VerifyResponse =
   | { result: "redeemed" | "already_redeemed" }
-  | { result: "invalid_pin" | "unknown_code" | "error" };
+  | { result: "invalid_pin" | "unknown_code" | "locked" | "error" };
 
 export type Summary = {
   issued: number;
@@ -36,7 +37,7 @@ const enrollFlights = new Map<string, Promise<EnrollResponse>>();
 
 export type MergeResponse =
   | { ok: true; student: EnrollStudent; redeemed: boolean }
-  | { ok: false; error: "invalid" | "mismatch" | "unavailable" | "error" };
+  | { ok: false; error: "invalid" | "mismatch" | "forbidden" | "locked" | "unavailable" | "error" };
 
 const mergeFlights = new Map<string, Promise<MergeResponse>>();
 
@@ -76,6 +77,9 @@ async function postIssue(
       code?: unknown;
       issuedAt?: unknown;
     };
+    if (response.status === 403 || body.result === "forbidden") {
+      return { result: "forbidden" };
+    }
     if (
       body.result === "issued" &&
       typeof body.code === "string" &&
@@ -187,13 +191,14 @@ export function enrollStudent(
 async function postMerge(
   nickname: string,
   telegramCode: string,
-  currentStamps: string[],
+  stamp: string,
+  token: string,
 ): Promise<MergeResponse> {
   try {
     const response = await fetchApi("/api/student/merge", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nickname, telegramCode, currentStamps }),
+      body: JSON.stringify({ nickname, telegramCode, stamp, token }),
     });
     const body = (await response.json()) as {
       success?: unknown;
@@ -231,6 +236,12 @@ async function postMerge(
         },
       };
     }
+    if (response.status === 429 || body.error === "LOCKED") {
+      return { ok: false, error: "locked" };
+    }
+    if (response.status === 403 || body.error === "FORBIDDEN") {
+      return { ok: false, error: "forbidden" };
+    }
     if (response.status === 401 || body.error === "MISMATCH") {
       return { ok: false, error: "mismatch" };
     }
@@ -245,12 +256,13 @@ async function postMerge(
 export function mergeStudent(
   nickname: string,
   telegramCode: string,
-  currentStamps: string[],
+  stamp: string,
+  token: string,
 ): Promise<MergeResponse> {
-  const key = `${nickname}:${telegramCode}:${currentStamps.join(",")}`;
+  const key = `${nickname}:${telegramCode}:${stamp}`;
   const existing = mergeFlights.get(key);
   if (existing) return existing;
-  const flight = postMerge(nickname, telegramCode, currentStamps).finally(() => {
+  const flight = postMerge(nickname, telegramCode, stamp, token).finally(() => {
     mergeFlights.delete(key);
   });
   mergeFlights.set(key, flight);
@@ -294,7 +306,8 @@ export async function verifyToken(
       result === "redeemed" ||
       result === "already_redeemed" ||
       result === "invalid_pin" ||
-      result === "unknown_code"
+      result === "unknown_code" ||
+      result === "locked"
     ) {
       return { result };
     }
