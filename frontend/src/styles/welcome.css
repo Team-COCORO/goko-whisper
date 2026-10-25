@@ -38,8 +38,9 @@
   font-size: clamp(24px, 7vw, 28px);
   font-weight: bold;
   color: var(--nav);
-  letter-spacing: 0.15em;
-  white-space: nowrap;
+  letter-spacing: 0.08em;
+  line-height: 1.35;
+  white-space: normal;
 }
 
 .welcome-lead {
@@ -52,6 +53,7 @@
 }
 
 .welcome-flow {
+  list-style: none;
   width: 100%;
   background: rgba(44, 62, 80, 0.04);
   border: 1px dashed var(--welcome-border);
@@ -71,6 +73,7 @@
   align-items: baseline;
   gap: 8px;
   line-height: 1.45;
+  text-align: left;
   word-break: keep-all;
   overflow-wrap: normal;
 }
@@ -157,4 +160,354 @@
   color: #8f8577;
   cursor: not-allowed;
   box-shadow: none;
+}
+
+.welcome--scroll {
+  justify-content: flex-start;
+  overflow: auto;
+  padding: 24px 0 32px;
+}
+
+.join-copy,
+.join-note,
+.join-error {
+  width: 100%;
+  margin: 0 0 12px;
+  font-size: clamp(13px, 3.6vw, 14px);
+  line-height: 1.7;
+  text-align: center;
+  color: var(--welcome-sub);
+  word-break: keep-all;
+  line-break: strict;
+}
+
+.join-copy--start {
+  text-align: left;
+}
+
+.join-copy--note {
+  margin-top: 10px;
+  margin-bottom: 0;
+  font-size: 14px;
+}
+
+.join-note-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 4px;
+  color: var(--nav);
+}
+
+.join-note-title span {
+  white-space: nowrap;
+}
+
+.join-mark {
+  width: 18px;
+  height: 18px;
+  flex: none;
+}
+
+.join-note {
+  background: rgba(44, 62, 80, 0.04);
+  border: 1px dashed var(--welcome-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.join-note--alert {
+  border-color: rgba(139, 58, 43, 0.45);
+  background: rgba(139, 58, 43, 0.05);
+}
+
+.join-note--alert .join-note-title {
+  color: var(--brick);
+}
+
+.join-error {
+  color: var(--brick);
+  font-weight: bold;
+}
+
+.telegram-card {
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 14px 10px 16px;
+  background: #f4edd9;
+  border: 2px solid #5a4a3a;
+  border-radius: 2px;
+  box-shadow: inset 0 0 12px rgba(139, 110, 75, 0.2);
+}
+
+.telegram-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #7c6853;
+}
+
+.telegram-title {
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: 0.2em;
+  color: #4a3c2f;
+}
+
+.telegram-stamp {
+  padding: 2px 6px;
+  color: var(--brick);
+  border: 1px solid var(--brick);
+  border-radius: 2px;
+  font-size: 11px;
+  transform: rotate(3deg);
+}
+
+.slip-name {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: bold;
+  color: var(--brick);
+}
+
+.join-codes {
+  width: 100%;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 8px;
+  text-align: center;
+}
+
+.join-codes-label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #8c7d73;
+  white-space: nowrap;
+}
+
+.join-codes .goko-icon {
+  width: 36px;
+  height: 36px;
+  margin: 0 auto 4px;
+}
+
+.join-codes-word {
+  display: block;
+  font-size: 15px;
+  font-weight: bold;
+  line-height: 1.3;
+  color: var(--nav);
+  white-space: nowrap;
+  border-bottom: 1px dashed rgba(124, 104, 83, 0.5);
+}
+
+.join-check {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 12px;
+  text-align: left;
+  font-size: 14.5px;
+  color: var(--brick);
+  background: rgba(139, 58, 43, 0.06);
+  border: 1px solid rgba(139, 58, 43, 0.2);
+  border-radius: 6px;
+}
+
+.join-check input {
+  width: 20px;
+  height: 20px;
+  flex: none;
+  accent-color: var(--brick);
+}
+
+.join-check span {
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.join-secondary {
+  width: 100%;
+  margin-top: 10px;
+  padding: 13px;
+  background: transparent;
+  color: var(--welcome-sub);
+  border: 1.5px solid var(--welcome-border);
+  border-radius: 6px;
+  font-size: clamp(14.5px, 4vw, 16px);
+  font-weight: bold;
+  font-family: inherit;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+
+.join-secondary:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.join-secondary:not(:disabled) {
+  cursor: pointer;
+  color: var(--nav);
+}
+
+.merge-preview {
+  width: 100%;
+  min-height: 36px;
+  margin: 0 0 14px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.merge-preview-empty {
+  color: #8c7d73;
+  font-size: 13px;
+  line-height: 24px;
+}
+
+.merge-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 6px;
+  color: var(--brick);
+  background: rgba(139, 58, 43, 0.1);
+  border: 1px solid rgba(139, 58, 43, 0.2);
+  border-radius: 2px;
+  font-size: 12.5px;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.merge-tag .goko-icon {
+  width: 22px;
+  height: 22px;
+  flex: none;
+}
+
+.merge-frame {
+  width: 100%;
+  margin: 0 0 14px;
+  padding: 0;
+  border: none;
+  text-align: left;
+}
+
+.merge-frame-title {
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  color: var(--nav);
+}
+
+.merge-frame-title span {
+  font-weight: normal;
+  color: var(--welcome-sub);
+}
+
+.merge-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.merge-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-height: 72px;
+  padding: 8px 4px;
+  background: #fcfbf9;
+  color: var(--nav);
+  border: 1px solid var(--welcome-border);
+  border-radius: 6px;
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.merge-choice .goko-icon {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+
+.merge-choice span {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.merge-choice.is-selected {
+  background: var(--brick);
+  color: #fff;
+  border-color: var(--brick);
+}
+
+.merge-choice.is-selected .goko-icon :not(.mark) {
+  stroke: #fff;
+}
+
+.shuin-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  height: 78px;
+  margin: 4px 0 14px;
+  padding: 4px;
+  color: #b73e2d;
+  background: rgba(183, 62, 45, 0.05);
+  border: 2px dashed #b73e2d;
+  border-radius: 8px;
+  box-shadow: 0 0 0 3px rgba(183, 62, 45, 0.08);
+  font-size: 16px;
+  font-weight: bold;
+  letter-spacing: 0.1em;
+  line-height: 1.25;
+  text-align: center;
+  transform: rotate(-6deg);
+}
+
+svg.goko-icon {
+  display: block;
+  stroke: #2c2623;
+  fill: none;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+svg.goko-icon .mark {
+  stroke: none;
+}
+
+.join-back {
+  margin-top: 10px;
+  border: none;
+  background: transparent;
+  color: var(--welcome-sub);
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.join-back:disabled {
+  cursor: not-allowed;
 }

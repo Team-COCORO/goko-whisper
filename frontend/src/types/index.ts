@@ -23,6 +23,8 @@ export type WhisperContent = {
 export type StampRallyState = {
   clientId: string;
   nickname: string;
+  hasJoined: boolean;
+  telegramCode: string | null;
   stamp1Done: boolean;
   stamp2Done: boolean;
   stamp3Done: boolean;
