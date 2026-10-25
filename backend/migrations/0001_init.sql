@@ -12,4 +12,4 @@ CREATE TABLE settings (
   value TEXT NOT NULL
 );
 
-INSERT INTO settings (key, value) VALUES ('reward_limit', '100');
+INSERT INTO settings (key, value) VALUES ('reward_limit', '500');
