@@ -7,11 +7,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { verifyStamp, type StampVerifyResult } from "../api";
+import { verifyStamp, type EnrollStudent, type StampVerifyResult } from "../api";
 import type { Screen, StampRallyState, Tab, WhisperId } from "../types";
 
 const STORAGE_KEY = "goko-whisper";
 const STAMP_CLAIM_KEY = "goko-stamp-claim";
+const SLIP_OPEN_KEY = "goko-slip-open";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -36,10 +37,19 @@ type AppContextValue = {
   whisperId: WhisperId | null;
   nicknameLocked: boolean;
   clientId: string;
+  hasJoined: boolean;
+  telegramCode: string | null;
   rewardCode?: string;
   issuedAt?: number;
+  slipVisible: boolean;
   setActiveTab: (tab: Tab) => void;
-  saveNickname: (name: string) => void;
+  reserveClientForEnroll: () => boolean;
+  readStampForEnroll: () => { initialStamp: string; token: string } | null;
+  completeEnroll: (student: EnrollStudent) => boolean;
+  completeMerge: (student: EnrollStudent, redeemed: boolean) => boolean;
+  acknowledgeSlip: () => void;
+  acknowledgeMerge: () => void;
+  mergeVisible: boolean;
   saveIssued: (code: string, issuedAt: number) => void;
   markRedeemed: () => void;
   markSoldOut: () => void;
@@ -57,10 +67,14 @@ type AppContextValue = {
 
 const AppContext = createContext<AppContextValue | null>(null);
 
+const TELEGRAM_CODE_RE = /^[0-7]-[0-7]-[0-7]-[0-7]$/;
+
 function emptyRally(clientId: string): StampRallyState {
   return {
     clientId,
     nickname: "",
+    hasJoined: false,
+    telegramCode: null,
     stamp1Done: false,
     stamp2Done: false,
     stamp3Done: false,
@@ -74,10 +88,28 @@ function isUuid(value: unknown): value is string {
   return typeof value === "string" && UUID_RE.test(value);
 }
 
+function normalizeClientId(value: unknown): string | null {
+  if (!isUuid(value)) return null;
+  return value.toLowerCase();
+}
+
 function readClientId(value: unknown): string | null {
   if (!value || typeof value !== "object") return null;
-  const clientId = (value as { clientId?: unknown }).clientId;
-  return isUuid(clientId) ? clientId : null;
+  return normalizeClientId((value as { clientId?: unknown }).clientId);
+}
+
+function salvageClientId(raw: string): string | null {
+  const match = raw.match(/"clientId"\s*:\s*"([^"]+)"/);
+  return match ? normalizeClientId(match[1]) : null;
+}
+
+function readTelegramCode(value: unknown): string | null {
+  return typeof value === "string" && TELEGRAM_CODE_RE.test(value) ? value : null;
+}
+
+function readHasJoined(value: unknown, nickname: string): boolean {
+  if (typeof value === "boolean") return value;
+  return nickname.trim().length > 0;
 }
 
 function parseRally(raw: string | null): StampRallyState {
@@ -87,7 +119,7 @@ function parseRally(raw: string | null): StampRallyState {
   try {
     parsed = JSON.parse(raw);
   } catch {
-    return emptyRally(crypto.randomUUID());
+    return emptyRally(salvageClientId(raw) ?? crypto.randomUUID());
   }
 
   if (!parsed || typeof parsed !== "object") {
@@ -95,9 +127,7 @@ function parseRally(raw: string | null): StampRallyState {
   }
 
   const record = parsed as Record<string, unknown>;
-  const clientId = isUuid(record.clientId)
-    ? record.clientId
-    : crypto.randomUUID();
+  const clientId = normalizeClientId(record.clientId) ?? crypto.randomUUID();
 
   if (
     typeof record.nickname !== "string" ||
@@ -111,6 +141,8 @@ function parseRally(raw: string | null): StampRallyState {
   const rally: StampRallyState = {
     clientId,
     nickname: record.nickname,
+    hasJoined: readHasJoined(record.hasJoined, record.nickname),
+    telegramCode: readTelegramCode(record.telegramCode),
     stamp1Done: record.stamp1Done,
     stamp2Done: record.stamp2Done,
     stamp3Done: record.stamp3Done === true,
@@ -153,7 +185,7 @@ function spotToId(stamp: string | null): WhisperId | null {
 type StampClaim = { stamp: string; id: WhisperId; token: string };
 
 let stampClaim: StampClaim | null | undefined;
-let stampVerify: Promise<StampVerifyResult> | null = null;
+let stampVerify: { key: string; flight: Promise<StampVerifyResult> } | null = null;
 
 function claimFromParts(stamp: string | null, token: string | null): StampClaim | null {
   const id = spotToId(stamp);
@@ -211,13 +243,15 @@ function claimStampQuery(): StampClaim | null {
 }
 
 function confirmStamp(claim: StampClaim): Promise<StampVerifyResult> {
-  if (!stampVerify) {
-    const flight = verifyStamp(claim.stamp, claim.token).finally(() => {
-      if (stampVerify === flight) stampVerify = null;
-    });
-    stampVerify = flight;
-  }
-  return stampVerify;
+  const rally = bootSnapshot?.rally;
+  const clientId = rally?.hasJoined ? rally.clientId : undefined;
+  const key = `${claim.stamp}:${clientId ?? ""}`;
+  if (stampVerify?.key === key) return stampVerify.flight;
+  const flight = verifyStamp(claim.stamp, claim.token, clientId).finally(() => {
+    if (stampVerify?.flight === flight) stampVerify = null;
+  });
+  stampVerify = { key, flight };
+  return flight;
 }
 
 async function resolveStamp(claim: StampClaim): Promise<StampVerifyResult | "done"> {
@@ -269,6 +303,32 @@ function persistRally(next: StampRallyState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
 }
 
+function slipOpenFor(clientId: string): boolean {
+  try {
+    return sessionStorage.getItem(SLIP_OPEN_KEY) === clientId;
+  } catch {
+    return false;
+  }
+}
+
+function markSlipOpen(clientId: string) {
+  sessionStorage.setItem(SLIP_OPEN_KEY, clientId);
+}
+
+function clearSlipOpen() {
+  try {
+    sessionStorage.removeItem(SLIP_OPEN_KEY);
+  } catch {
+    // 確認を消せなくても、この画面では地図へ進める。
+  }
+}
+
+function stampFlags(stamps: string[], id: WhisperId): boolean {
+  if (id === 1) return stamps.includes("spot1");
+  if (id === 2) return stamps.includes("spot2");
+  return stamps.includes("spot3");
+}
+
 // StrictMode は Provider を付け直す。付け直しのたびにクエリを読むと、
 // 先に保存した押印待ちが消える。起動処理は一度だけにする。
 let bootSnapshot: BootResult | null = null;
@@ -278,13 +338,17 @@ function boot(): BootResult {
   claimStampQuery();
 
   try {
-    const stored = parseRally(localStorage.getItem(STORAGE_KEY));
-    let rally = stored;
-    if (
-      allStamps(rally) &&
-      rally.nickname.trim() &&
-      !rally.pendingStamp
-    ) {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw == null) {
+      bootSnapshot = {
+        storageBlocked: false,
+        rally: emptyRally(crypto.randomUUID()),
+      };
+      return bootSnapshot;
+    }
+
+    let rally = parseRally(raw);
+    if (allStamps(rally) && rally.nickname.trim() && !rally.pendingStamp) {
       rally = { ...rally, goalUnlocked: true };
     }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(rally));
@@ -319,6 +383,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [stampNotice, setStampNotice] = useState<"retry" | "invalid" | null>(
     null,
   );
+  const [slipVisible, setSlipVisible] = useState(
+    () =>
+      initial.rally.hasJoined &&
+      Boolean(initial.rally.telegramCode) &&
+      slipOpenFor(initial.rally.clientId),
+  );
+  const [mergeVisible, setMergeVisible] = useState(false);
 
   useEffect(() => {
     const sync = () => setIsAdmin(window.location.hash === "#admin");
@@ -326,9 +397,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("hashchange", sync);
   }, []);
 
-  const acceptStamp = useCallback((claim: StampClaim) => {
+  const acceptStamp = useCallback((claim: StampClaim, onlyIfJoined = false) => {
     let saved = false;
+    let joined = false;
     setRally((prev) => {
+      joined = prev.hasJoined;
+      if (onlyIfJoined && !prev.hasJoined) return prev;
       if (stampDone(prev, claim.id)) {
         saved = true;
         return prev;
@@ -343,25 +417,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       return next;
     });
-    return saved;
+    return { saved, joined };
   }, []);
 
   const applyStampResult = useCallback(
     (result: StampVerifyResult | "done", claim: StampClaim) => {
       if (result === "done") return;
-      if (result === "ok") {
-        const saved = acceptStamp(claim);
-        if (saved) clearStoredClaim();
-        setStampNotice(saved ? null : "retry");
+      if (result === "ok" || result === "error") {
+        const accepted = acceptStamp(claim, result === "error");
+        if (result === "error" && !accepted.joined) {
+          setStampNotice("retry");
+          return;
+        }
+        if (accepted.saved && accepted.joined) clearStoredClaim();
+        setStampNotice(accepted.saved ? null : "retry");
         return;
       }
-      if (result === "invalid") {
-        clearStoredClaim();
-        stampClaim = null;
-        setStampNotice("invalid");
-        return;
-      }
-      setStampNotice("retry");
+      clearStoredClaim();
+      stampClaim = null;
+      setStampNotice("invalid");
     },
     [acceptStamp],
   );
@@ -452,22 +526,104 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setActiveTab("home");
   }, []);
 
-  const saveNickname = useCallback(
-    (name: string) => {
-      const nickname = name.trim();
-      if (!nickname || nickname.length > 10 || rally.rewardCode) return;
+  const reserveClientForEnroll = useCallback(() => {
+    if (rally.hasJoined) return false;
+    try {
+      persistRally(rally);
+      return true;
+    } catch {
+      setStorageBlocked(true);
+      return false;
+    }
+  }, [rally]);
 
-      const next = { ...rally, nickname };
+  const readStampForEnroll = useCallback(() => {
+    if (!rally.pendingStamp) return null;
+    const claim = claimStampQuery();
+    if (!claim || claim.id !== rally.pendingStamp) return null;
+    return { initialStamp: claim.stamp, token: claim.token };
+  }, [rally.pendingStamp]);
+
+  const completeEnroll = useCallback((student: EnrollStudent) => {
+    const nickname = student.nickname.trim();
+    const telegramCode = readTelegramCode(student.telegramCode);
+    const clientId = normalizeClientId(student.clientId);
+    if (!clientId || !nickname || nickname.length > 10 || !telegramCode) return false;
+
+    let saved = false;
+    setRally((prev) => {
+      if (prev.pendingStamp && !stampFlags(student.stamps, prev.pendingStamp)) return prev;
+      const next: StampRallyState = {
+        ...prev,
+        clientId,
+        nickname,
+        telegramCode,
+        hasJoined: true,
+        stamp1Done: stampFlags(student.stamps, 1),
+        stamp2Done: stampFlags(student.stamps, 2),
+        stamp3Done: stampFlags(student.stamps, 3),
+        pendingStamp: null,
+      };
       try {
         persistRally(next);
       } catch {
         setStorageBlocked(true);
-        return;
+        return prev;
       }
-      setRally(next);
-    },
-    [rally],
-  );
+      try {
+        markSlipOpen(next.clientId);
+      } catch {
+        // 再読込では控えを出せない。今の画面では出す。
+      }
+      stampClaim = null;
+      clearStoredClaim();
+      saved = true;
+      setSlipVisible(true);
+      return next;
+    });
+    return saved;
+  }, []);
+
+  const completeMerge = useCallback((student: EnrollStudent, redeemed: boolean) => {
+    const nickname = student.nickname.trim();
+    const telegramCode = readTelegramCode(student.telegramCode);
+    const clientId = normalizeClientId(student.clientId);
+    if (!clientId || !nickname || nickname.length > 10 || !telegramCode || typeof redeemed !== "boolean") {
+      return false;
+    }
+
+    let saved = false;
+    setRally((prev) => {
+      if (prev.pendingStamp && !stampFlags(student.stamps, prev.pendingStamp)) return prev;
+      const stamp1Done = stampFlags(student.stamps, 1);
+      const stamp2Done = stampFlags(student.stamps, 2);
+      const stamp3Done = stampFlags(student.stamps, 3);
+      const next: StampRallyState = {
+        clientId,
+        nickname,
+        telegramCode,
+        hasJoined: true,
+        stamp1Done,
+        stamp2Done,
+        stamp3Done,
+        pendingStamp: null,
+        goalUnlocked: stamp1Done && stamp2Done && stamp3Done,
+        redeemed,
+      };
+      try {
+        persistRally(next);
+      } catch {
+        setStorageBlocked(true);
+        return prev;
+      }
+      stampClaim = null;
+      clearStoredClaim();
+      saved = true;
+      setMergeVisible(true);
+      return next;
+    });
+    return saved;
+  }, []);
 
   const saveIssued = useCallback(
     (code: string, issuedAt: number) => {
@@ -500,6 +656,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSoldOut(true);
   }, []);
 
+  const acknowledgeSlip = useCallback(() => {
+    clearSlipOpen();
+    setSlipVisible(false);
+  }, []);
+
+  const acknowledgeMerge = useCallback(() => {
+    setMergeVisible(false);
+  }, []);
+
   const value = useMemo(
     () => ({
       storageBlocked,
@@ -516,10 +681,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       whisperId,
       nicknameLocked: Boolean(rally.rewardCode),
       clientId: rally.clientId,
+      hasJoined: rally.hasJoined,
+      telegramCode: rally.telegramCode,
       rewardCode: rally.rewardCode,
       issuedAt: rally.issuedAt,
+      slipVisible,
+      mergeVisible,
       setActiveTab,
-      saveNickname,
+      reserveClientForEnroll,
+      readStampForEnroll,
+      completeEnroll,
+      completeMerge,
+      acknowledgeSlip,
+      acknowledgeMerge,
       saveIssued,
       markRedeemed,
       markSoldOut,
@@ -547,10 +721,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rally.rewardCode,
       rally.issuedAt,
       rally.clientId,
+      rally.hasJoined,
+      rally.telegramCode,
+      slipVisible,
+      mergeVisible,
+      reserveClientForEnroll,
+      readStampForEnroll,
+      completeEnroll,
+      completeMerge,
+      acknowledgeSlip,
+      acknowledgeMerge,
       bookOpen,
       bookLocked,
       whisperId,
-      saveNickname,
       saveIssued,
       markRedeemed,
       markSoldOut,

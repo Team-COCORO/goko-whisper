@@ -17,4 +17,4 @@ migrations_dir = "migrations"
 [[previews.d1_databases]]
 binding = "DB"
 database_name = "goko-whisper-db-preview"
-database_id = "c16c6af4-82d4-4f16-bb6e-42cd476cf08f"
+database_id = "178fdd71-badf-4ab6-a8bb-725e1090b606"

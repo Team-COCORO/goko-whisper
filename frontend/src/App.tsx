@@ -5,12 +5,16 @@ import { CampusMap } from "./components/CampusMap";
 import { HomeStatus } from "./components/HomeStatus";
 import { StampBook, StampBookButton } from "./components/StampBook";
 import { StampNotice } from "./components/StampNotice";
+import { TelegramSlip } from "./components/TelegramSlip";
 import { AppProvider, useApp } from "./context/AppContext";
 import { placeById, type PlaceId } from "./data/places";
 import { AdminPage } from "./pages/AdminPage";
+import { EnrollPage } from "./pages/EnrollPage";
 import { FoodPage } from "./pages/FoodPage";
+import { MergeNotice, MergePage } from "./pages/MergePage";
 import { PresentPage } from "./pages/PresentPage";
-import { WelcomePage } from "./pages/WelcomePage";
+import { ProloguePage } from "./pages/ProloguePage";
+import { StampLandingPage } from "./pages/StampLandingPage";
 import type { Screen } from "./types";
 
 function sheetLabel(screen: Screen, placeName: string | null): string {
@@ -136,8 +140,46 @@ function TabContent() {
   return <HomeStage />;
 }
 
+function StampJoinGate({ pendingStamp }: { pendingStamp: 1 | 2 | 3 }) {
+  const [mode, setMode] = useState<"landing" | "enroll" | "merge">("landing");
+  if (mode === "enroll") return <EnrollPage withStamp onBack={() => setMode("landing")} />;
+  if (mode === "merge") return <MergePage onBack={() => setMode("landing")} />;
+  return (
+    <StampLandingPage
+      pendingStamp={pendingStamp}
+      onEnroll={() => setMode("enroll")}
+      onMerge={() => setMode("merge")}
+    />
+  );
+}
+
+function JoinGate() {
+  const [enrolling, setEnrolling] = useState(false);
+  if (enrolling) return <EnrollPage onBack={() => setEnrolling(false)} />;
+  return <ProloguePage onEnroll={() => setEnrolling(true)} />;
+}
+
 function AppShell() {
-  const { storageBlocked, screen, nickname } = useApp();
+  const {
+    storageBlocked,
+    screen,
+    hasJoined,
+    pendingStamp,
+    slipVisible,
+    mergeVisible,
+    nickname,
+    telegramCode,
+    acknowledgeSlip,
+    acknowledgeMerge,
+  } = useApp();
+
+  if (screen === "admin") {
+    return (
+      <div className="app-shell">
+        <TabContent />
+      </div>
+    );
+  }
 
   if (storageBlocked) {
     return (
@@ -154,10 +196,30 @@ function AppShell() {
     );
   }
 
-  if (screen !== "admin" && !nickname.trim()) {
+  if (!hasJoined) {
     return (
       <div className="app-shell">
-        <WelcomePage />
+        {pendingStamp ? <StampJoinGate pendingStamp={pendingStamp} /> : <JoinGate />}
+      </div>
+    );
+  }
+
+  if (mergeVisible) {
+    return (
+      <div className="app-shell">
+        <MergeNotice onConfirm={acknowledgeMerge} />
+      </div>
+    );
+  }
+
+  if (slipVisible && telegramCode) {
+    return (
+      <div className="app-shell">
+        <TelegramSlip
+          nickname={nickname}
+          telegramCode={telegramCode}
+          onConfirm={acknowledgeSlip}
+        />
       </div>
     );
   }

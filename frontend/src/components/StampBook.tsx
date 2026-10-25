@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import type { AnimationEvent, CSSProperties, PointerEvent, TouchEvent, TransitionEvent } from "react";
+import { TELEGRAM_FRAMES, telegramWords } from "../data/telegram";
 import type { WhisperId } from "../types";
+import { TelegramIcon } from "./TelegramIcon";
 import { useApp } from "../context/AppContext";
 
 const HERALD_MS = 3000;
@@ -24,7 +26,8 @@ const FRAMES: {
   { id: 3, label: "五高記念館", act: "第三幕", volume: "三の巻", tilt: -0.6, stamp: "/stamps/heam.svg" },
 ];
 
-type PageIndex = 0 | 1 | 2;
+type PageIndex = 0 | 1 | 2 | 3;
+type Sheet = "telegram" | WhisperId;
 type TurnDir = "next" | "prev";
 
 type Phase = "open" | "press" | "hold" | "wait-close";
@@ -117,12 +120,22 @@ function frameOf(id: WhisperId) {
   return frame;
 }
 
-function pageFor(id: WhisperId): PageIndex {
-  return (id - 1) as PageIndex;
+function sheetsFor(hasSlip: boolean): Sheet[] {
+  return hasSlip ? ["telegram", 1, 2, 3] : [1, 2, 3];
 }
 
-function idAt(index: PageIndex): WhisperId {
-  return (index + 1) as WhisperId;
+function pageFor(id: WhisperId, hasSlip: boolean): PageIndex {
+  return (hasSlip ? id : id - 1) as PageIndex;
+}
+
+function Dots({ active, total }: { active: number; total: number }) {
+  return (
+    <span className="orihon-dots" aria-hidden="true">
+      {Array.from({ length: total }, (_, index) => (
+        <span key={index} className={index === active ? "orihon-dot is-on" : "orihon-dot"} />
+      ))}
+    </span>
+  );
 }
 
 function Paper({
@@ -132,6 +145,8 @@ function Paper({
   pressing,
   quiet,
   face,
+  dotActive,
+  dotTotal,
 }: {
   id: WhisperId;
   side: "left" | "right";
@@ -139,6 +154,8 @@ function Paper({
   pressing: boolean;
   quiet?: boolean;
   face?: "front" | "back";
+  dotActive: number;
+  dotTotal: number;
 }) {
   const frame = frameOf(id);
   return (
@@ -156,12 +173,62 @@ function Paper({
           {pressed && <Seal frame={frame} pressing={pressing} />}
         </div>
         <footer className="orihon-foot">
-          <span className="orihon-dots" aria-hidden="true">
-            {FRAMES.map((item) => (
-              <span key={item.id} className={item.id === frame.id ? "orihon-dot is-on" : "orihon-dot"} />
-            ))}
-          </span>
+          <Dots active={dotActive} total={dotTotal} />
           <span>{frame.volume}</span>
+        </footer>
+      </div>
+    </div>
+  );
+}
+
+function TelegramPaper({
+  nickname,
+  telegramCode,
+  side,
+  face,
+  dotTotal,
+}: {
+  nickname: string;
+  telegramCode: string;
+  side: "left" | "right";
+  face?: "front" | "back";
+  dotTotal: number;
+}) {
+  const words = telegramWords(telegramCode);
+  if (!words) return null;
+  return (
+    <div className={face ? `orihon-face is-${side} orihon-face--${face}` : `orihon-face is-${side}`}>
+      <div className="orihon-paper">
+        <div className="orihon-rule" />
+        <div className="orihon-rule orihon-rule--iron" />
+        <div className="orihon-rule orihon-rule--inner" />
+        <header className="orihon-head">
+          <span className="orihon-act">合言葉</span>
+          <span className="orihon-spot orihon-spot--slip">あなたの符丁</span>
+          <span className="orihon-spot__sub">符丁控</span>
+        </header>
+        <div className="orihon-telegram">
+          <p className="orihon-telegram__name">
+            <span className="u-nowrap">{nickname}</span> 様
+          </p>
+          <ul className="orihon-telegram__grid">
+            {TELEGRAM_FRAMES.map((frame, index) => (
+              <li key={frame.label}>
+                <span className="orihon-telegram__label">{frame.label}</span>
+                <TelegramIcon word={words[index]} />
+                <span className="orihon-telegram__word">{words[index]}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="orihon-telegram__note">
+            <span className="u-nowrap">ページが消えてしまったときは、</span>
+            <span className="u-nowrap">この4つの言葉で記録を復元できます。</span>
+            <span className="orihon-telegram__hint u-nowrap">※スクリーンショットをお勧めします</span>
+          </p>
+        </div>
+        <footer className="orihon-foot">
+          <Dots active={0} total={dotTotal} />
+          <span>符丁</span>
         </footer>
       </div>
     </div>
@@ -269,6 +336,7 @@ function PageGuide({ open, onDismiss }: { open: boolean; onDismiss: () => void }
 export function StampBook() {
   const {
     nickname,
+    telegramCode,
     pendingStamp,
     stamp1Done,
     stamp2Done,
@@ -291,6 +359,10 @@ export function StampBook() {
   const swallowClick = useRef(false);
   const turnOrigin = useRef<PageIndex>(0);
   const turnSettled = useRef(false);
+  const wasOpen = useRef(bookOpen);
+  const hasSlip = Boolean(telegramCode && telegramWords(telegramCode));
+  const sheets = sheetsFor(hasSlip);
+  const lastPage = (sheets.length - 1) as PageIndex;
 
   const done = (id: WhisperId) => {
     if (id === 1) return stamp1Done;
@@ -399,8 +471,9 @@ export function StampBook() {
   }, [turning, flipped]);
 
   useEffect(() => {
-    if (livePress) setPage(pageFor(livePress.id));
-  });
+    if (bookOpen && !wasOpen.current && !livePress && hasSlip) setPage(0);
+    wasOpen.current = bookOpen;
+  }, [bookOpen, hasSlip]);
 
   if (!bookOpen && !presented) return null;
 
@@ -421,7 +494,7 @@ export function StampBook() {
     if (event.animationName === "book-out") setPresented(false);
   };
 
-  const displayed: PageIndex = livePress ? pageFor(livePress.id) : page;
+  const displayed: PageIndex = livePress ? pageFor(livePress.id, hasSlip) : page;
   const pressingNow = livePress?.phase === "press";
 
   const locked =
@@ -438,7 +511,7 @@ export function StampBook() {
 
   const turnTo = (dir: TurnDir) => {
     if (livePress || turning) return;
-    if (dir === "next" && displayed === 2) return;
+    if (dir === "next" && displayed === lastPage) return;
     if (dir === "prev" && displayed === 0) return;
     if (prefersReducedMotion()) {
       setPage((dir === "next" ? displayed + 1 : displayed - 1) as PageIndex);
@@ -511,7 +584,19 @@ export function StampBook() {
     settleGesture(start.x, start.y, event.clientX, event.clientY, event.currentTarget);
   };
 
-  const sheet = (id: WhisperId, side: "left" | "right", face?: "front" | "back") => {
+  const sheet = (item: Sheet, side: "left" | "right", face?: "front" | "back") => {
+    if (item === "telegram" && telegramCode) {
+      return (
+        <TelegramPaper
+          nickname={nickname}
+          telegramCode={telegramCode}
+          side={side}
+          face={face}
+          dotTotal={sheets.length}
+        />
+      );
+    }
+    const id = item === "telegram" ? 1 : item;
     const arriving = livePress?.phase === "open" && livePress.id === id;
     return (
       <Paper
@@ -521,6 +606,8 @@ export function StampBook() {
         pressed={(done(id) || livePress?.id === id) && !arriving}
         pressing={pressingNow && livePress?.id === id}
         quiet={arriving}
+        dotActive={hasSlip ? id : id - 1}
+        dotTotal={sheets.length}
       />
     );
   };
@@ -528,8 +615,9 @@ export function StampBook() {
   const destination = (
     turning === "next" ? displayed + 1 : turning === "prev" ? displayed - 1 : displayed
   ) as PageIndex;
-  const underId = idAt(turning === "next" ? destination : displayed);
-  const leafId = idAt(turning === "prev" ? destination : displayed);
+  const underSheet = sheets[turning === "next" ? destination : displayed] ?? sheets[0];
+  const leafSheet = sheets[turning === "prev" ? destination : displayed] ?? sheets[0];
+  const pageLabel = underSheet === "telegram" ? "あなたの符丁" : frameOf(underSheet).label;
   const leafFlipped = turning === "prev" ? !flipped : flipped;
 
   return (
@@ -566,8 +654,8 @@ export function StampBook() {
           if (gesture.current?.kind === "pointer") gesture.current = null;
         }}
       >
-        <article className="orihon-page" aria-label={`${frameOf(underId).label}の頁`}>
-          {sheet(underId, "left")}
+        <article className="orihon-page" aria-label={`${pageLabel}の頁`}>
+          {sheet(underSheet, "left")}
         </article>
         <PageGuide open={guideOn} onDismiss={() => setGuideOn(false)} />
         {turning && (
@@ -580,7 +668,7 @@ export function StampBook() {
             aria-hidden="true"
             onTransitionEnd={finishTurn}
           >
-            {sheet(leafId, "left", "front")}
+            {sheet(leafSheet, "left", "front")}
             <div className="orihon-face orihon-face--back" />
           </article>
         )}
