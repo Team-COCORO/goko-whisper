@@ -304,18 +304,109 @@ export async function verifyToken(
   }
 }
 
+export type OfficeStudent = {
+  nickname: string;
+  telegramCode: string;
+  createdAt: number;
+  stamps: string[];
+  redeemed: boolean;
+  ticketIssued: boolean;
+};
+
+export type OfficeError = "unauthorized" | "invalid" | "missing" | "no_token" | "unavailable" | "error";
+
+function officeError(status: number): OfficeError {
+  if (status === 401) return "unauthorized";
+  if (status === 400) return "invalid";
+  if (status === 404) return "missing";
+  if (status === 409) return "no_token";
+  if (status === 503) return "unavailable";
+  return "error";
+}
+
+async function postOffice(
+  path: string,
+  idToken: string,
+  body: unknown,
+): Promise<{ ok: true } | { ok: false; error: OfficeError }> {
+  try {
+    const response = await fetchApi(path, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) return { ok: false, error: officeError(response.status) };
+    const payload = (await response.json()) as { success?: unknown };
+    if (payload.success !== true) return { ok: false, error: "error" };
+    return { ok: true };
+  } catch {
+    return { ok: false, error: "error" };
+  }
+}
+
+export function deleteStudent(
+  idToken: string,
+  nickname: string,
+  telegramCode: string,
+): Promise<{ ok: true } | { ok: false; error: OfficeError }> {
+  return postOffice("/api/admin/student/delete", idToken, { nickname, telegramCode });
+}
+
+export function redeemStudent(
+  idToken: string,
+  nickname: string,
+  telegramCode: string,
+): Promise<{ ok: true } | { ok: false; error: OfficeError }> {
+  return postOffice("/api/admin/student/redeem", idToken, { nickname, telegramCode });
+}
+
+export function updateStamps(
+  idToken: string,
+  nickname: string,
+  telegramCode: string,
+  stamps: string[],
+): Promise<{ ok: true } | { ok: false; error: OfficeError }> {
+  return postOffice("/api/admin/student/stamps", idToken, { nickname, telegramCode, stamps });
+}
+
+export async function listStudents(
+  idToken: string,
+): Promise<
+  | { ok: true; students: OfficeStudent[]; truncated: boolean }
+  | { ok: false; error: OfficeError }
+> {
+  try {
+    const response = await fetchApi("/api/admin/student/search", {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!response.ok) return { ok: false, error: officeError(response.status) };
+    const body = (await response.json()) as {
+      success?: boolean;
+      truncated?: boolean;
+      students?: OfficeStudent[];
+    };
+    if (!body.success || !Array.isArray(body.students)) return { ok: false, error: "error" };
+    return { ok: true, students: body.students, truncated: Boolean(body.truncated) };
+  } catch {
+    return { ok: false, error: "error" };
+  }
+}
+
 export async function fetchSummary(
-  token: string,
-): Promise<{ ok: true; summary: Summary } | { ok: false; unauthorized: boolean }> {
+  idToken: string,
+): Promise<{ ok: true; summary: Summary } | { ok: false; error: OfficeError }> {
   try {
     const response = await fetchApi("/api/admin/summary", {
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${idToken}` },
     });
-    if (response.status === 401) return { ok: false, unauthorized: true };
-    if (!response.ok) return { ok: false, unauthorized: false };
-    const summary = (await response.json()) as Summary;
+    if (!response.ok) return { ok: false, error: officeError(response.status) };
+    const summary = (await response.json()) as Summary & { success?: boolean };
+    if (typeof summary.issued !== "number") return { ok: false, error: "error" };
     return { ok: true, summary };
   } catch {
-    return { ok: false, unauthorized: false };
+    return { ok: false, error: "error" };
   }
 }

@@ -173,6 +173,14 @@ function AppShell() {
     acknowledgeMerge,
   } = useApp();
 
+  if (screen === "admin") {
+    return (
+      <div className="app-shell">
+        <TabContent />
+      </div>
+    );
+  }
+
   if (storageBlocked) {
     return (
       <div className="app-shell">
@@ -188,7 +196,7 @@ function AppShell() {
     );
   }
 
-  if (screen !== "admin" && !hasJoined) {
+  if (!hasJoined) {
     return (
       <div className="app-shell">
         {pendingStamp ? <StampJoinGate pendingStamp={pendingStamp} /> : <JoinGate />}
@@ -196,7 +204,7 @@ function AppShell() {
     );
   }
 
-  if (screen !== "admin" && mergeVisible) {
+  if (mergeVisible) {
     return (
       <div className="app-shell">
         <MergeNotice onConfirm={acknowledgeMerge} />
@@ -204,7 +212,7 @@ function AppShell() {
     );
   }
 
-  if (screen !== "admin" && slipVisible && telegramCode) {
+  if (slipVisible && telegramCode) {
     return (
       <div className="app-shell">
         <TelegramSlip

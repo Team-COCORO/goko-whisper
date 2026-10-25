@@ -1,4 +1,10 @@
-import { handleSummary } from "./admin";
+import {
+  handleStudentDelete,
+  handleStudentRedeem,
+  handleStudentSearch,
+  handleStudentStamps,
+  handleSummary,
+} from "./admin";
 import type { Env } from "./env";
 import { corsHeaders, json, securityHeaders } from "./http";
 import { handleEnroll, handleMerge, handleStamp } from "./students";
@@ -27,6 +33,18 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   }
   if (url.pathname === "/api/admin/summary" && request.method === "GET") {
     return handleSummary(request, env);
+  }
+  if (url.pathname === "/api/admin/student/search" && request.method === "GET") {
+    return handleStudentSearch(request, env);
+  }
+  if (url.pathname === "/api/admin/student/delete" && request.method === "POST") {
+    return handleStudentDelete(request, env);
+  }
+  if (url.pathname === "/api/admin/student/stamps" && request.method === "POST") {
+    return handleStudentStamps(request, env);
+  }
+  if (url.pathname === "/api/admin/student/redeem" && request.method === "POST") {
+    return handleStudentRedeem(request, env);
   }
 
   return json(request, { result: "not_found" }, 404);
