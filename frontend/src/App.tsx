@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { BottomNav } from "./components/BottomNav";
 import { BottomSheet } from "./components/BottomSheet";
 import { CampusMap } from "./components/CampusMap";
-import { HomeStatus } from "./components/HomeStatus";
+import { HomeStatus, StampMarks } from "./components/HomeStatus";
 import { StampBook, StampBookButton } from "./components/StampBook";
 import { StampNotice } from "./components/StampNotice";
 import { TelegramSlip } from "./components/TelegramSlip";
 import { AppProvider, useApp } from "./context/AppContext";
-import { placeById, type PlaceId } from "./data/places";
+import { placeById, type PlaceId, type PlaceStory } from "./data/places";
 import { AdminPage } from "./pages/AdminPage";
 import { EnrollPage } from "./pages/EnrollPage";
 import { FoodPage } from "./pages/FoodPage";
@@ -42,6 +42,19 @@ function sheetRatio(screen: Screen, placeName: string | null): number {
   if (screen === "goal" || screen === "whisper") return 0.6;
   if (screen === "herald" || screen === "top") return 0.45;
   return 0.38;
+}
+
+function PlaceStoryCard({ story }: { story: PlaceStory }) {
+  return (
+    <article className="place-story">
+      <header className="place-story__head">
+        <h2 className="place-story__name">{story.name}</h2>
+        {story.heritage && <p className="place-story__badge">重要文化財</p>}
+      </header>
+      <p className="place-story__title">{story.title}</p>
+      <p className="place-story__body">{story.body}</p>
+    </article>
+  );
 }
 
 function HomeStage() {
@@ -103,13 +116,17 @@ function HomeStage() {
         label={sheetLabel(screen, place?.name ?? null)}
         preferredRatio={sheetRatio(screen, place?.name ?? null)}
         contentKey={place ? `${screen}:${place.id}` : screen}
+        expandToContent={place !== null}
         onHeightChange={(height) => {
           insetRef.current = height;
           refitRef.current();
         }}
       >
         <StampNotice />
-        {place ? (
+        {!place && (screen === "top" || screen === "guide") && <StampMarks />}
+        {place?.story ? (
+          <PlaceStoryCard story={place.story} />
+        ) : place ? (
           <div className="card">
             {place.image && <img className="map-place__photo" src={place.image} alt="" />}
             <p className="sheet-line">{place.summary}</p>

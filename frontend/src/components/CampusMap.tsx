@@ -7,7 +7,7 @@ import type { WhisperId } from "../types";
 
 const MAP_W = 320;
 const MAP_H = 240;
-const MIN_K = 0.8;
+const MIN_K = 0.4;
 const MAX_K = 5;
 
 type View = { k: number; x: number; y: number };
@@ -190,9 +190,12 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
       const ratio = pixelRatio();
       if (ratio <= 0) return;
       const visiblePx = Math.max(80, wrap.clientHeight - (insetRef.current ?? 0));
-      view.k = 1;
-      view.x = 0;
-      view.y = (visiblePx / ratio - MAP_H) / 2;
+      const visibleUser = visiblePx / ratio;
+      view.k = Math.min(1, visibleUser / MAP_H);
+      const drawnH = MAP_H * view.k;
+      const drawnW = MAP_W * view.k;
+      view.x = (MAP_W - drawnW) / 2;
+      view.y = Math.max(0, (visibleUser - drawnH) / 2);
       apply();
     };
 
@@ -437,8 +440,8 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
           <PlaceName x={92} y={40}>
             グラウンド
           </PlaceName>
-          <PlaceName x={230} y={156}>
-            図書館
+          <PlaceName x={235} y={156}>
+            ひご未来図書館
           </PlaceName>
           <PlaceName x={239} y={92}>
             共用棟黒髪
@@ -447,6 +450,12 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             <circle r={2.5} fill="#4a3f35" />
             <text y={-8} textAnchor="middle" className="map-label">
               メインステージ
+            </text>
+          </g>
+          <g transform="translate(132 137)">
+            <circle r={3} fill="#4a3f35" stroke="#efe6da" strokeWidth={1} />
+            <text y={-5} textAnchor="middle" className="map-label" style={{ fontSize: 6 }}>
+              生協 学生会館ショップ
             </text>
           </g>
           <g transform="translate(282 130)" pointerEvents="none" aria-hidden="true">
