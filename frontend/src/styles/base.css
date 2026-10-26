@@ -1094,14 +1094,16 @@ h1 {
 }
 
 .admin-menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
   border: 1px solid #c4b8ae;
   background: #fff;
   color: var(--ink);
   border-radius: 6px;
-  padding: 4px 10px;
-  font: inherit;
-  font-size: 13px;
-  line-height: 1.4;
   cursor: pointer;
 }
 
