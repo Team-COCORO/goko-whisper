@@ -156,6 +156,33 @@ function percent(part: number, whole: number): string {
   return `${Math.round((part / whole) * 100)}%`;
 }
 
+function EditButton({
+  expanded,
+  disabled,
+  onClick,
+}: {
+  expanded: boolean;
+  disabled: boolean;
+  onClick: (button: HTMLButtonElement) => void;
+}) {
+  return (
+    <button
+      className="admin-menu-button"
+      type="button"
+      aria-label="編集"
+      aria-haspopup="menu"
+      aria-expanded={expanded}
+      disabled={disabled}
+      onClick={(event) => onClick(event.currentTarget)}
+    >
+      <svg className="admin-mark" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z" />
+        <path d="M13.5 6.5l3 3" />
+      </svg>
+    </button>
+  );
+}
+
 function StampDots({ student }: { student: OfficeStudent }) {
   const done = new Set(student.stamps);
   const count = stampCount(student);
@@ -596,16 +623,11 @@ export function AdminPage() {
               </p>
               <p className="admin-card__actions">
                 <PrizeStatus student={student} />
-                <button
-                  className="admin-menu-button"
-                  type="button"
-                  aria-haspopup="menu"
-                  aria-expanded={menu?.key === rowKey(student)}
+                <EditButton
+                  expanded={menu?.key === rowKey(student)}
                   disabled={loading || pendingKey === rowKey(student)}
-                  onClick={(event) => openMenu(student, event.currentTarget)}
-                >
-                  操作
-                </button>
+                  onClick={(button) => openMenu(student, button)}
+                />
               </p>
             </article>
           ))}
@@ -619,7 +641,7 @@ export function AdminPage() {
                 <th>符丁</th>
                 <th>スタンプ進捗</th>
                 <th>景品ステータス</th>
-                <th>操作</th>
+                <th>編集</th>
               </tr>
             </thead>
             <tbody>
@@ -640,16 +662,11 @@ export function AdminPage() {
                     <PrizeStatus student={student} />
                   </td>
                   <td>
-                    <button
-                      className="admin-menu-button"
-                      type="button"
-                      aria-haspopup="menu"
-                      aria-expanded={menu?.key === rowKey(student)}
+                    <EditButton
+                      expanded={menu?.key === rowKey(student)}
                       disabled={loading || pendingKey === rowKey(student)}
-                      onClick={(event) => openMenu(student, event.currentTarget)}
-                    >
-                      操作
-                    </button>
+                      onClick={(button) => openMenu(student, button)}
+                    />
                   </td>
                 </tr>
               ))}
@@ -659,7 +676,7 @@ export function AdminPage() {
       </section>
       {menu && (
         <>
-          <button className="admin-menu-backdrop" type="button" aria-label="操作メニューを閉じる" onClick={() => setMenu(null)} />
+          <button className="admin-menu-backdrop" type="button" aria-label="編集メニューを閉じる" onClick={() => setMenu(null)} />
           <div className="admin-menu" role="menu" style={{ top: menu.top, right: menu.right }}>
             <button type="button" role="menuitem" onClick={() => openStamps(menu.student)}>
               スタンプを手動変更

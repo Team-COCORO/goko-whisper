@@ -37,16 +37,30 @@ function BrowserNote() {
   );
 }
 
+export function StampMarks() {
+  const { stamp1Done, stamp2Done, stamp3Done } = useApp();
+  const marks = [
+    { name: "化学実験場", done: stamp1Done },
+    { name: "五高喫茶", done: stamp2Done },
+    { name: "五高記念館", done: stamp3Done },
+  ];
+  return (
+    <ul className="stamp-marks">
+      {marks.map((mark) => (
+        <li key={mark.name} className={mark.done ? "is-done" : undefined}>
+          <span className="stamp-marks__seal" aria-hidden="true" />
+          <span className="stamp-marks__name">{mark.name}</span>
+          <span className="stamp-marks__state">{mark.done ? "取得済み" : "未取得"}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function HomeStatus() {
-  const {
-    screen,
-    nickname,
-    whisperId,
-    stamp1Done,
-    stamp2Done,
-    stamp3Done,
-    dismissWhisper,
-  } = useApp();
+  const { screen, nickname, whisperId, stamp1Done, stamp2Done, stamp3Done, dismissWhisper } =
+    useApp();
+  const noneYet = !stamp1Done && !stamp2Done && !stamp3Done;
 
   if (screen === "whisper" && whisperId) {
     const item = WHISPERS[whisperId];
@@ -69,27 +83,7 @@ export function HomeStatus() {
     );
   }
 
-  if (screen === "guide") {
-    const missing = [
-      !stamp1Done ? "化学実験場の QR" : "",
-      !stamp2Done ? "五高喫茶（模擬店）の QR" : "",
-      !stamp3Done ? "五高記念館の QR" : "",
-    ].filter(Boolean);
-    return (
-      <div className="card">
-        <p className="sheet-line">
-          <Phrases
-            parts={[
-              "まだ残っている声は、",
-              ...missing.map((place, index) =>
-                index === missing.length - 1 ? `${place}です。` : `${place}と`,
-              ),
-            ]}
-          />
-        </p>
-      </div>
-    );
-  }
+  if (screen === "guide") return null;
 
   if (screen === "herald") {
     return (
@@ -113,6 +107,9 @@ export function HomeStatus() {
           <Phrases parts={["百年の声が、", "まだここに漂っている。"]} />
         </p>
         <BrowserNote />
+        {noneYet && (
+          <p className="sheet-hint">赤門や記念館をタップすると、百年前の小話が読めます。</p>
+        )}
       </div>
     );
   }

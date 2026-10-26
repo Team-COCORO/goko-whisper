@@ -55,42 +55,54 @@
 .welcome-flow {
   list-style: none;
   width: 100%;
-  background: rgba(44, 62, 80, 0.04);
+  background: #fdfbf7;
   border: 1px dashed var(--welcome-border);
   border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 16px;
+  padding: 16px 14px;
+  margin: 4px 0 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
   text-align: left;
 }
 
 .welcome-flow-item {
-  font-size: clamp(12.5px, 3.5vw, 13.5px);
   color: var(--welcome-sub);
   display: flex;
-  align-items: baseline;
-  gap: 8px;
-  line-height: 1.45;
+  align-items: flex-start;
+  gap: 12px;
   text-align: left;
   word-break: keep-all;
   overflow-wrap: normal;
 }
 
 .welcome-flow-num {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
   background: var(--nav);
-  color: var(--brass);
+  color: #fff;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
-  font-weight: bold;
+  font-family: var(--font-roman);
+  font-size: 12px;
   flex-shrink: 0;
-  align-self: center;
+}
+
+.welcome-flow-body strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ink);
+  font-size: 14.5px;
+}
+
+.welcome-flow-body p {
+  margin: 0;
+  color: var(--welcome-sub);
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .welcome-input {
@@ -169,7 +181,6 @@
 }
 
 .join-copy,
-.join-note,
 .join-error {
   width: 100%;
   margin: 0 0 12px;
@@ -185,46 +196,10 @@
   text-align: left;
 }
 
-.join-copy--note {
-  margin-top: 10px;
-  margin-bottom: 0;
-  font-size: 14px;
-}
-
-.join-note-title {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 4px;
-  color: var(--nav);
-}
-
-.join-note-title span {
-  white-space: nowrap;
-}
-
-.join-mark {
-  width: 18px;
-  height: 18px;
-  flex: none;
-}
-
-.join-note {
-  background: rgba(44, 62, 80, 0.04);
-  border: 1px dashed var(--welcome-border);
-  border-radius: 6px;
-  padding: 10px 12px;
-}
-
-.join-note--alert {
-  border-color: rgba(139, 58, 43, 0.45);
-  background: rgba(139, 58, 43, 0.05);
-}
-
-.join-note--alert .join-note-title {
-  color: var(--brick);
+.join-copy.prologue-lead {
+  color: var(--ink);
+  font-size: 14.5px;
+  line-height: 1.65;
 }
 
 .join-error {
@@ -510,4 +485,220 @@ svg.goko-icon .mark {
 
 .join-back:disabled {
   cursor: not-allowed;
+}
+
+.welcome.welcome--prologue,
+.welcome.welcome--enroll {
+  background: var(--out);
+}
+
+.welcome--prologue .welcome-card,
+.welcome--enroll .welcome-card {
+  max-width: 440px;
+  background: var(--card);
+  padding-bottom: 28px;
+}
+
+.welcome--prologue .welcome-lead {
+  margin-bottom: 6px;
+  letter-spacing: 0.15em;
+}
+
+.prologue-title-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.prologue-host {
+  width: 100%;
+  margin: 0 0 10px;
+  color: var(--welcome-sub);
+  font-size: 11.5px;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.prologue-title-row .welcome-title {
+  margin: 0;
+  line-height: 1;
+}
+
+.prologue-title-row rt {
+  font-size: 0.4em;
+  font-weight: normal;
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+.prologue-logo {
+  height: 40px;
+  width: auto;
+  flex: none;
+}
+
+.prologue-mark {
+  width: 26px;
+  height: 26px;
+  flex: none;
+}
+
+.prologue-note {
+  margin-top: 14px;
+  border: none;
+  background: none;
+  color: var(--brick);
+  font: inherit;
+  font-size: 12.5px;
+  line-height: 1.45;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.prologue-about {
+  width: 100%;
+  margin-top: 20px;
+  border-top: 1px dashed var(--welcome-border);
+  padding-top: 14px;
+  text-align: left;
+}
+
+.prologue-about-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  border: none;
+  background: none;
+  color: var(--welcome-sub);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.prologue-about-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+}
+
+.prologue-about-body {
+  margin-top: 8px;
+  padding: 10px 12px;
+  background: #f4ede1;
+  border-radius: 4px;
+  color: var(--welcome-sub);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.prologue-about-body p {
+  margin: 0;
+}
+
+.prologue-about-body p + p {
+  margin-top: 12px;
+}
+
+.prologue-about-body strong {
+  color: var(--ink);
+}
+
+.prologue-chevron {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  transition: transform 0.2s;
+}
+
+.prologue-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.prologue-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.prologue-modal-body {
+  width: 100%;
+  max-width: 380px;
+  padding: 20px 18px;
+  background: var(--card);
+  border: 1px solid var(--brass);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  text-align: left;
+  outline: none;
+}
+
+.prologue-modal-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 0 0 12px;
+  color: var(--brick);
+  font-size: 16px;
+  font-weight: bold;
+}
+
+.prologue-modal-alert {
+  margin-bottom: 12px;
+  padding: 8px 10px;
+  background: rgba(139, 58, 43, 0.06);
+  border-left: 3px solid var(--brick);
+  color: var(--brick);
+  font-size: 12.5px;
+  line-height: 1.5;
+}
+
+.prologue-modal-desc {
+  margin: 0 0 16px;
+  padding-left: 1.25em;
+  color: var(--ink);
+  font-size: 13px;
+  line-height: 1.7;
+  list-style: disc;
+}
+
+.prologue-modal-desc li + li {
+  margin-top: 10px;
+}
+
+.welcome--enroll .welcome-name {
+  margin-top: 4px;
+  border: 1px solid #d4c8b6;
+  border-radius: 4px;
+}
+
+.welcome--enroll .welcome-name:focus {
+  border-color: var(--brick);
+  box-shadow: 0 0 0 2px rgba(139, 58, 43, 0.15);
+}
+
+.welcome--enroll .enroll-lock {
+  color: var(--brick);
+  font-size: 13px;
+}
+
+.welcome--enroll .welcome-start:disabled {
+  background: #c9bfb5;
+  color: #fff;
 }

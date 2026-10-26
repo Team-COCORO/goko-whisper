@@ -55,16 +55,16 @@ export function EnrollPage({ onBack, withStamp = false }: EnrollPageProps) {
   }
 
   return (
-    <main className="welcome welcome--scroll">
+    <main className="welcome welcome--scroll welcome--enroll">
       <div className="welcome-card">
         <div className="welcome-lead">五高</div>
         <h1 className="welcome-title">入学手続き</h1>
-        <p className="join-copy">
+        <p className="join-copy prologue-lead">
           <span className="u-nowrap">スタンプを記録する</span>
           <span className="u-nowrap">スタンプ帖を作ります。</span>
           <span className="u-nowrap">ニックネームを決めてください。</span>
           <span className="u-nowrap">本名は不要です。</span>
-          <span className="u-nowrap">入学したあとは変更できません。</span>
+          <span className="u-nowrap enroll-lock">入学したあとは変更できません。</span>
         </p>
         <label className="welcome-label" htmlFor="student-nickname">
           ニックネーム（10文字まで）
@@ -88,7 +88,7 @@ export function EnrollPage({ onBack, withStamp = false }: EnrollPageProps) {
           入学する
         </button>
         <button className="join-back" type="button" onClick={onBack} disabled={busy}>
-          {withStamp ? "戻る" : "案内に戻る"}
+          {withStamp ? "戻る" : "案内にもどる"}
         </button>
       </div>
     </main>

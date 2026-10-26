@@ -54,6 +54,12 @@ type AppContextValue = {
   markRedeemed: () => void;
   markSoldOut: () => void;
   beginPress: (id: WhisperId) => void;
+  heldStamp: WhisperId | null;
+  brushStamp: WhisperId | null;
+  holdBrush: (id: WhisperId) => void;
+  playBrush: (id: WhisperId) => void;
+  finishBrush: () => void;
+  releaseBrush: () => void;
   openBook: () => void;
   closeBook: () => void;
   hideBook: () => void;
@@ -374,6 +380,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [soldOut, setSoldOut] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
   const [bookLocked, setBookLocked] = useState(false);
+  const [heldStamp, setHeldStamp] = useState<WhisperId | null>(null);
+  const [brushStamp, setBrushStamp] = useState<WhisperId | null>(null);
   const [whisperId, setWhisperId] = useState<WhisperId | null>(null);
   const [, setWhisperOpensGoal] = useState(false);
   const [showGoal, setShowGoal] = useState(() => Boolean(initial.rally.rewardCode));
@@ -480,6 +488,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
       return next;
     });
+  }, []);
+
+  const holdBrush = useCallback((id: WhisperId) => {
+    setHeldStamp(id);
+  }, []);
+
+  const playBrush = useCallback((id: WhisperId) => {
+    setBrushStamp(id);
+  }, []);
+
+  const finishBrush = useCallback(() => {
+    setBrushStamp(null);
+    setHeldStamp(null);
+  }, []);
+
+  const releaseBrush = useCallback(() => {
+    setHeldStamp(null);
   }, []);
 
   const openBook = useCallback(() => {
@@ -698,6 +723,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       markRedeemed,
       markSoldOut,
       beginPress,
+      heldStamp,
+      brushStamp,
+      holdBrush,
+      playBrush,
+      finishBrush,
+      releaseBrush,
       openBook,
       closeBook,
       hideBook,
@@ -738,6 +769,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       markRedeemed,
       markSoldOut,
       beginPress,
+      heldStamp,
+      brushStamp,
+      holdBrush,
+      playBrush,
+      finishBrush,
+      releaseBrush,
       openBook,
       closeBook,
       hideBook,
