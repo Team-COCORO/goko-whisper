@@ -1,5 +1,6 @@
 import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
 import { useApp } from "../context/AppContext";
+import { BUILDING_PLATES, type BuildingPlate } from "../data/buildingPlates";
 import { MAP_PLACES, type PlaceId } from "../data/places";
 
 const MAP_W = 320;
@@ -27,6 +28,7 @@ type SpotProps = {
   imageY: number;
   imageW: number;
   imageH: number;
+  plate: BuildingPlate;
   done: boolean;
 };
 
@@ -42,6 +44,7 @@ function Spot({
   imageY,
   imageW,
   imageH,
+  plate,
   done,
 }: SpotProps) {
   return (
@@ -49,6 +52,12 @@ function Spot({
       {!done && (
         <circle className="pulse-circle" cx={0} cy={0} fill="none" stroke="#E15F41" />
       )}
+      <path
+        d={plate.d}
+        transform={`translate(${imageX} ${imageY}) scale(${imageW / plate.srcW} ${imageH / plate.srcH})`}
+        fill="#efe6da"
+        pointerEvents="none"
+      />
       <image
         className={done ? "building-illust" : "building-illust locked"}
         href={done ? colorHref : href}
@@ -343,6 +352,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             imageY={-20}
             imageW={56}
             imageH={32}
+            plate={BUILDING_PLATES.kagaku}
             done={stamp1Done}
           />
           <Spot
@@ -356,6 +366,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             imageY={-24}
             imageW={72}
             imageH={40}
+            plate={BUILDING_PLATES.goko}
             done={stamp3Done}
           />
           <Spot
@@ -370,6 +381,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             imageY={-35}
             imageW={48}
             imageH={48}
+            plate={BUILDING_PLATES.cafe}
             done={stamp2Done}
           />
           <Mystery x={133} y={207} href="/maps/akamon.svg" />
