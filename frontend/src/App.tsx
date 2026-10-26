@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { BottomNav } from "./components/BottomNav";
 import { BottomSheet } from "./components/BottomSheet";
 import { CampusMap } from "./components/CampusMap";
+import { HomeGuide } from "./components/HomeGuide";
 import { HomeStatus, StampMarks } from "./components/HomeStatus";
 import { StampBook, StampBookButton } from "./components/StampBook";
 import { StampNotice } from "./components/StampNotice";
@@ -190,6 +191,7 @@ function AppShell() {
   const {
     storageBlocked,
     screen,
+    activeTab,
     hasJoined,
     pendingStamp,
     slipVisible,
@@ -257,6 +259,7 @@ function AppShell() {
       <StampBookButton />
       <StampBook />
       <BottomNav />
+      {activeTab === "home" && <HomeGuide />}
     </div>
   );
 }
