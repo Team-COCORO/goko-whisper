@@ -1,7 +1,9 @@
 import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
+import { BrushReveal } from "./BrushReveal";
 import { useApp } from "../context/AppContext";
 import { BUILDING_PLATES, type BuildingPlate } from "../data/buildingPlates";
 import { MAP_PLACES, type PlaceId } from "../data/places";
+import type { WhisperId } from "../types";
 
 const MAP_W = 320;
 const MAP_H = 240;
@@ -29,7 +31,11 @@ type SpotProps = {
   imageW: number;
   imageH: number;
   plate: BuildingPlate;
+  stampId: WhisperId;
   done: boolean;
+  painting: boolean;
+  showColor: boolean;
+  onPaintDone: () => void;
 };
 
 function Spot({
@@ -45,7 +51,11 @@ function Spot({
   imageW,
   imageH,
   plate,
+  stampId,
   done,
+  painting,
+  showColor,
+  onPaintDone,
 }: SpotProps) {
   return (
     <g transform={`translate(${x} ${y})`}>
@@ -59,13 +69,34 @@ function Spot({
         pointerEvents="none"
       />
       <image
-        className={done ? "building-illust" : "building-illust locked"}
-        href={done ? colorHref : href}
+        className="building-illust locked"
+        href={href}
         x={imageX}
         y={imageY}
         width={imageW}
         height={imageH}
       />
+      {showColor && (
+        <image
+          className="building-illust"
+          href={colorHref}
+          x={imageX}
+          y={imageY}
+          width={imageW}
+          height={imageH}
+        />
+      )}
+      {painting && (
+        <BrushReveal
+          stampId={stampId}
+          colorHref={colorHref}
+          imageX={imageX}
+          imageY={imageY}
+          imageW={imageW}
+          imageH={imageH}
+          onDone={onPaintDone}
+        />
+      )}
       <text x={labelX} y={labelY} textAnchor="middle" className="map-label">
         {label}
       </text>
@@ -103,7 +134,9 @@ type Props = {
 };
 
 export function CampusMap({ insetRef, refitRef, onPick }: Props) {
-  const { stamp1Done, stamp2Done, stamp3Done } = useApp();
+  const { stamp1Done, stamp2Done, stamp3Done, heldStamp, brushStamp, finishBrush } = useApp();
+  const colorOf = (id: WhisperId, done: boolean) =>
+    done && heldStamp !== id && brushStamp !== id;
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const groupRef = useRef<SVGGElement>(null);
@@ -353,7 +386,11 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             imageW={56}
             imageH={32}
             plate={BUILDING_PLATES.kagaku}
+            stampId={1}
             done={stamp1Done}
+            painting={brushStamp === 1}
+            showColor={colorOf(1, stamp1Done)}
+            onPaintDone={finishBrush}
           />
           <Spot
             x={167}
@@ -367,7 +404,11 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             imageW={72}
             imageH={40}
             plate={BUILDING_PLATES.goko}
+            stampId={3}
             done={stamp3Done}
+            painting={brushStamp === 3}
+            showColor={colorOf(3, stamp3Done)}
+            onPaintDone={finishBrush}
           />
           <Spot
             x={159}
@@ -382,7 +423,11 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             imageW={48}
             imageH={48}
             plate={BUILDING_PLATES.cafe}
+            stampId={2}
             done={stamp2Done}
+            painting={brushStamp === 2}
+            showColor={colorOf(2, stamp2Done)}
+            onPaintDone={finishBrush}
           />
           <Mystery x={133} y={207} href="/maps/akamon.svg" />
           <Mystery x={148} y={109} href="/maps/heam-relief.svg" />
