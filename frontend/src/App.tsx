@@ -87,7 +87,17 @@ function HomeStage() {
         />
       </div>
       <header className="float-header">
-        <h1>五高の囁き</h1>
+        <h1>
+          <a
+            className="home-brand"
+            href="https://museum.kumamoto-u.ac.jp/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span className="home-logo" aria-hidden="true" />
+            五高の囁き
+          </a>
+        </h1>
       </header>
       <BottomSheet
         label={sheetLabel(screen, place?.name ?? null)}
