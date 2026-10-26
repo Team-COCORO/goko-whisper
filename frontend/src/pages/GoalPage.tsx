@@ -22,7 +22,7 @@ export function GoalPage() {
     markSoldOut,
   } = useApp();
   const [issuing, setIssuing] = useState(!rewardCode);
-  const [issueError, setIssueError] = useState(false);
+  const [issueProblem, setIssueProblem] = useState<"error" | "forbidden" | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [pin, setPin] = useState("");
@@ -45,6 +45,7 @@ export function GoalPage() {
       if (cancelled) return;
       setIssuing(false);
       if (result.result === "issued") {
+        setIssueProblem(null);
         saveIssued(result.code, result.issuedAt);
         return;
       }
@@ -52,7 +53,7 @@ export function GoalPage() {
         markSoldOut();
         return;
       }
-      setIssueError(true);
+      setIssueProblem(result.result === "forbidden" ? "forbidden" : "error");
     })();
 
     return () => {
@@ -65,7 +66,7 @@ export function GoalPage() {
   const showCode = Boolean(rewardCode) && (!expired || revealed);
 
   const retryIssue = () => {
-    setIssueError(false);
+    setIssueProblem(null);
     setIssuing(true);
     void (async () => {
       const result = await issueToken(nickname, clientId);
@@ -78,7 +79,7 @@ export function GoalPage() {
         markSoldOut();
         return;
       }
-      setIssueError(true);
+      setIssueProblem(result.result === "forbidden" ? "forbidden" : "error");
     })();
   };
 
@@ -102,6 +103,10 @@ export function GoalPage() {
       setVerifyMessage("このコードは見つかりません");
       return;
     }
+    if (result.result === "locked") {
+      setVerifyMessage("このコードは、しばらく確認できません。");
+      return;
+    }
     setVerifyMessage("通信が必要です");
   };
 
@@ -113,10 +118,19 @@ export function GoalPage() {
     );
   }
 
-  if (issueError && !rewardCode) {
+  if (issueProblem && !rewardCode) {
     return (
       <div className="card">
-        <p className="sheet-line is-alert">通信が必要です</p>
+        <p className="sheet-line is-alert">
+          {issueProblem === "forbidden" ? (
+            <>
+              <span className="u-nowrap">三つのスタンプが確認できていません。</span>
+              <span className="u-nowrap">各QRをもう一度読み取ってください。</span>
+            </>
+          ) : (
+            "通信が必要です"
+          )}
+        </p>
         <button className="b alt" type="button" onClick={retryIssue}>
           再試行
         </button>

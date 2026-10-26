@@ -24,6 +24,7 @@ type Props = {
   label: string;
   preferredRatio: number;
   contentKey: string;
+  expandToContent?: boolean;
   onHeightChange: (height: number) => void;
   children: ReactNode;
 };
@@ -32,6 +33,7 @@ export function BottomSheet({
   label,
   preferredRatio,
   contentKey,
+  expandToContent = false,
   onHeightChange,
   children,
 }: Props) {
@@ -57,9 +59,28 @@ export function BottomSheet({
   };
 
   useLayoutEffect(() => {
+    const sheet = sheetRef.current;
+    const parent = sheet?.parentElement;
+    const pane = sheet?.querySelector(".sheet__pane");
+    const handle = sheet?.querySelector(".sheet__handle");
+    if (
+      expandToContent &&
+      sheet &&
+      parent &&
+      pane instanceof HTMLElement &&
+      handle instanceof HTMLElement &&
+      parent.clientHeight > 0
+    ) {
+      const border = sheet.offsetHeight - sheet.clientHeight;
+      const needed = handle.offsetHeight + pane.scrollHeight + border;
+      const next = Math.min(0.6, Math.max(0.18, needed / parent.clientHeight));
+      ratioRef.current = next;
+      setRatio(next);
+      return;
+    }
     ratioRef.current = preferredRatio;
     setRatio(preferredRatio);
-  }, [preferredRatio]);
+  }, [preferredRatio, contentKey, expandToContent]);
 
   useLayoutEffect(() => () => stopDragRef.current?.(), []);
 

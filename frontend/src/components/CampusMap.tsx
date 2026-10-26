@@ -1,10 +1,13 @@
 import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
+import { BrushReveal } from "./BrushReveal";
 import { useApp } from "../context/AppContext";
+import { BUILDING_PLATES, type BuildingPlate } from "../data/buildingPlates";
 import { MAP_PLACES, type PlaceId } from "../data/places";
+import type { WhisperId } from "../types";
 
 const MAP_W = 320;
 const MAP_H = 240;
-const MIN_K = 0.8;
+const MIN_K = 0.4;
 const MAX_K = 5;
 
 type View = { k: number; x: number; y: number };
@@ -27,7 +30,12 @@ type SpotProps = {
   imageY: number;
   imageW: number;
   imageH: number;
+  plate: BuildingPlate;
+  stampId: WhisperId;
   done: boolean;
+  painting: boolean;
+  showColor: boolean;
+  onPaintDone: () => void;
 };
 
 function Spot({
@@ -42,21 +50,53 @@ function Spot({
   imageY,
   imageW,
   imageH,
+  plate,
+  stampId,
   done,
+  painting,
+  showColor,
+  onPaintDone,
 }: SpotProps) {
   return (
     <g transform={`translate(${x} ${y})`}>
       {!done && (
         <circle className="pulse-circle" cx={0} cy={0} fill="none" stroke="#E15F41" />
       )}
+      <path
+        d={plate.d}
+        transform={`translate(${imageX} ${imageY}) scale(${imageW / plate.srcW} ${imageH / plate.srcH})`}
+        fill="#efe6da"
+        pointerEvents="none"
+      />
       <image
-        className={done ? "building-illust" : "building-illust locked"}
-        href={done ? colorHref : href}
+        className="building-illust locked"
+        href={href}
         x={imageX}
         y={imageY}
         width={imageW}
         height={imageH}
       />
+      {showColor && (
+        <image
+          className="building-illust"
+          href={colorHref}
+          x={imageX}
+          y={imageY}
+          width={imageW}
+          height={imageH}
+        />
+      )}
+      {painting && (
+        <BrushReveal
+          stampId={stampId}
+          colorHref={colorHref}
+          imageX={imageX}
+          imageY={imageY}
+          imageW={imageW}
+          imageH={imageH}
+          onDone={onPaintDone}
+        />
+      )}
       <text x={labelX} y={labelY} textAnchor="middle" className="map-label">
         {label}
       </text>
@@ -94,7 +134,9 @@ type Props = {
 };
 
 export function CampusMap({ insetRef, refitRef, onPick }: Props) {
-  const { stamp1Done, stamp2Done, stamp3Done } = useApp();
+  const { stamp1Done, stamp2Done, stamp3Done, heldStamp, brushStamp, finishBrush } = useApp();
+  const colorOf = (id: WhisperId, done: boolean) =>
+    done && heldStamp !== id && brushStamp !== id;
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const groupRef = useRef<SVGGElement>(null);
@@ -148,9 +190,12 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
       const ratio = pixelRatio();
       if (ratio <= 0) return;
       const visiblePx = Math.max(80, wrap.clientHeight - (insetRef.current ?? 0));
-      view.k = 1;
-      view.x = 0;
-      view.y = (visiblePx / ratio - MAP_H) / 2;
+      const visibleUser = visiblePx / ratio;
+      view.k = Math.min(1, visibleUser / MAP_H);
+      const drawnH = MAP_H * view.k;
+      const drawnW = MAP_W * view.k;
+      view.x = (MAP_W - drawnW) / 2;
+      view.y = Math.max(0, (visibleUser - drawnH) / 2);
       apply();
     };
 
@@ -343,7 +388,12 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             imageY={-20}
             imageW={56}
             imageH={32}
+            plate={BUILDING_PLATES.kagaku}
+            stampId={1}
             done={stamp1Done}
+            painting={brushStamp === 1}
+            showColor={colorOf(1, stamp1Done)}
+            onPaintDone={finishBrush}
           />
           <Spot
             x={167}
@@ -356,7 +406,12 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             imageY={-24}
             imageW={72}
             imageH={40}
+            plate={BUILDING_PLATES.goko}
+            stampId={3}
             done={stamp3Done}
+            painting={brushStamp === 3}
+            showColor={colorOf(3, stamp3Done)}
+            onPaintDone={finishBrush}
           />
           <Spot
             x={159}
@@ -370,7 +425,12 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             imageY={-35}
             imageW={48}
             imageH={48}
+            plate={BUILDING_PLATES.cafe}
+            stampId={2}
             done={stamp2Done}
+            painting={brushStamp === 2}
+            showColor={colorOf(2, stamp2Done)}
+            onPaintDone={finishBrush}
           />
           <Mystery x={133} y={207} href="/maps/akamon.svg" />
           <Mystery x={148} y={109} href="/maps/heam-relief.svg" />
@@ -380,8 +440,8 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
           <PlaceName x={92} y={40}>
             グラウンド
           </PlaceName>
-          <PlaceName x={230} y={156}>
-            図書館
+          <PlaceName x={235} y={156}>
+            ひご未来図書館
           </PlaceName>
           <PlaceName x={239} y={92}>
             共用棟黒髪
@@ -390,6 +450,12 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             <circle r={2.5} fill="#4a3f35" />
             <text y={-8} textAnchor="middle" className="map-label">
               メインステージ
+            </text>
+          </g>
+          <g transform="translate(132 137)">
+            <circle r={3} fill="#4a3f35" stroke="#efe6da" strokeWidth={1} />
+            <text y={-5} textAnchor="middle" className="map-label" style={{ fontSize: 6 }}>
+              生協 学生会館ショップ
             </text>
           </g>
           <g transform="translate(282 130)" pointerEvents="none" aria-hidden="true">

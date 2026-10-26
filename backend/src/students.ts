@@ -1,6 +1,7 @@
 import type { Env } from "./env";
 import { errorText, json, readJson, safeEqual } from "./http";
 import { BLOCKED_CLIENT_ID, CLIENT_ID_RE, STAMP_IDS } from "./ids";
+import { clearMergeFailure, mergeLocked, recordMergeFailure } from "./lockout";
 
 type StudentRow = {
   client_id: string;
@@ -90,11 +91,11 @@ export async function handleEnroll(request: Request, env: Env): Promise<Response
     return enrollError(request, "INVALID", 400);
   }
 
-  const existing = await findStudent(env.DB, clientId);
-  if (existing) return json(request, enrollBody(existing));
-
   const nickname =
     typeof record.nickname === "string" ? record.nickname.trim() : "";
+  const existing = await findStudent(env.DB, clientId);
+  if (existing) return respondExisting(request, existing, nickname);
+
   if (!nickname || nickname.length > 10) {
     return enrollError(request, "INVALID", 400);
   }
@@ -143,7 +144,7 @@ export async function handleEnroll(request: Request, env: Env): Promise<Response
       const message = errorText(error);
       if (isClientCollision(message)) {
         const raced = await findStudent(env.DB, clientId);
-        if (raced) return json(request, enrollBody(raced));
+        if (raced) return respondExisting(request, raced, nickname);
         return enrollError(request, "UNAVAILABLE", 500);
       }
       if (isTelegramCollision(message)) continue;
@@ -151,21 +152,18 @@ export async function handleEnroll(request: Request, env: Env): Promise<Response
     }
 
     const raced = await findStudent(env.DB, clientId);
-    if (raced) return json(request, enrollBody(raced));
+    if (raced) return respondExisting(request, raced, nickname);
     return enrollError(request, "UNAVAILABLE", 500);
   }
 
   return enrollError(request, "UNAVAILABLE", 503);
 }
 
-function readCurrentStamps(value: unknown): string[] | null {
-  if (!Array.isArray(value)) return null;
-  const stamps: string[] = [];
-  for (const item of value) {
-    if (typeof item !== "string" || !STAMP_IDS.has(item)) return null;
-    if (!stamps.includes(item)) stamps.push(item);
+function respondExisting(request: Request, row: StudentRow, nickname: string): Response {
+  if (!nickname || nickname.length > 10 || nickname !== row.nickname) {
+    return enrollError(request, "FORBIDDEN", 403);
   }
-  return stamps;
+  return json(request, enrollBody(row));
 }
 
 function unionStamps(saved: string[], incoming: string[]): string[] {
@@ -230,20 +228,37 @@ export async function handleMerge(request: Request, env: Env): Promise<Response>
   const record = payload as {
     nickname?: unknown;
     telegramCode?: unknown;
-    currentStamps?: unknown;
+    stamp?: unknown;
+    token?: unknown;
   };
   const nickname = typeof record.nickname === "string" ? record.nickname.trim() : "";
   const telegramCode = typeof record.telegramCode === "string" ? record.telegramCode : "";
-  const currentStamps = readCurrentStamps(record.currentStamps);
-  if (!nickname || nickname.length > 10 || !TELEGRAM_CODE_RE.test(telegramCode) || !currentStamps) {
+  const stamp = typeof record.stamp === "string" ? record.stamp : "";
+  const token = typeof record.token === "string" ? record.token : "";
+  if (!nickname || nickname.length > 10 || !TELEGRAM_CODE_RE.test(telegramCode) || !STAMP_IDS.has(stamp)) {
     return enrollError(request, "INVALID", 400);
   }
 
-  const found = await findByTelegram(env.DB, nickname, telegramCode);
-  if (!found) return enrollError(request, "MISMATCH", 401);
+  const now = Date.now();
+  if (await mergeLocked(env.DB, nickname, now)) {
+    return enrollError(request, "LOCKED", 429);
+  }
 
-  const merged = await writeUnion(env.DB, found.client_id, currentStamps);
+  const expected = env.STAMP_TOKEN ?? "";
+  if (!expected || !token || !(await safeEqual(token, expected))) {
+    return enrollError(request, "FORBIDDEN", 403);
+  }
+
+  const found = await findByTelegram(env.DB, nickname, telegramCode);
+  if (!found) {
+    const failure = await recordMergeFailure(env.DB, nickname, now);
+    if (failure === "locked") return enrollError(request, "LOCKED", 429);
+    return enrollError(request, "MISMATCH", 401);
+  }
+
+  const merged = await writeUnion(env.DB, found.client_id, [stamp]);
   if (!merged) return enrollError(request, "UNAVAILABLE", 503);
+  await clearMergeFailure(env.DB, nickname);
 
   return json(request, {
     ...enrollBody(merged),

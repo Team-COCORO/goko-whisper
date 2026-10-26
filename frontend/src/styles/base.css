@@ -72,14 +72,37 @@ body {
 }
 
 .float-header h1 {
-  display: inline-block;
   margin: 0;
-  padding: 8px 12px;
+  text-align: left;
+}
+
+.home-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px 8px 8px;
   border-radius: 8px;
   background: rgba(245, 239, 235, 0.85);
   backdrop-filter: blur(4px);
-  text-align: left;
+  color: inherit;
+  text-decoration: none;
   letter-spacing: 0.18em;
+  pointer-events: auto;
+}
+
+.home-brand:focus-visible {
+  outline: 2px solid var(--brick);
+  outline-offset: 2px;
+}
+
+.home-logo {
+  width: 36px;
+  height: 36px;
+  flex: none;
+  background: currentColor;
+  -webkit-mask: url("/logo/logo_campus_museum.svg") center / contain no-repeat;
+  mask: url("/logo/logo_campus_museum.svg") center / contain no-repeat;
+  mask-mode: alpha;
 }
 
 .sheet {
@@ -146,6 +169,112 @@ body {
 .sheet__pane {
   padding: 0 16px 16px;
   animation: sheet-pane-in 0.32s ease;
+}
+
+.stamp-marks {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 2px 0 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.stamp-marks li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+
+.stamp-marks__seal {
+  width: 22px;
+  height: 22px;
+  border: 1.5px dashed rgba(139, 58, 43, 0.45);
+  border-radius: 50%;
+  background: transparent;
+}
+
+.stamp-marks li.is-done .stamp-marks__seal {
+  border-style: solid;
+  border-color: var(--brick);
+  background: var(--brick);
+  box-shadow:
+    inset 0 0 0 3px var(--card),
+    inset 0 0 0 4.5px var(--brick);
+}
+
+.stamp-marks__name {
+  font-size: 11px;
+  line-height: 1.3;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: #7d7266;
+}
+
+.stamp-marks li.is-done .stamp-marks__name {
+  color: var(--brick);
+}
+
+.stamp-marks__state {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+.place-story {
+  margin: 4px 0 8px;
+  padding: 12px 14px 14px;
+  border: 1px dashed #c4b5a4;
+  border-radius: 8px;
+  background: #fffdf8;
+}
+
+.place-story__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.place-story__name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+}
+
+.place-story__badge {
+  flex: none;
+  margin: 0;
+  padding: 2px 6px;
+  border: 1px solid var(--brick);
+  border-radius: 2px;
+  color: var(--brick);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.place-story__title {
+  margin: 8px 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: 0.04em;
+  color: var(--brick);
+}
+
+.place-story__body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.75;
+  letter-spacing: 0.03em;
+  color: var(--ink);
 }
 
 .app-shell:has(.stamp-fab) .stage:not(.stage--home) .menu-page h1 {
@@ -607,6 +736,17 @@ h1 {
   border-top: 1px dashed #d9cfbe;
   font-size: 13px;
   line-height: 1.6;
+  text-align: center;
+  color: #7d7266;
+  word-break: keep-all;
+  line-break: strict;
+}
+
+.stage--home .card p.sheet-hint {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  letter-spacing: 0.03em;
   text-align: center;
   color: #7d7266;
   word-break: keep-all;
@@ -1094,14 +1234,16 @@ h1 {
 }
 
 .admin-menu-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
   border: 1px solid #c4b8ae;
   background: #fff;
   color: var(--ink);
   border-radius: 6px;
-  padding: 4px 10px;
-  font: inherit;
-  font-size: 13px;
-  line-height: 1.4;
   cursor: pointer;
 }
 
@@ -2564,7 +2706,10 @@ input.pin {
 
   .sheet,
   .orihon-leaf--flip,
-  .book-guide {
+  .book-guide,
+  .home-guide__balloon,
+  .home-guide__tail,
+  .home-guide__ring {
     transition: none;
   }
 
@@ -2601,4 +2746,144 @@ input.pin {
   fill: none;
   stroke: currentColor;
   stroke-width: 1.6;
+}
+
+.home-guide {
+  position: absolute;
+  z-index: 8;
+  inset: 0;
+}
+
+.home-guide__dim {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.home-guide__ring {
+  transition: x 0.28s cubic-bezier(0.16, 1, 0.3, 1), y 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    width 0.28s cubic-bezier(0.16, 1, 0.3, 1), height 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-guide__balloon {
+  position: absolute;
+  z-index: 2;
+  max-width: 320px;
+  padding: 13px 15px;
+  border: 1.5px solid var(--brass);
+  border-radius: 12px;
+  background: var(--card);
+  box-shadow: 0 12px 32px rgba(22, 38, 56, 0.42), 0 2px 6px rgba(0, 0, 0, 0.12);
+  transition: top 0.28s cubic-bezier(0.16, 1, 0.3, 1), left 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-guide__tail {
+  position: absolute;
+  z-index: 1;
+  width: 12px;
+  height: 12px;
+  background: var(--card);
+  transform: rotate(45deg);
+  transition: top 0.28s cubic-bezier(0.16, 1, 0.3, 1), left 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.home-guide__tail.is-bottom {
+  border-top: 1.5px solid var(--brass);
+  border-left: 1.5px solid var(--brass);
+}
+
+.home-guide__tail.is-top {
+  border-right: 1.5px solid var(--brass);
+  border-bottom: 1.5px solid var(--brass);
+}
+
+.home-guide__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #e3d7c5;
+}
+
+.home-guide__count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #8c6e32;
+  font-size: 11px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+}
+
+.home-guide__count::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brick);
+}
+
+.home-guide__skip {
+  margin: 0;
+  padding: 2px;
+  border: 0;
+  background: none;
+  color: #786b60;
+  font: inherit;
+  font-size: 11px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.home-guide__title {
+  margin: 0 0 4px;
+  color: var(--brick);
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 0.06em;
+}
+
+.home-guide__body {
+  margin: 0 0 12px;
+  color: #3b322c;
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.home-guide__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.home-guide__prev,
+.home-guide__next {
+  margin: 0;
+  padding: 4px 14px;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+}
+
+.home-guide__prev {
+  border: 1px solid #d9cfbe;
+  background: transparent;
+  color: #6b5e52;
+}
+
+.home-guide__prev[hidden] {
+  display: inline-block;
+  visibility: hidden;
+}
+
+.home-guide__next {
+  border: 0;
+  background: var(--brick);
+  color: var(--card);
+  font-weight: bold;
 }

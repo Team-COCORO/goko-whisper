@@ -6,6 +6,7 @@ import { TelegramIcon } from "./TelegramIcon";
 import { useApp } from "../context/AppContext";
 
 const HERALD_MS = 3000;
+const BOOK_OUT_MS = 1000;
 const BOOK_IN_MS = 2000;
 const BEAT_MS = 1000;
 const PRESS_MS = 4000;
@@ -343,6 +344,9 @@ export function StampBook() {
     stamp3Done,
     bookOpen,
     beginPress,
+    holdBrush,
+    playBrush,
+    releaseBrush,
     openBook,
     closeBook,
     hideBook,
@@ -360,6 +364,13 @@ export function StampBook() {
   const turnOrigin = useRef<PageIndex>(0);
   const turnSettled = useRef(false);
   const wasOpen = useRef(bookOpen);
+  const ceremonyId = useRef<WhisperId | null>(null);
+  const settledClose = useRef(true);
+  const closeTimer = useRef(0);
+  const playBrushRef = useRef(playBrush);
+  const releaseBrushRef = useRef(releaseBrush);
+  playBrushRef.current = playBrush;
+  releaseBrushRef.current = releaseBrush;
   const hasSlip = Boolean(telegramCode && telegramWords(telegramCode));
   const sheets = sheetsFor(hasSlip);
   const lastPage = (sheets.length - 1) as PageIndex;
@@ -380,8 +391,25 @@ export function StampBook() {
     };
   });
 
+  const claimCeremony = (id: WhisperId) => {
+    ceremonyId.current = id;
+    holdBrush(id);
+  };
+
+  const settleClose = (animate: boolean) => {
+    if (settledClose.current) return;
+    settledClose.current = true;
+    window.clearTimeout(closeTimer.current);
+    const id = ceremonyId.current;
+    ceremonyId.current = null;
+    if (!id) return;
+    if (animate && !prefersReducedMotion()) playBrushRef.current(id);
+    else releaseBrushRef.current();
+  };
+
   useEffect(() => {
     if (livePress) {
+      claimCeremony(livePress.id);
       openBook();
       setBookLocked(livePress.phase === "open" || livePress.phase === "press" || livePress.phase === "hold");
       arm();
@@ -406,6 +434,8 @@ export function StampBook() {
         willComplete,
         startedAt: Date.now(),
       };
+      ceremonyId.current = id;
+      holdBrush(id);
       if (nextPhase !== "open") beginPress(id);
       openBook();
       setBookLocked(nextPhase !== "wait-close");
@@ -421,9 +451,25 @@ export function StampBook() {
     stamp2Done,
     stamp3Done,
     beginPress,
+    holdBrush,
     openBook,
     setBookLocked,
   ]);
+
+  useEffect(() => {
+    if (bookOpen) {
+      settledClose.current = false;
+      window.clearTimeout(closeTimer.current);
+      return;
+    }
+    if (settledClose.current) return;
+    if (prefersReducedMotion()) {
+      settleClose(false);
+      return;
+    }
+    closeTimer.current = window.setTimeout(() => settleClose(true), BOOK_OUT_MS);
+    return () => window.clearTimeout(closeTimer.current);
+  }, [bookOpen]);
 
   useEffect(() => {
     if (bookOpen) {
@@ -491,7 +537,10 @@ export function StampBook() {
 
   const onBookAnimationEnd = (event: AnimationEvent<HTMLDivElement>) => {
     if (event.target !== event.currentTarget || bookOpen) return;
-    if (event.animationName === "book-out") setPresented(false);
+    if (event.animationName === "book-out") {
+      setPresented(false);
+      settleClose(true);
+    }
   };
 
   const displayed: PageIndex = livePress ? pageFor(livePress.id, hasSlip) : page;

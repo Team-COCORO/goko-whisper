@@ -5,3 +5,7 @@
 standalone/
 
 docs/
+
+# 一時作業ファイル
+.tmp/
+.scratchpad/

@@ -6,25 +6,12 @@ import { TELEGRAM_FRAMES } from "../data/telegram";
 
 const NICKNAME_MAX = 10;
 
-function stampSpots(done: [boolean, boolean, boolean], pending: string | null): string[] {
-  const spots = ["spot1", "spot2", "spot3"].filter((_, index) => done[index]);
-  if (pending && !spots.includes(pending)) spots.push(pending);
-  return spots;
-}
-
 type MergePageProps = {
   onBack: () => void;
 };
 
 export function MergePage({ onBack }: MergePageProps) {
-  const {
-    pendingStamp,
-    stamp1Done,
-    stamp2Done,
-    stamp3Done,
-    readStampForEnroll,
-    completeMerge,
-  } = useApp();
+  const { pendingStamp, readStampForEnroll, completeMerge } = useApp();
   const [input, setInput] = useState("");
   const [picks, setPicks] = useState<(number | null)[]>([null, null, null, null]);
   const [busy, setBusy] = useState(false);
@@ -44,11 +31,7 @@ export function MergePage({ onBack }: MergePageProps) {
       return;
     }
     const telegramCode = picks.join("-");
-    const result = await mergeStudent(
-      name,
-      telegramCode,
-      stampSpots([stamp1Done, stamp2Done, stamp3Done], claim.initialStamp),
-    );
+    const result = await mergeStudent(name, telegramCode, claim.initialStamp, claim.token);
     if (!result.ok) {
       setBusy(false);
       setError(
@@ -56,7 +39,11 @@ export function MergePage({ onBack }: MergePageProps) {
           ? "ニックネームと4つのしるしが合いません。入れ直してください。"
           : result.error === "invalid"
             ? "名前を確認してください。"
-            : "通信できませんでした。もう一度合わせられます。",
+            : result.error === "locked"
+              ? "合わせるのを、しばらく待ってください。"
+              : result.error === "forbidden"
+                ? "QRを、もう一度スマホ本体のカメラで読み取ってください。"
+                : "通信できませんでした。もう一度合わせられます。",
       );
       return;
     }
