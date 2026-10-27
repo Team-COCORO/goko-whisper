@@ -5,6 +5,7 @@ import { CampusMap } from "./components/CampusMap";
 import { HomeGuide } from "./components/HomeGuide";
 import { HomeStatus, StampMarks } from "./components/HomeStatus";
 import { StampBook, StampBookButton } from "./components/StampBook";
+import { SettingsModal } from "./components/SettingsModal";
 import { StampNotice } from "./components/StampNotice";
 import { TelegramSlip } from "./components/TelegramSlip";
 import { AppProvider, useApp } from "./context/AppContext";
@@ -229,6 +230,7 @@ function AppShell() {
     return (
       <div className="app-shell">
         {pendingStamp ? <StampJoinGate pendingStamp={pendingStamp} /> : <JoinGate />}
+        <SettingsModal />
       </div>
     );
   }
@@ -260,6 +262,7 @@ function AppShell() {
       <StampBook />
       <BottomNav />
       {activeTab === "home" && <HomeGuide />}
+      <SettingsModal />
     </div>
   );
 }

@@ -134,7 +134,15 @@ type Props = {
 };
 
 export function CampusMap({ insetRef, refitRef, onPick }: Props) {
-  const { stamp1Done, stamp2Done, stamp3Done, heldStamp, brushStamp, finishBrush } = useApp();
+  const {
+    stamp1Done,
+    stamp2Done,
+    stamp3Done,
+    heldStamp,
+    brushStamp,
+    finishBrush,
+    openSettings,
+  } = useApp();
   const colorOf = (id: WhisperId, done: boolean) =>
     done && heldStamp !== id && brushStamp !== id;
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -482,6 +490,29 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
           onClick={() => apiRef.current.fit()}
         >
           全体
+        </button>
+        <button
+          type="button"
+          className="settings"
+          aria-label="設定と手引き"
+          onClick={() => openSettings()}
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">
+            <path
+              d="M18.891,10.769L21.057,10.383L21.057,13.617L18.891,13.231L17.743,16.003L19.548,17.260L17.260,19.548L16.003,17.743L13.231,18.891L13.617,21.057L10.383,21.057L10.769,18.891L7.997,17.743L6.740,19.548L4.452,17.260L6.257,16.003L5.109,13.231L2.943,13.617L2.943,10.383L5.109,10.769L6.257,7.997L4.452,6.740L6.740,4.452L7.997,6.257L10.769,5.109L10.383,2.943L13.617,2.943L13.231,5.109L16.003,6.257L17.260,4.452L19.548,6.740L17.743,7.997Z"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinejoin="miter"
+              strokeLinecap="square"
+            />
+            <circle
+              cx="12"
+              cy="12"
+              r="2.8"
+              stroke="currentColor"
+              strokeWidth="1.5"
+            />
+          </svg>
         </button>
       </div>
     </div>
