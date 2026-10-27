@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { restoreStudent } from "../api";
+import { openSurveyPage, restoreStudent } from "../api";
 import { useApp } from "../context/AppContext";
 import { TELEGRAM_FRAMES } from "../data/telegram";
 import { TelegramIcon } from "./TelegramIcon";
@@ -188,6 +188,12 @@ export function SettingsModal() {
                 <span className="settings-card__text">
                   <span className="settings-card__title">困ったときは</span>
                   <span className="settings-card__desc">赤いビブスのスタッフ案内・操作手引</span>
+                </span>
+              </button>
+              <button className="settings-card" type="button" onClick={openSurveyPage}>
+                <span className="settings-card__text">
+                  <span className="settings-card__title">アンケート</span>
+                  <span className="settings-card__desc">別の画面で開きます（氏名・連絡先は不要）</span>
                 </span>
               </button>
             </div>

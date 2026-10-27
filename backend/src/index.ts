@@ -14,6 +14,7 @@ import {
   handleStamp,
   handleSync,
 } from "./students";
+import { handleSurveySubmit, handleSurveySummary } from "./survey";
 import { handleIssue, handleVerify } from "./tokens";
 
 async function handleApi(request: Request, env: Env): Promise<Response> {
@@ -57,6 +58,12 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   }
   if (url.pathname === "/api/admin/student/redeem" && request.method === "POST") {
     return handleStudentRedeem(request, env);
+  }
+  if (url.pathname === "/api/survey" && request.method === "POST") {
+    return handleSurveySubmit(request, env);
+  }
+  if (url.pathname === "/api/admin/survey/summary" && request.method === "GET") {
+    return handleSurveySummary(request, env);
   }
 
   return json(request, { result: "not_found" }, 404);

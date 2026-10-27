@@ -3194,3 +3194,60 @@ input.pin {
   color: var(--card);
   font-weight: bold;
 }
+
+.admin-survey-list,
+.admin-survey-comments {
+  margin-top: 14px;
+}
+
+.admin-survey-list h3,
+.admin-survey-comments h3 {
+  margin: 0 0 8px;
+  color: var(--brick);
+  font-size: 14px;
+  letter-spacing: 0.06em;
+}
+
+.admin-survey-list ul,
+.admin-survey-comments ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.admin-survey-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 6px 10px;
+  border: 1px solid #e2dacb;
+  border-radius: 4px;
+  background: #fff;
+  font-size: 13px;
+}
+
+.admin-survey-comments li {
+  padding: 10px;
+  border: 1px solid #e2dacb;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.admin-survey-comments time,
+.admin-survey-comments__meta {
+  display: block;
+  color: #736b63;
+  font-size: 12px;
+}
+
+.admin-survey-comments p {
+  margin: 6px 0 0;
+  color: #3b322c;
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
