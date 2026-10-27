@@ -57,10 +57,76 @@ export function StampMarks() {
   );
 }
 
+const STAMP_PLACE_NAME = {
+  1: "化学実験場",
+  2: "五高喫茶",
+  3: "五高記念館",
+} as const;
+
+const STAMP_SPOTS = [
+  { id: 1 as const, name: "化学実験場" },
+  { id: 2 as const, name: "五高喫茶" },
+  { id: 3 as const, name: "五高記念館" },
+];
+
+function MapTapHint() {
+  return (
+    <p className="sheet-hint">
+      <Phrases parts={["地図上の建物をタップすると、", "百年前の物語が読めます。"]} />
+    </p>
+  );
+}
+
+function GuideContent({
+  stamp1Done,
+  stamp2Done,
+  stamp3Done,
+}: {
+  stamp1Done: boolean;
+  stamp2Done: boolean;
+  stamp3Done: boolean;
+}) {
+  const remaining = STAMP_SPOTS.filter((spot) => {
+    if (spot.id === 1) return !stamp1Done;
+    if (spot.id === 2) return !stamp2Done;
+    return !stamp3Done;
+  });
+
+  const lead =
+    remaining.length === 1
+      ? (["最後の声は、", `${remaining[0].name}に`, "眠っています。"] as string[])
+      : ([
+          "まだ残っている声は、",
+          ...remaining.flatMap((spot, index) =>
+            index === 0 ? [spot.name] : ["、", spot.name],
+          ),
+          "です。",
+        ] as string[]);
+
+  return (
+    <div className="card">
+      <p className="sheet-line">
+        <Phrases parts={lead} />
+      </p>
+      <MapTapHint />
+    </div>
+  );
+}
+
 export function HomeStatus() {
-  const { screen, nickname, whisperId, stamp1Done, stamp2Done, stamp3Done, dismissWhisper } =
-    useApp();
+  const {
+    screen,
+    nickname,
+    whisperId,
+    acquiredStamp,
+    stamp1Done,
+    stamp2Done,
+    stamp3Done,
+    dismissWhisper,
+    acknowledgeAcquired,
+  } = useApp();
   const noneYet = !stamp1Done && !stamp2Done && !stamp3Done;
+  const allDone = stamp1Done && stamp2Done && stamp3Done;
 
   if (screen === "whisper" && whisperId) {
     const item = WHISPERS[whisperId];
@@ -83,7 +149,25 @@ export function HomeStatus() {
     );
   }
 
-  if (screen === "guide") return null;
+  if (screen === "acquired" && acquiredStamp) {
+    const place = STAMP_PLACE_NAME[acquiredStamp];
+    return (
+      <div className="card">
+        <p className="sheet-line">
+          <Phrases parts={[`${place}の`, "スタンプを", "取得しました！"]} />
+        </p>
+        <button className="b" type="button" onClick={acknowledgeAcquired}>
+          続ける
+        </button>
+      </div>
+    );
+  }
+
+  if (screen === "guide") {
+    return (
+      <GuideContent stamp1Done={stamp1Done} stamp2Done={stamp2Done} stamp3Done={stamp3Done} />
+    );
+  }
 
   if (screen === "herald") {
     return (
@@ -100,16 +184,35 @@ export function HomeStatus() {
     );
   }
 
-  if (screen === "top") {
+  if (screen === "top" && noneYet) {
     return (
       <div className="card">
+        <p className="sub">
+          <span className="u-nowrap">あなたは、</span>
+          <span className="u-nowrap">五高の声を聞いたことがありますか。</span>
+        </p>
         <p className="sheet-line">
           <Phrases parts={["百年の声が、", "まだここに漂っている。"]} />
         </p>
         <BrowserNote />
-        {noneYet && (
-          <p className="sheet-hint">赤門や記念館をタップすると、百年前の小話が読めます。</p>
-        )}
+        <p className="sheet-hint">
+          <Phrases parts={["赤門や記念館をタップすると、", "百年前の小話が読めます。"]} />
+        </p>
+      </div>
+    );
+  }
+
+  if (screen === "top" && allDone) {
+    return (
+      <div className="card">
+        <p className="sheet-line">
+          <Phrases parts={["3つの声が、", "ひとつに集まりました。"]} />
+        </p>
+        <p className="sheet-hint">
+          <Phrases
+            parts={["五高記念館で景品と交換できます。", "下の「プレゼント」からも進めます。"]}
+          />
+        </p>
       </div>
     );
   }
@@ -120,7 +223,7 @@ export function HomeStatus() {
     return (
       <div className="card">
         <p className="sheet-line">
-          <Phrases parts={["受取は完了しています"]} />
+          <Phrases parts={["受取は完了しています。", "ありがとうございました。"]} />
         </p>
       </div>
     );

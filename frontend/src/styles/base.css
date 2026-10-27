@@ -167,8 +167,14 @@ body {
 }
 
 .sheet__pane {
-  padding: 0 16px 16px;
+  padding: 0 14px 12px;
   animation: sheet-pane-in 0.32s ease;
+}
+
+@media (max-width: 360px) {
+  .sheet__pane {
+    padding: 0 12px 10px;
+  }
 }
 
 .stamp-marks {
@@ -763,9 +769,9 @@ h1 {
 
 .literary-card {
   width: 100%;
-  max-width: 350px;
-  margin: 0 auto 4px;
-  padding: 14px 14px 10px;
+  max-width: min(350px, 100%);
+  margin: 0 auto;
+  padding: 12px 12px 10px;
   border: 1px solid var(--brass);
   border-radius: 4px;
   background: #fdfcf9;
@@ -774,6 +780,17 @@ h1 {
     0 0 0 4px rgba(139, 58, 43, 0.35),
     0 6px 16px rgba(31, 49, 68, 0.08);
   text-align: justify;
+}
+
+@media (max-width: 360px) {
+  .literary-card {
+    padding: 10px 10px 8px;
+  }
+
+  .literary-card__body {
+    font-size: 15px;
+    line-height: 1.65;
+  }
 }
 
 .literary-card__head,
@@ -785,8 +802,8 @@ h1 {
 }
 
 .literary-card__head {
-  margin-bottom: 10px;
-  padding-bottom: 5px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
   border-bottom: 1px solid rgba(197, 160, 89, 0.4);
 }
 
@@ -820,10 +837,10 @@ h1 {
 }
 
 .literary-card__body {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   color: var(--nav);
-  font-size: 17px;
-  line-height: 1.75;
+  font-size: 16px;
+  line-height: 1.7;
   letter-spacing: 0.04em;
   text-align: center;
   word-break: keep-all;

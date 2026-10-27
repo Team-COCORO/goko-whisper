@@ -19,7 +19,11 @@ import { ProloguePage } from "./pages/ProloguePage";
 import { StampLandingPage } from "./pages/StampLandingPage";
 import type { Screen } from "./types";
 
-function sheetLabel(screen: Screen, placeName: string | null): string {
+function sheetLabel(
+  screen: Screen,
+  placeName: string | null,
+  stampCount: number,
+): string {
   if (placeName) return placeName;
   switch (screen) {
     case "whisper":
@@ -28,12 +32,16 @@ function sheetLabel(screen: Screen, placeName: string | null): string {
       return "案内";
     case "herald":
       return "耳を澄ませ";
+    case "acquired":
+      return "印を得て";
     case "goal":
       return "ゴール";
     case "redeemed":
       return "受取完了";
     case "soldOut":
       return "配布終了";
+    case "top":
+      return stampCount >= 3 ? "満願" : "はじまり";
     default:
       return "耳を澄ませ";
   }
@@ -41,9 +49,25 @@ function sheetLabel(screen: Screen, placeName: string | null): string {
 
 function sheetRatio(screen: Screen, placeName: string | null): number {
   if (placeName) return 0.45;
-  if (screen === "goal" || screen === "whisper") return 0.6;
-  if (screen === "herald" || screen === "top") return 0.45;
+  // 実高さは expandToContent で合わせる。ここは初期・フォールバック用。
+  if (screen === "goal") return 0.55;
+  if (screen === "whisper" || screen === "acquired" || screen === "herald") return 0.42;
+  if (screen === "top" || screen === "guide") return 0.42;
   return 0.38;
+}
+
+function sheetHugsContent(screen: Screen, hasPlace: boolean): boolean {
+  if (hasPlace) return true;
+  return (
+    screen === "top" ||
+    screen === "guide" ||
+    screen === "herald" ||
+    screen === "acquired" ||
+    screen === "whisper" ||
+    screen === "goal" ||
+    screen === "redeemed" ||
+    screen === "soldOut"
+  );
 }
 
 function PlaceStoryCard({ story }: { story: PlaceStory }) {
@@ -60,12 +84,14 @@ function PlaceStoryCard({ story }: { story: PlaceStory }) {
 }
 
 function HomeStage() {
-  const { screen, setActiveTab } = useApp();
+  const { screen, setActiveTab, stamp1Done, stamp2Done, stamp3Done } = useApp();
   const insetRef = useRef(0);
   const refitRef = useRef<() => void>(() => {});
   const [placeId, setPlaceId] = useState<PlaceId | null>(null);
   const browsing = screen === "top" || screen === "guide";
   const place = browsing && placeId ? placeById(placeId) : null;
+  const stampCount = [stamp1Done, stamp2Done, stamp3Done].filter(Boolean).length;
+  const showMarks = !place && (screen === "top" || screen === "guide");
 
   useEffect(() => {
     if (!browsing) setPlaceId(null);
@@ -115,17 +141,16 @@ function HomeStage() {
         </h1>
       </header>
       <BottomSheet
-        label={sheetLabel(screen, place?.name ?? null)}
+        label={sheetLabel(screen, place?.name ?? null, stampCount)}
         preferredRatio={sheetRatio(screen, place?.name ?? null)}
-        contentKey={place ? `${screen}:${place.id}` : screen}
-        expandToContent={place !== null}
+        contentKey={place ? `${screen}:${place.id}` : `${screen}:${stampCount}`}
+        expandToContent={sheetHugsContent(screen, place !== null)}
         onHeightChange={(height) => {
           insetRef.current = height;
           refitRef.current();
         }}
       >
         <StampNotice />
-        {!place && (screen === "top" || screen === "guide") && <StampMarks />}
         {place?.story ? (
           <PlaceStoryCard story={place.story} />
         ) : place ? (
@@ -135,10 +160,7 @@ function HomeStage() {
           </div>
         ) : (
           <>
-            <p className="sub">
-              <span className="u-nowrap">あなたは、</span>
-              <span className="u-nowrap">五高の声を聞いたことがありますか。</span>
-            </p>
+            {showMarks && <StampMarks />}
             <HomeStatus />
           </>
         )}
