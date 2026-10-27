@@ -269,6 +269,55 @@ export function mergeStudent(
   return flight;
 }
 
+export type SyncResponse =
+  | { ok: true; stamps: string[]; redeemed: boolean }
+  | { ok: false; error: "invalid" | "forbidden" | "missing" | "error" };
+
+const syncFlights = new Map<string, Promise<SyncResponse>>();
+
+async function postSync(clientId: string, nickname: string): Promise<SyncResponse> {
+  try {
+    const response = await fetchApi("/api/student/sync", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ clientId, nickname }),
+    });
+    const body = (await response.json()) as {
+      success?: unknown;
+      error?: unknown;
+      stamps?: unknown;
+      redeemed?: unknown;
+    };
+    if (response.status === 404 || body.error === "NOT_FOUND") {
+      return { ok: false, error: "missing" };
+    }
+    if (response.status === 403 || body.error === "FORBIDDEN") {
+      return { ok: false, error: "forbidden" };
+    }
+    const stamps = Array.isArray(body.stamps)
+      ? body.stamps.filter((item): item is string => typeof item === "string")
+      : null;
+    if (response.ok && body.success === true && stamps && typeof body.redeemed === "boolean") {
+      return { ok: true, stamps, redeemed: body.redeemed };
+    }
+    if (body.error === "INVALID") return { ok: false, error: "invalid" };
+    return { ok: false, error: "error" };
+  } catch {
+    return { ok: false, error: "error" };
+  }
+}
+
+export function syncStudent(clientId: string, nickname: string): Promise<SyncResponse> {
+  const key = `${clientId}:${nickname}`;
+  const existing = syncFlights.get(key);
+  if (existing) return existing;
+  const flight = postSync(clientId, nickname).finally(() => {
+    syncFlights.delete(key);
+  });
+  syncFlights.set(key, flight);
+  return flight;
+}
+
 export async function verifyStamp(
   stamp: string,
   token: string,

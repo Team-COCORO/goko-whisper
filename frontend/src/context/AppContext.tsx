@@ -7,7 +7,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { verifyStamp, type EnrollStudent, type StampVerifyResult } from "../api";
+import {
+  syncStudent,
+  verifyStamp,
+  type EnrollStudent,
+  type StampVerifyResult,
+} from "../api";
 import type { Screen, StampRallyState, Tab, WhisperId } from "../types";
 
 const STORAGE_KEY = "goko-whisper";
@@ -335,9 +340,36 @@ function stampFlags(stamps: string[], id: WhisperId): boolean {
   return stamps.includes("spot3");
 }
 
+function withServerProgress(
+  rally: StampRallyState,
+  stamps: string[],
+  redeemed: boolean,
+): StampRallyState {
+  const stamp1Done = stamps.includes("spot1");
+  const stamp2Done = stamps.includes("spot2");
+  const stamp3Done = stamps.includes("spot3");
+  const pendingStamp =
+    rally.pendingStamp && stampFlags(stamps, rally.pendingStamp)
+      ? null
+      : rally.pendingStamp;
+  return {
+    ...rally,
+    stamp1Done,
+    stamp2Done,
+    stamp3Done,
+    pendingStamp,
+    goalUnlocked: (stamp1Done && stamp2Done && stamp3Done) || Boolean(rally.rewardCode),
+    redeemed,
+  };
+}
+
 // StrictMode は Provider を付け直す。付け直しのたびにクエリを読むと、
 // 先に保存した押印待ちが消える。起動処理は一度だけにする。
 let bootSnapshot: BootResult | null = null;
+
+function rememberBootRally(next: StampRallyState) {
+  if (bootSnapshot) bootSnapshot = { ...bootSnapshot, rally: next };
+}
 
 function boot(): BootResult {
   if (bootSnapshot) return bootSnapshot;
@@ -404,6 +436,75 @@ export function AppProvider({ children }: { children: ReactNode }) {
     window.addEventListener("hashchange", sync);
     return () => window.removeEventListener("hashchange", sync);
   }, []);
+
+  useEffect(() => {
+    if (storageBlocked) return;
+    const joined = boot().rally;
+    if (!joined.hasJoined) return;
+    const nickname = joined.nickname.trim();
+    if (!nickname) return;
+
+    let cancelled = false;
+    void (async () => {
+      const result = await syncStudent(joined.clientId, nickname);
+      if (cancelled) return;
+
+      if (!result.ok) {
+        if (result.error !== "missing") return;
+        setRally((prev) => {
+          if (!prev.hasJoined) return prev;
+          const next = emptyRally(prev.clientId);
+          try {
+            persistRally(next);
+          } catch {
+            setStorageBlocked(true);
+            return prev;
+          }
+          rememberBootRally(next);
+          return next;
+        });
+        setShowGoal(false);
+        setSlipVisible(false);
+        setMergeVisible(false);
+        setWhisperId(null);
+        return;
+      }
+
+      setRally((prev) => {
+        if (!prev.hasJoined) return prev;
+        const next = withServerProgress(prev, result.stamps, result.redeemed);
+        if (
+          next.stamp1Done === prev.stamp1Done &&
+          next.stamp2Done === prev.stamp2Done &&
+          next.stamp3Done === prev.stamp3Done &&
+          next.redeemed === prev.redeemed &&
+          next.pendingStamp === prev.pendingStamp &&
+          next.goalUnlocked === prev.goalUnlocked
+        ) {
+          return prev;
+        }
+        try {
+          persistRally(next);
+        } catch {
+          setStorageBlocked(true);
+          return prev;
+        }
+        rememberBootRally(next);
+        return next;
+      });
+      if (
+        !result.stamps.includes("spot1") ||
+        !result.stamps.includes("spot2") ||
+        !result.stamps.includes("spot3")
+      ) {
+        setShowGoal(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [storageBlocked]);
 
   const acceptStamp = useCallback((claim: StampClaim, onlyIfJoined = false) => {
     let saved = false;
