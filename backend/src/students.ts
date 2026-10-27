@@ -266,6 +266,44 @@ export async function handleMerge(request: Request, env: Env): Promise<Response>
   });
 }
 
+export async function handleSync(request: Request, env: Env): Promise<Response> {
+  const parsed = await readJson(request);
+  if (!parsed.ok) return enrollError(request, "INVALID", 400);
+  const payload = parsed.payload;
+  if (!payload || typeof payload !== "object") {
+    return enrollError(request, "INVALID", 400);
+  }
+
+  const record = payload as { clientId?: unknown; nickname?: unknown };
+  const clientId = typeof record.clientId === "string" ? record.clientId : "";
+  const nickname =
+    typeof record.nickname === "string" ? record.nickname.trim() : "";
+
+  if (
+    !nickname ||
+    nickname.length > 10 ||
+    !CLIENT_ID_RE.test(clientId) ||
+    clientId === BLOCKED_CLIENT_ID
+  ) {
+    return enrollError(request, "INVALID", 400);
+  }
+
+  const student = await findStudent(env.DB, clientId);
+  if (!student) return enrollError(request, "NOT_FOUND", 404);
+  if (student.nickname !== nickname) {
+    return enrollError(request, "FORBIDDEN", 403);
+  }
+
+  const stamps = STAMP_ORDER.filter((id) =>
+    parseStampList(student.stamps).includes(id),
+  );
+  return json(request, {
+    success: true,
+    stamps,
+    redeemed: await isRedeemed(env.DB, clientId),
+  });
+}
+
 export async function handleStamp(request: Request, env: Env): Promise<Response> {
   const parsed = await readJson(request);
   if (!parsed.ok) return json(request, { result: "invalid" }, 400);

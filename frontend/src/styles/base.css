@@ -1404,6 +1404,75 @@ h1 {
   font-weight: 700;
 }
 
+.admin-toast {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 80;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 32px));
+  padding: 12px 12px 12px 14px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+  animation: admin-toast-in 0.22s ease;
+}
+
+.admin-toast.is-ok {
+  color: #234a33;
+  background: #eef7f1;
+  border-color: #9fc5ad;
+}
+
+.admin-toast.is-err {
+  color: var(--brick);
+  background: #fbf0ed;
+  border-color: rgba(139, 58, 43, 0.35);
+}
+
+.admin-toast__text {
+  flex: 1;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.admin-toast__close {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  margin: -4px -4px 0 0;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.7;
+}
+
+.admin-toast__close:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+@keyframes admin-toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .admin-badge {
   display: inline-block;
   padding: 2px 8px;

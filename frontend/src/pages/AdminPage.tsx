@@ -345,6 +345,23 @@ export function AdminPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [dialog, pendingKey]);
 
+  useEffect(() => {
+    if (!notice) return;
+    const timer = window.setTimeout(
+      () => {
+        setNotice("");
+        setNoticeOk(false);
+      },
+      noticeOk ? 3200 : 5200,
+    );
+    return () => window.clearTimeout(timer);
+  }, [notice, noticeOk]);
+
+  const clearNotice = () => {
+    setNotice("");
+    setNoticeOk(false);
+  };
+
   const shown = useMemo(() => {
     const query = filter.trim();
     return (students ?? []).filter(
@@ -468,14 +485,27 @@ export function AdminPage() {
     reloadAfter("引換済みにしました");
   };
 
+  const toast = notice ? (
+    <div
+      className={noticeOk ? "admin-toast is-ok" : "admin-toast is-err"}
+      role="status"
+      aria-live="polite"
+    >
+      <p className="admin-toast__text">{notice}</p>
+      <button className="admin-toast__close" type="button" aria-label="通知を閉じる" onClick={clearNotice}>
+        ×
+      </button>
+    </div>
+  ) : null;
+
   if (!idToken) {
     return (
       <div className="admin-login">
+        {toast}
         <h1>
           <span className="admin-brand">五高の囁き</span> 運営管理
         </h1>
         <p className="admin-kicker">（関係者専用・事務室）</p>
-        {notice && <p className="err">{notice}</p>}
         {CLIENT_ID ? <div ref={buttonRef} /> : <p className="err">運営管理の設定がありません</p>}
       </div>
     );
@@ -490,6 +520,7 @@ export function AdminPage() {
 
   return (
     <div className="admin-dash">
+      {toast}
       <header className="admin-bar">
         <div className="admin-bar__title">
           <h1>
@@ -522,7 +553,6 @@ export function AdminPage() {
           </button>
         </div>
       </header>
-      {notice && <p className={noticeOk ? "admin-done" : "err"}>{notice}</p>}
       {lowStock && <p className="admin-alert">景品の残数が少なくなっています。</p>}
       {summary && (
         <section className="admin-metrics" aria-label="景品・配布進捗">
@@ -603,7 +633,7 @@ export function AdminPage() {
         </div>
         <p className="admin-note">サーバーに残っている印だけを表示します。</p>
         <p className="admin-note">
-          印の修正はサーバーの記録です。来場者のスマホには残り、次の読取りで足し戻ることがあります。
+          印・受取状態の修正は、来場者がアプリを開き直すと端末へ反映されます。同じ地点のQRを再度読むと、その印は再び付きます。
         </p>
         {truncated && <p className="admin-note">新しい順に500件まで表示しています。</p>}
         {students && shown.length === 0 && <p className="admin-note">該当する参加者はいません。</p>}
