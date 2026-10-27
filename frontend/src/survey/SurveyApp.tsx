@@ -54,7 +54,7 @@ export function SurveyApp() {
 
   async function onSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!ready || region === "") return;
+    if (!ready) return;
     setBusy(true);
     setError("");
     const result = await submitSurvey({
