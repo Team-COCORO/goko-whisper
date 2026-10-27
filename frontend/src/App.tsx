@@ -13,7 +13,7 @@ import { placeById, type PlaceId, type PlaceStory } from "./data/places";
 import { AdminPage } from "./pages/AdminPage";
 import { EnrollPage } from "./pages/EnrollPage";
 import { FoodPage } from "./pages/FoodPage";
-import { MergeNotice, MergePage } from "./pages/MergePage";
+import { MergePage } from "./pages/MergePage";
 import { PresentPage } from "./pages/PresentPage";
 import { ProloguePage } from "./pages/ProloguePage";
 import { StampLandingPage } from "./pages/StampLandingPage";
@@ -196,11 +196,9 @@ function AppShell() {
     hasJoined,
     pendingStamp,
     slipVisible,
-    mergeVisible,
     nickname,
     telegramCode,
     acknowledgeSlip,
-    acknowledgeMerge,
   } = useApp();
 
   if (screen === "admin") {
@@ -231,14 +229,6 @@ function AppShell() {
       <div className="app-shell">
         {pendingStamp ? <StampJoinGate pendingStamp={pendingStamp} /> : <JoinGate />}
         <SettingsModal />
-      </div>
-    );
-  }
-
-  if (mergeVisible) {
-    return (
-      <div className="app-shell">
-        <MergeNotice onConfirm={acknowledgeMerge} />
       </div>
     );
   }
