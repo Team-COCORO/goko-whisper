@@ -167,8 +167,14 @@ body {
 }
 
 .sheet__pane {
-  padding: 0 16px 16px;
+  padding: 0 14px 12px;
   animation: sheet-pane-in 0.32s ease;
+}
+
+@media (max-width: 360px) {
+  .sheet__pane {
+    padding: 0 12px 10px;
+  }
 }
 
 .stamp-marks {
@@ -763,9 +769,9 @@ h1 {
 
 .literary-card {
   width: 100%;
-  max-width: 350px;
-  margin: 0 auto 4px;
-  padding: 14px 14px 10px;
+  max-width: min(350px, 100%);
+  margin: 0 auto;
+  padding: 12px 12px 10px;
   border: 1px solid var(--brass);
   border-radius: 4px;
   background: #fdfcf9;
@@ -774,6 +780,17 @@ h1 {
     0 0 0 4px rgba(139, 58, 43, 0.35),
     0 6px 16px rgba(31, 49, 68, 0.08);
   text-align: justify;
+}
+
+@media (max-width: 360px) {
+  .literary-card {
+    padding: 10px 10px 8px;
+  }
+
+  .literary-card__body {
+    font-size: 15px;
+    line-height: 1.65;
+  }
 }
 
 .literary-card__head,
@@ -785,8 +802,8 @@ h1 {
 }
 
 .literary-card__head {
-  margin-bottom: 10px;
-  padding-bottom: 5px;
+  margin-bottom: 8px;
+  padding-bottom: 4px;
   border-bottom: 1px solid rgba(197, 160, 89, 0.4);
 }
 
@@ -820,10 +837,10 @@ h1 {
 }
 
 .literary-card__body {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   color: var(--nav);
-  font-size: 17px;
-  line-height: 1.75;
+  font-size: 16px;
+  line-height: 1.7;
   letter-spacing: 0.04em;
   text-align: center;
   word-break: keep-all;
@@ -3077,8 +3094,8 @@ input.pin {
 .home-guide__balloon {
   position: absolute;
   z-index: 2;
-  max-width: 320px;
-  padding: 13px 15px;
+  max-width: min(340px, calc(100vw - 24px));
+  padding: 14px 16px;
   border: 1.5px solid var(--brass);
   border-radius: 12px;
   background: var(--card);
@@ -3120,7 +3137,7 @@ input.pin {
   align-items: center;
   gap: 6px;
   color: #8c6e32;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: bold;
   letter-spacing: 0.08em;
 }
@@ -3140,24 +3157,29 @@ input.pin {
   background: none;
   color: #786b60;
   font: inherit;
-  font-size: 11px;
+  font-size: 13px;
   text-decoration: underline;
   cursor: pointer;
 }
 
 .home-guide__title {
-  margin: 0 0 4px;
+  margin: 0 0 6px;
   color: var(--brick);
-  font-size: 14px;
+  font-size: 17px;
   font-weight: bold;
   letter-spacing: 0.06em;
+  line-height: 1.4;
 }
 
 .home-guide__body {
-  margin: 0 0 12px;
+  margin: 0 0 14px;
   color: #3b322c;
-  font-size: 12px;
-  line-height: 1.7;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.home-guide__body .u-nowrap {
+  margin-right: 0.1em;
 }
 
 .home-guide__actions {
@@ -3169,10 +3191,10 @@ input.pin {
 .home-guide__prev,
 .home-guide__next {
   margin: 0;
-  padding: 4px 14px;
+  padding: 6px 16px;
   border-radius: 4px;
   font: inherit;
-  font-size: 12px;
+  font-size: 14px;
   letter-spacing: 0.05em;
   cursor: pointer;
 }

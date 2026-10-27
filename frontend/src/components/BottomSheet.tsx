@@ -72,8 +72,9 @@ export function BottomSheet({
       parent.clientHeight > 0
     ) {
       const border = sheet.offsetHeight - sheet.clientHeight;
+      // 本文に合わせつつ、小画面でも掴みやすく下限を確保。上限は画面の6割。
       const needed = handle.offsetHeight + pane.scrollHeight + border;
-      const next = Math.min(0.6, Math.max(0.18, needed / parent.clientHeight));
+      const next = Math.min(0.6, Math.max(0.22, needed / parent.clientHeight));
       ratioRef.current = next;
       setRatio(next);
       return;

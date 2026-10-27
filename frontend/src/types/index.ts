@@ -5,6 +5,7 @@ export type Screen =
   | "whisper"
   | "guide"
   | "herald"
+  | "acquired"
   | "goal"
   | "redeemed"
   | "soldOut"

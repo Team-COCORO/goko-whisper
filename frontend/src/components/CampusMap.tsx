@@ -9,6 +9,14 @@ const MAP_W = 320;
 const MAP_H = 240;
 const MIN_K = 0.4;
 const MAX_K = 5;
+const FOCUS_K = 2.35;
+const FOCUS_MS = 560;
+
+const STAMP_FOCUS: Record<WhisperId, { x: number; y: number }> = {
+  1: { x: 226, y: 36 },
+  2: { x: 159, y: 97 },
+  3: { x: 167, y: 30 },
+};
 
 type View = { k: number; x: number; y: number };
 
@@ -16,6 +24,7 @@ type MapApi = {
   zoomIn: () => void;
   zoomOut: () => void;
   fit: () => void;
+  focusStamp: (id: WhisperId) => void;
 };
 
 type SpotProps = {
@@ -140,6 +149,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
     stamp3Done,
     heldStamp,
     brushStamp,
+    mapFocusStamp,
     finishBrush,
     openSettings,
   } = useApp();
@@ -152,6 +162,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
     zoomIn: () => {},
     zoomOut: () => {},
     fit: () => {},
+    focusStamp: () => {},
   });
   const onPickRef = useRef(onPick);
   onPickRef.current = onPick;
@@ -164,6 +175,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
 
     const view: View = { k: 1, x: 0, y: 0 };
     let userAdjusted = false;
+    let focusRaf = 0;
     const pointers = new Map<number, [number, number]>();
     let pinchDistance = 0;
     let tap: { id: number; x: number; y: number; moved: boolean } | null = null;
@@ -194,11 +206,17 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
       );
     };
 
+    const visibleUserHeight = () => {
+      const ratio = pixelRatio();
+      if (ratio <= 0) return MAP_H;
+      const visiblePx = Math.max(80, wrap.clientHeight - (insetRef.current ?? 0));
+      return visiblePx / ratio;
+    };
+
     const fit = () => {
       const ratio = pixelRatio();
       if (ratio <= 0) return;
-      const visiblePx = Math.max(80, wrap.clientHeight - (insetRef.current ?? 0));
-      const visibleUser = visiblePx / ratio;
+      const visibleUser = visibleUserHeight();
       view.k = Math.min(1, visibleUser / MAP_H);
       const drawnH = MAP_H * view.k;
       const drawnW = MAP_W * view.k;
@@ -209,6 +227,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
 
     const zoomAt = (factor: number, ux: number, uy: number) => {
       userAdjusted = true;
+      window.cancelAnimationFrame(focusRaf);
       const next = Math.min(MAX_K, Math.max(MIN_K, view.k * factor));
       const applied = next / view.k;
       view.x = ux - (ux - view.x) * applied;
@@ -217,13 +236,52 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
       apply();
     };
 
+    const targetFor = (id: WhisperId): View => {
+      const spot = STAMP_FOCUS[id];
+      const visibleUser = visibleUserHeight();
+      const k = Math.min(MAX_K, Math.max(MIN_K, FOCUS_K));
+      return {
+        k,
+        x: MAP_W / 2 - spot.x * k,
+        y: visibleUser * 0.42 - spot.y * k,
+      };
+    };
+
+    const focusStamp = (id: WhisperId) => {
+      userAdjusted = true;
+      window.cancelAnimationFrame(focusRaf);
+      const from = { ...view };
+      const to = targetFor(id);
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      if (reduce) {
+        view.k = to.k;
+        view.x = to.x;
+        view.y = to.y;
+        apply();
+        return;
+      }
+      const started = performance.now();
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - started) / FOCUS_MS);
+        const ease = 1 - (1 - t) ** 3;
+        view.k = from.k + (to.k - from.k) * ease;
+        view.x = from.x + (to.x - from.x) * ease;
+        view.y = from.y + (to.y - from.y) * ease;
+        apply();
+        if (t < 1) focusRaf = window.requestAnimationFrame(tick);
+      };
+      focusRaf = window.requestAnimationFrame(tick);
+    };
+
     apiRef.current = {
       zoomIn: () => zoomAt(1.2, MAP_W / 2, MAP_H / 2),
       zoomOut: () => zoomAt(1 / 1.2, MAP_W / 2, MAP_H / 2),
       fit: () => {
         userAdjusted = false;
+        window.cancelAnimationFrame(focusRaf);
         fit();
       },
+      focusStamp,
     };
 
     const point = (event: { clientX: number; clientY: number }): [number, number] => {
@@ -351,6 +409,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
     wrap.addEventListener("dblclick", onDblClick);
 
     return () => {
+      window.cancelAnimationFrame(focusRaf);
       refitRef.current = () => {};
       observer.disconnect();
       wrap.removeEventListener("pointerdown", onDown);
@@ -361,6 +420,11 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
       wrap.removeEventListener("dblclick", onDblClick);
     };
   }, [insetRef, refitRef]);
+
+  useEffect(() => {
+    if (mapFocusStamp == null) return;
+    apiRef.current.focusStamp(mapFocusStamp);
+  }, [mapFocusStamp]);
 
   return (
     <div className="mapw" ref={wrapRef} aria-label="キャンパスの見取り図">
