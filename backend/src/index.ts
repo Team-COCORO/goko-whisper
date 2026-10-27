@@ -7,7 +7,13 @@ import {
 } from "./admin";
 import type { Env } from "./env";
 import { corsHeaders, json, securityHeaders } from "./http";
-import { handleEnroll, handleMerge, handleStamp, handleSync } from "./students";
+import {
+  handleEnroll,
+  handleMerge,
+  handleRestore,
+  handleStamp,
+  handleSync,
+} from "./students";
 import { handleIssue, handleVerify } from "./tokens";
 
 async function handleApi(request: Request, env: Env): Promise<Response> {
@@ -24,6 +30,9 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   }
   if (url.pathname === "/api/student/merge" && request.method === "POST") {
     return handleMerge(request, env);
+  }
+  if (url.pathname === "/api/student/restore" && request.method === "POST") {
+    return handleRestore(request, env);
   }
   if (url.pathname === "/api/student/sync" && request.method === "POST") {
     return handleSync(request, env);

@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { StampNotice } from "../components/StampNotice";
+import { useApp } from "../context/AppContext";
 
 type ProloguePageProps = {
   onEnroll: () => void;
@@ -49,6 +50,7 @@ function Chevron({ open }: { open: boolean }) {
 }
 
 export function ProloguePage({ onEnroll }: ProloguePageProps) {
+  const { openSettings } = useApp();
   const [notesOpen, setNotesOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -128,6 +130,9 @@ export function ProloguePage({ onEnroll }: ProloguePageProps) {
         </ol>
         <button className="welcome-start" type="button" onClick={onEnroll}>
           参加（入学）する
+        </button>
+        <button className="join-secondary" type="button" onClick={() => openSettings("restore")}>
+          記録を復元する
         </button>
         <button className="prologue-note" type="button" onClick={() => setNotesOpen(true)}>
           <NoticeMark />

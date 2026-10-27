@@ -5,6 +5,7 @@ import { CampusMap } from "./components/CampusMap";
 import { HomeGuide } from "./components/HomeGuide";
 import { HomeStatus, StampMarks } from "./components/HomeStatus";
 import { StampBook, StampBookButton } from "./components/StampBook";
+import { SettingsModal } from "./components/SettingsModal";
 import { StampNotice } from "./components/StampNotice";
 import { TelegramSlip } from "./components/TelegramSlip";
 import { AppProvider, useApp } from "./context/AppContext";
@@ -12,7 +13,7 @@ import { placeById, type PlaceId, type PlaceStory } from "./data/places";
 import { AdminPage } from "./pages/AdminPage";
 import { EnrollPage } from "./pages/EnrollPage";
 import { FoodPage } from "./pages/FoodPage";
-import { MergeNotice, MergePage } from "./pages/MergePage";
+import { MergePage } from "./pages/MergePage";
 import { PresentPage } from "./pages/PresentPage";
 import { ProloguePage } from "./pages/ProloguePage";
 import { StampLandingPage } from "./pages/StampLandingPage";
@@ -195,11 +196,9 @@ function AppShell() {
     hasJoined,
     pendingStamp,
     slipVisible,
-    mergeVisible,
     nickname,
     telegramCode,
     acknowledgeSlip,
-    acknowledgeMerge,
   } = useApp();
 
   if (screen === "admin") {
@@ -229,14 +228,7 @@ function AppShell() {
     return (
       <div className="app-shell">
         {pendingStamp ? <StampJoinGate pendingStamp={pendingStamp} /> : <JoinGate />}
-      </div>
-    );
-  }
-
-  if (mergeVisible) {
-    return (
-      <div className="app-shell">
-        <MergeNotice onConfirm={acknowledgeMerge} />
+        <SettingsModal />
       </div>
     );
   }
@@ -260,6 +252,7 @@ function AppShell() {
       <StampBook />
       <BottomNav />
       {activeTab === "home" && <HomeGuide />}
+      <SettingsModal />
     </div>
   );
 }

@@ -117,14 +117,23 @@ function placeBalloon(
   };
 }
 
+function clearGuideSeen() {
+  try {
+    localStorage.removeItem(GUIDE_KEY);
+  } catch {
+    // 消せなくても強制表示は続ける。
+  }
+}
+
 export function HomeGuide() {
-  const { activeTab } = useApp();
+  const { activeTab, guideReplayToken } = useApp();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [layout, setLayout] = useState<Layout | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const balloonRef = useRef<HTMLDivElement>(null);
   const started = useRef(false);
+  const seenReplay = useRef(0);
   const current = STEPS[step];
   const last = step === STEPS.length - 1;
 
@@ -133,6 +142,16 @@ export function HomeGuide() {
     started.current = true;
     setOpen(true);
   }, [activeTab]);
+
+  useEffect(() => {
+    if (guideReplayToken === 0 || guideReplayToken === seenReplay.current) return;
+    if (activeTab !== "home") return;
+    seenReplay.current = guideReplayToken;
+    clearGuideSeen();
+    started.current = true;
+    setStep(0);
+    setOpen(true);
+  }, [guideReplayToken, activeTab]);
 
   useLayoutEffect(() => {
     if (!open) return;

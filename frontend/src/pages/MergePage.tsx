@@ -132,25 +132,3 @@ export function MergePage({ onBack }: MergePageProps) {
   );
 }
 
-export function MergeNotice({ onConfirm }: { onConfirm: () => void }) {
-  return (
-    <main className="welcome welcome--scroll">
-      <div className="welcome-card">
-        <div className="welcome-lead">帳面合わせ</div>
-        <h1 className="welcome-title">
-          <span className="u-nowrap">帳面が一つに</span>
-          <span className="u-nowrap">合わさりました</span>
-        </h1>
-        <p className="join-copy">
-          <span className="u-nowrap">これまでのスタンプが、</span>
-          <span className="u-nowrap">この画面に集まりました。</span>
-          <span className="u-nowrap">次のスタンプも、</span>
-          <span className="u-nowrap">スマホ本体のカメラで読み取れます。</span>
-        </p>
-        <button className="welcome-start" type="button" onClick={onConfirm}>
-          散策を続ける
-        </button>
-      </div>
-    </main>
-  );
-}

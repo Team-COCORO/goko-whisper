@@ -15,6 +15,10 @@ import {
 } from "../api";
 import type { Screen, StampRallyState, Tab, WhisperId } from "../types";
 
+export type SyncNowResult =
+  | { ok: true; stampCount: number; redeemed: boolean }
+  | { ok: false; error: "not_joined" | "missing" | "forbidden" | "error" };
+
 const STORAGE_KEY = "goko-whisper";
 const STAMP_CLAIM_KEY = "goko-stamp-claim";
 const SLIP_OPEN_KEY = "goko-slip-open";
@@ -53,8 +57,6 @@ type AppContextValue = {
   completeEnroll: (student: EnrollStudent) => boolean;
   completeMerge: (student: EnrollStudent, redeemed: boolean) => boolean;
   acknowledgeSlip: () => void;
-  acknowledgeMerge: () => void;
-  mergeVisible: boolean;
   saveIssued: (code: string, issuedAt: number) => void;
   markRedeemed: () => void;
   markSoldOut: () => void;
@@ -74,6 +76,14 @@ type AppContextValue = {
   openGoal: () => void;
   stampNotice: "retry" | "invalid" | null;
   retryStamp: () => void;
+  settingsOpen: boolean;
+  settingsStartView: "menu" | "restore" | "staff";
+  openSettings: (view?: "menu" | "restore" | "staff") => void;
+  closeSettings: () => void;
+  guideReplayToken: number;
+  replayGuide: () => void;
+  syncNow: () => Promise<SyncNowResult>;
+  completeRestore: (student: EnrollStudent, redeemed: boolean) => boolean;
 };
 
 const AppContext = createContext<AppContextValue | null>(null);
@@ -429,7 +439,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       Boolean(initial.rally.telegramCode) &&
       slipOpenFor(initial.rally.clientId),
   );
-  const [mergeVisible, setMergeVisible] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsStartView, setSettingsStartView] = useState<"menu" | "restore" | "staff">("menu");
+  const [guideReplayToken, setGuideReplayToken] = useState(0);
 
   useEffect(() => {
     const sync = () => setIsAdmin(window.location.hash === "#admin");
@@ -465,7 +477,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
         setShowGoal(false);
         setSlipVisible(false);
-        setMergeVisible(false);
         setWhisperId(null);
         return;
       }
@@ -720,10 +731,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     let saved = false;
     setRally((prev) => {
-      if (prev.pendingStamp && !stampFlags(student.stamps, prev.pendingStamp)) return prev;
-      const stamp1Done = stampFlags(student.stamps, 1);
-      const stamp2Done = stampFlags(student.stamps, 2);
-      const stamp3Done = stampFlags(student.stamps, 3);
+      const pending = prev.pendingStamp;
+      if (pending && !stampFlags(student.stamps, pending)) return prev;
+      // 仮押印分は StampBook の押印／色塗りセレモニーに任せる。他の印だけ先に確定する。
+      const stamp1Done = stampFlags(student.stamps, 1) && pending !== 1;
+      const stamp2Done = stampFlags(student.stamps, 2) && pending !== 2;
+      const stamp3Done = stampFlags(student.stamps, 3) && pending !== 3;
       const next: StampRallyState = {
         clientId,
         nickname,
@@ -732,7 +745,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         stamp1Done,
         stamp2Done,
         stamp3Done,
-        pendingStamp: null,
+        pendingStamp: pending,
         goalUnlocked: stamp1Done && stamp2Done && stamp3Done,
         redeemed,
       };
@@ -745,7 +758,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       stampClaim = null;
       clearStoredClaim();
       saved = true;
-      setMergeVisible(true);
       return next;
     });
     return saved;
@@ -787,8 +799,136 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setSlipVisible(false);
   }, []);
 
-  const acknowledgeMerge = useCallback(() => {
-    setMergeVisible(false);
+  const openSettings = useCallback((view: "menu" | "restore" | "staff" = "menu") => {
+    setSettingsStartView(view);
+    setSettingsOpen(true);
+  }, []);
+
+  const closeSettings = useCallback(() => {
+    setSettingsOpen(false);
+    setSettingsStartView("menu");
+  }, []);
+
+  const replayGuide = useCallback(() => {
+    setSettingsOpen(false);
+    setActiveTab("home");
+    setGuideReplayToken((value) => value + 1);
+  }, []);
+
+  const applySyncedRally = useCallback((stamps: string[], redeemed: boolean) => {
+    const stampCount = ["spot1", "spot2", "spot3"].filter((id) => stamps.includes(id)).length;
+    setRally((prev) => {
+      if (!prev.hasJoined) return prev;
+      const next = withServerProgress(prev, stamps, redeemed);
+      if (
+        next.stamp1Done === prev.stamp1Done &&
+        next.stamp2Done === prev.stamp2Done &&
+        next.stamp3Done === prev.stamp3Done &&
+        next.redeemed === prev.redeemed &&
+        next.pendingStamp === prev.pendingStamp &&
+        next.goalUnlocked === prev.goalUnlocked
+      ) {
+        return prev;
+      }
+      try {
+        persistRally(next);
+      } catch {
+        setStorageBlocked(true);
+        return prev;
+      }
+      rememberBootRally(next);
+      return next;
+    });
+    if (!stamps.includes("spot1") || !stamps.includes("spot2") || !stamps.includes("spot3")) {
+      setShowGoal(false);
+    }
+    return stampCount;
+  }, []);
+
+  const syncNow = useCallback(async (): Promise<SyncNowResult> => {
+    const current = boot().rally;
+    if (!current.hasJoined) return { ok: false, error: "not_joined" };
+    const nickname = current.nickname.trim();
+    if (!nickname) return { ok: false, error: "not_joined" };
+
+    const claim = claimStampQuery();
+    if (claim) {
+      const result = await resolveStamp(claim);
+      applyStampResult(result, claim);
+    }
+
+    const synced = await syncStudent(current.clientId, nickname);
+    if (!synced.ok) {
+      if (synced.error === "missing") {
+        setRally((prev) => {
+          if (!prev.hasJoined) return prev;
+          const next = emptyRally(prev.clientId);
+          try {
+            persistRally(next);
+          } catch {
+            setStorageBlocked(true);
+            return prev;
+          }
+          rememberBootRally(next);
+          return next;
+        });
+        setShowGoal(false);
+        setSlipVisible(false);
+        setWhisperId(null);
+        return { ok: false, error: "missing" };
+      }
+      if (synced.error === "forbidden") return { ok: false, error: "forbidden" };
+      return { ok: false, error: "error" };
+    }
+
+    const stampCount = applySyncedRally(synced.stamps, synced.redeemed);
+    return { ok: true, stampCount, redeemed: synced.redeemed };
+  }, [applyStampResult, applySyncedRally]);
+
+  const completeRestore = useCallback((student: EnrollStudent, redeemed: boolean) => {
+    const nickname = student.nickname.trim();
+    const telegramCode = readTelegramCode(student.telegramCode);
+    const clientId = normalizeClientId(student.clientId);
+    if (!clientId || !nickname || nickname.length > 10 || !telegramCode || typeof redeemed !== "boolean") {
+      return false;
+    }
+
+    let saved = false;
+    setRally((prev) => {
+      const stamp1Done = stampFlags(student.stamps, 1);
+      const stamp2Done = stampFlags(student.stamps, 2);
+      const stamp3Done = stampFlags(student.stamps, 3);
+      const next: StampRallyState = {
+        clientId,
+        nickname,
+        telegramCode,
+        hasJoined: true,
+        stamp1Done,
+        stamp2Done,
+        stamp3Done,
+        pendingStamp: null,
+        goalUnlocked: stamp1Done && stamp2Done && stamp3Done,
+        redeemed,
+      };
+      try {
+        persistRally(next);
+      } catch {
+        setStorageBlocked(true);
+        return prev;
+      }
+      stampClaim = null;
+      clearStoredClaim();
+      rememberBootRally(next);
+      saved = true;
+      return next;
+    });
+    if (saved) {
+      setShowGoal(false);
+      setSlipVisible(false);
+      setWhisperId(null);
+      setActiveTab("home");
+    }
+    return saved;
   }, []);
 
   const value = useMemo(
@@ -812,14 +952,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rewardCode: rally.rewardCode,
       issuedAt: rally.issuedAt,
       slipVisible,
-      mergeVisible,
       setActiveTab,
       reserveClientForEnroll,
       readStampForEnroll,
       completeEnroll,
       completeMerge,
       acknowledgeSlip,
-      acknowledgeMerge,
       saveIssued,
       markRedeemed,
       markSoldOut,
@@ -839,6 +977,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       openGoal,
       stampNotice,
       retryStamp,
+      settingsOpen,
+      settingsStartView,
+      openSettings,
+      closeSettings,
+      guideReplayToken,
+      replayGuide,
+      syncNow,
+      completeRestore,
     }),
     [
       storageBlocked,
@@ -856,13 +1002,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rally.hasJoined,
       rally.telegramCode,
       slipVisible,
-      mergeVisible,
       reserveClientForEnroll,
       readStampForEnroll,
       completeEnroll,
       completeMerge,
       acknowledgeSlip,
-      acknowledgeMerge,
       bookOpen,
       bookLocked,
       whisperId,
@@ -885,6 +1029,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       openGoal,
       stampNotice,
       retryStamp,
+      settingsOpen,
+      settingsStartView,
+      openSettings,
+      closeSettings,
+      guideReplayToken,
+      replayGuide,
+      syncNow,
+      completeRestore,
     ],
   );
 
