@@ -1,13 +1,28 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useApp } from "../context/AppContext";
 
 const GUIDE_KEY = "goko-home-guide";
 
-const STEPS = [
+const STEPS: {
+  target: "stamp" | "map" | "sheet" | "nav";
+  title: string;
+  body: ReactNode;
+  side: "top" | "bottom";
+  padding: number;
+  radius: number;
+}[] = [
   {
     target: "stamp",
     title: "印と符丁の確認",
-    body: "獲得したスタンプの確認や、あなたに授けられた「4つの符丁」の閲覧は、右上のスタンプ帖をタップします。",
+    body: (
+      <>
+        <span className="u-nowrap">獲得したスタンプの確認や、</span>
+        <span className="u-nowrap">あなたに授けられた</span>
+        <span className="u-nowrap">「4つの符丁」の閲覧は、</span>
+        <span className="u-nowrap">右上のスタンプ帖を</span>
+        <span className="u-nowrap">タップします。</span>
+      </>
+    ),
     side: "bottom",
     padding: 6,
     radius: 8,
@@ -15,7 +30,14 @@ const STEPS = [
   {
     target: "map",
     title: "百年前の学び舎を巡る",
-    body: "地図上の建物をタップすると、百年前の物語が読めます。点滅するピンの場所を目指し、QRを探しましょう。",
+    body: (
+      <>
+        <span className="u-nowrap">地図上の建物をタップすると、</span>
+        <span className="u-nowrap">百年前の物語が読めます。</span>
+        <span className="u-nowrap">点滅するピンの場所を目指し、</span>
+        <span className="u-nowrap">QRを探しましょう。</span>
+      </>
+    ),
     side: "bottom",
     padding: 8,
     radius: 12,
@@ -23,7 +45,15 @@ const STEPS = [
   {
     target: "sheet",
     title: "囁きに耳を澄ます",
-    body: "下部の案内枠は上に引き上げられます。次に向かうべき場所やヒントを確認し、3つの印を集めましょう。",
+    body: (
+      <>
+        <span className="u-nowrap">下部の案内枠は</span>
+        <span className="u-nowrap">上に引き上げられます。</span>
+        <span className="u-nowrap">次に向かうべき場所や</span>
+        <span className="u-nowrap">ヒントを確認し、</span>
+        <span className="u-nowrap">3つの印を集めましょう。</span>
+      </>
+    ),
     side: "top",
     padding: 4,
     radius: 16,
@@ -31,12 +61,21 @@ const STEPS = [
   {
     target: "nav",
     title: "模擬店と景品への道",
-    body: "下のメニューから、紫熊祭の模擬店が並ぶ「食品」や、3つの印を集めたあとに記念品を受け取る「プレゼント」へ切り替えられます。",
+    body: (
+      <>
+        <span className="u-nowrap">下のメニューから、</span>
+        <span className="u-nowrap">紫熊祭の模擬店が並ぶ「食品」や、</span>
+        <span className="u-nowrap">3つの印を集めたあとに</span>
+        <span className="u-nowrap">記念品を受け取る</span>
+        <span className="u-nowrap">「プレゼント」へ</span>
+        <span className="u-nowrap">切り替えられます。</span>
+      </>
+    ),
     side: "top",
     padding: 2,
     radius: 6,
   },
-] as const;
+];
 
 type Side = "top" | "bottom";
 
@@ -161,7 +200,7 @@ export function HomeGuide() {
       const rect = shell ? targetRect(current.target) : null;
       if (!shell || !balloon || !rect || rect.width === 0 || rect.height === 0) return;
       const hole = holeFrom(rect, shell, current.padding, current.radius);
-      const width = Math.min(320, shell.width - 24);
+      const width = Math.min(340, shell.width - 24);
       balloon.style.width = `${width}px`;
       const placed = placeBalloon(shell.width, shell.height, hole, width, balloon.offsetHeight, current.side);
       setLayout({ hole, ...placed });
