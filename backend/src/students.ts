@@ -266,6 +266,40 @@ export async function handleMerge(request: Request, env: Env): Promise<Response>
   });
 }
 
+export async function handleRestore(request: Request, env: Env): Promise<Response> {
+  const parsed = await readJson(request);
+  if (!parsed.ok) return enrollError(request, "INVALID", 400);
+  const payload = parsed.payload;
+  if (!payload || typeof payload !== "object") {
+    return enrollError(request, "INVALID", 400);
+  }
+
+  const record = payload as { nickname?: unknown; telegramCode?: unknown };
+  const nickname = typeof record.nickname === "string" ? record.nickname.trim() : "";
+  const telegramCode = typeof record.telegramCode === "string" ? record.telegramCode : "";
+  if (!nickname || nickname.length > 10 || !TELEGRAM_CODE_RE.test(telegramCode)) {
+    return enrollError(request, "INVALID", 400);
+  }
+
+  const now = Date.now();
+  if (await mergeLocked(env.DB, nickname, now)) {
+    return enrollError(request, "LOCKED", 429);
+  }
+
+  const found = await findByTelegram(env.DB, nickname, telegramCode);
+  if (!found) {
+    const failure = await recordMergeFailure(env.DB, nickname, now);
+    if (failure === "locked") return enrollError(request, "LOCKED", 429);
+    return enrollError(request, "MISMATCH", 401);
+  }
+
+  await clearMergeFailure(env.DB, nickname);
+  return json(request, {
+    ...enrollBody(found),
+    redeemed: await isRedeemed(env.DB, found.client_id),
+  });
+}
+
 export async function handleSync(request: Request, env: Env): Promise<Response> {
   const parsed = await readJson(request);
   if (!parsed.ok) return enrollError(request, "INVALID", 400);

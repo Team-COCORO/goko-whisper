@@ -269,6 +269,80 @@ export function mergeStudent(
   return flight;
 }
 
+export type RestoreResponse =
+  | { ok: true; student: EnrollStudent; redeemed: boolean }
+  | { ok: false; error: "invalid" | "mismatch" | "locked" | "unavailable" | "error" };
+
+const restoreFlights = new Map<string, Promise<RestoreResponse>>();
+
+async function postRestore(nickname: string, telegramCode: string): Promise<RestoreResponse> {
+  try {
+    const response = await fetchApi("/api/student/restore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nickname, telegramCode }),
+    });
+    const body = (await response.json()) as {
+      success?: unknown;
+      error?: unknown;
+      redeemed?: unknown;
+      student?: {
+        clientId?: unknown;
+        nickname?: unknown;
+        telegramCode?: unknown;
+        stamps?: unknown;
+      };
+    };
+    const student = body.student;
+    const stamps = Array.isArray(student?.stamps)
+      ? student.stamps.filter((item): item is string => typeof item === "string")
+      : null;
+    if (
+      response.ok &&
+      body.success === true &&
+      student &&
+      typeof student.clientId === "string" &&
+      typeof student.nickname === "string" &&
+      typeof student.telegramCode === "string" &&
+      stamps &&
+      typeof body.redeemed === "boolean"
+    ) {
+      return {
+        ok: true,
+        redeemed: body.redeemed,
+        student: {
+          clientId: student.clientId,
+          nickname: student.nickname,
+          telegramCode: student.telegramCode,
+          stamps,
+        },
+      };
+    }
+    if (response.status === 429 || body.error === "LOCKED") {
+      return { ok: false, error: "locked" };
+    }
+    if (response.status === 401 || body.error === "MISMATCH") {
+      return { ok: false, error: "mismatch" };
+    }
+    if (body.error === "INVALID") return { ok: false, error: "invalid" };
+    if (body.error === "UNAVAILABLE") return { ok: false, error: "unavailable" };
+    return { ok: false, error: "error" };
+  } catch {
+    return { ok: false, error: "error" };
+  }
+}
+
+export function restoreStudent(nickname: string, telegramCode: string): Promise<RestoreResponse> {
+  const key = `${nickname}:${telegramCode}`;
+  const existing = restoreFlights.get(key);
+  if (existing) return existing;
+  const flight = postRestore(nickname, telegramCode).finally(() => {
+    restoreFlights.delete(key);
+  });
+  restoreFlights.set(key, flight);
+  return flight;
+}
+
 export type SyncResponse =
   | { ok: true; stamps: string[]; redeemed: boolean }
   | { ok: false; error: "invalid" | "forbidden" | "missing" | "error" };
