@@ -57,8 +57,6 @@ type AppContextValue = {
   completeEnroll: (student: EnrollStudent) => boolean;
   completeMerge: (student: EnrollStudent, redeemed: boolean) => boolean;
   acknowledgeSlip: () => void;
-  acknowledgeMerge: () => void;
-  mergeVisible: boolean;
   saveIssued: (code: string, issuedAt: number) => void;
   markRedeemed: () => void;
   markSoldOut: () => void;
@@ -441,7 +439,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       Boolean(initial.rally.telegramCode) &&
       slipOpenFor(initial.rally.clientId),
   );
-  const [mergeVisible, setMergeVisible] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [settingsStartView, setSettingsStartView] = useState<"menu" | "restore" | "staff">("menu");
   const [guideReplayToken, setGuideReplayToken] = useState(0);
@@ -480,7 +477,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
         setShowGoal(false);
         setSlipVisible(false);
-        setMergeVisible(false);
         setWhisperId(null);
         return;
       }
@@ -735,10 +731,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     let saved = false;
     setRally((prev) => {
-      if (prev.pendingStamp && !stampFlags(student.stamps, prev.pendingStamp)) return prev;
-      const stamp1Done = stampFlags(student.stamps, 1);
-      const stamp2Done = stampFlags(student.stamps, 2);
-      const stamp3Done = stampFlags(student.stamps, 3);
+      const pending = prev.pendingStamp;
+      if (pending && !stampFlags(student.stamps, pending)) return prev;
+      // 仮押印分は StampBook の押印／色塗りセレモニーに任せる。他の印だけ先に確定する。
+      const stamp1Done = stampFlags(student.stamps, 1) && pending !== 1;
+      const stamp2Done = stampFlags(student.stamps, 2) && pending !== 2;
+      const stamp3Done = stampFlags(student.stamps, 3) && pending !== 3;
       const next: StampRallyState = {
         clientId,
         nickname,
@@ -747,7 +745,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         stamp1Done,
         stamp2Done,
         stamp3Done,
-        pendingStamp: null,
+        pendingStamp: pending,
         goalUnlocked: stamp1Done && stamp2Done && stamp3Done,
         redeemed,
       };
@@ -760,7 +758,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       stampClaim = null;
       clearStoredClaim();
       saved = true;
-      setMergeVisible(true);
       return next;
     });
     return saved;
@@ -800,10 +797,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const acknowledgeSlip = useCallback(() => {
     clearSlipOpen();
     setSlipVisible(false);
-  }, []);
-
-  const acknowledgeMerge = useCallback(() => {
-    setMergeVisible(false);
   }, []);
 
   const openSettings = useCallback((view: "menu" | "restore" | "staff" = "menu") => {
@@ -881,7 +874,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
         });
         setShowGoal(false);
         setSlipVisible(false);
-        setMergeVisible(false);
         setWhisperId(null);
         return { ok: false, error: "missing" };
       }
@@ -933,7 +925,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (saved) {
       setShowGoal(false);
       setSlipVisible(false);
-      setMergeVisible(false);
       setWhisperId(null);
       setActiveTab("home");
     }
@@ -961,14 +952,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rewardCode: rally.rewardCode,
       issuedAt: rally.issuedAt,
       slipVisible,
-      mergeVisible,
       setActiveTab,
       reserveClientForEnroll,
       readStampForEnroll,
       completeEnroll,
       completeMerge,
       acknowledgeSlip,
-      acknowledgeMerge,
       saveIssued,
       markRedeemed,
       markSoldOut,
@@ -1013,13 +1002,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rally.hasJoined,
       rally.telegramCode,
       slipVisible,
-      mergeVisible,
       reserveClientForEnroll,
       readStampForEnroll,
       completeEnroll,
       completeMerge,
       acknowledgeSlip,
-      acknowledgeMerge,
       bookOpen,
       bookLocked,
       whisperId,
