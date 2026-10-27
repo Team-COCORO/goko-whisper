@@ -808,3 +808,187 @@ svg.goko-icon .mark {
   background: #c9bfb5;
   color: #fff;
 }
+
+/* 本体アプリは body overflow:hidden。アンケートだけ文書スクロールを許可する */
+html.survey-doc,
+html.survey-doc body,
+body:has(.survey-page) {
+  height: auto;
+  min-height: 100%;
+  display: block;
+  overflow: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+
+html.survey-doc #root,
+#root:has(.survey-page) {
+  height: auto;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.welcome.survey-page {
+  flex: none;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  height: auto;
+  overflow: visible;
+  padding: 20px 0 48px;
+}
+
+.survey-page .welcome-card {
+  align-items: stretch;
+  text-align: left;
+  width: min(420px, calc(100% - 24px));
+  max-width: none;
+  margin: 0 auto;
+}
+
+.survey-page .welcome-lead {
+  white-space: normal;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.survey-page .welcome-title {
+  text-align: center;
+}
+
+.survey-page .join-copy {
+  font-size: 15px;
+  line-height: 1.65;
+  text-align: left;
+}
+
+.survey-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.survey-field {
+  margin: 0;
+  padding: 14px 12px;
+  border: 1px solid var(--welcome-border);
+  border-radius: 6px;
+  text-align: left;
+}
+
+.survey-field legend {
+  padding: 0 4px;
+  color: var(--brick, #8b3a2b);
+  font-size: 15px;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.survey-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.survey-ratings {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.survey-choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 12px;
+  border: 1px solid var(--welcome-border);
+  border-radius: 6px;
+  background: #fff;
+  color: #3b322c;
+  font-size: 16px;
+  line-height: 1.4;
+  white-space: normal;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.survey-ratings .survey-choice {
+  flex: 1;
+  justify-content: center;
+  padding: 12px 0;
+  white-space: nowrap;
+}
+
+.survey-choice:has(input:checked) {
+  border-color: var(--brick, #8b3a2b);
+  background: rgba(139, 58, 43, 0.06);
+}
+
+.survey-choice input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.survey-label {
+  display: block;
+  margin: 14px 0 4px;
+  color: #5c554e;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.survey-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 4px;
+  padding: 12px;
+  border: 1px solid var(--welcome-border);
+  border-radius: 4px;
+  background: #fff;
+  color: inherit;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.55;
+  resize: vertical;
+  min-height: 96px;
+}
+
+.survey-done {
+  margin: 18px 0 0;
+  padding: 16px;
+  border: 1px solid var(--welcome-border);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--brick, #8b3a2b);
+  font-size: 16px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+.survey-page .welcome-start {
+  margin-top: 8px;
+  font-size: 17px;
+}
+
+@media (max-width: 360px) {
+  .survey-choice {
+    font-size: 15px;
+    padding: 11px 10px;
+  }
+
+  .survey-field legend {
+    font-size: 14px;
+  }
+}

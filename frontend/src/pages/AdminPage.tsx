@@ -2,12 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   deleteStudent,
   fetchSummary,
+  fetchSurveySummary,
   listStudents,
   redeemStudent,
   updateStamps,
   type OfficeError,
   type OfficeStudent,
   type Summary,
+  type SurveySummary,
 } from "../api";
 import { TelegramIcon } from "../components/TelegramIcon";
 import { telegramWords } from "../data/telegram";
@@ -91,6 +93,34 @@ function fold(text: string): string {
     .replace(/[\u30a1-\u30f6]/g, (char) => String.fromCharCode(char.charCodeAt(0) - 0x60))
     .replace(/ー/g, "う")
     .toLocaleLowerCase("ja");
+}
+
+const REGION_LABELS: Record<string, string> = {
+  kumamoto: "熊本県",
+  fukuoka: "福岡県",
+  saga: "佐賀県",
+  nagasaki: "長崎県",
+  oita: "大分県",
+  miyazaki: "宮崎県",
+  kagoshima: "鹿児島県",
+  okinawa: "沖縄県",
+  other: "九州外",
+};
+
+const FOOD_LABELS: Record<string, string> = {
+  soda_akane: "茜空クリームソーダ",
+  soda_blue: "碧空クリームソーダ",
+  soda_green: "新緑クリームソーダ",
+  soda_yugiri: "夕霧クリームソーダ",
+  other: "その他",
+};
+
+function regionLabel(region: string): string {
+  return REGION_LABELS[region] ?? region;
+}
+
+function foodItemLabel(item: string): string {
+  return FOOD_LABELS[item] ?? item;
 }
 
 function wordsOf(student: OfficeStudent): string[] | null {
@@ -215,6 +245,7 @@ type MenuState = {
 export function AdminPage() {
   const [idToken, setIdToken] = useState("");
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [survey, setSurvey] = useState<SurveySummary | null>(null);
   const [students, setStudents] = useState<OfficeStudent[] | null>(null);
   const [truncated, setTruncated] = useState(false);
   const [notice, setNotice] = useState("");
@@ -279,9 +310,10 @@ export function AdminPage() {
     if (!idToken) return;
     let cancelled = false;
     void (async () => {
-      const [summaryResult, listResult] = await Promise.all([
+      const [summaryResult, listResult, surveyResult] = await Promise.all([
         fetchSummary(idToken),
         listStudents(idToken),
+        fetchSurveySummary(idToken),
       ]);
       if (cancelled) return;
       setLoading(false);
@@ -292,6 +324,7 @@ export function AdminPage() {
           : null;
       if (error) {
         setSummary(null);
+        setSurvey(null);
         setStudents(null);
         if (error === "unauthorized") setIdToken("");
         setNoticeOk(false);
@@ -302,6 +335,9 @@ export function AdminPage() {
       setSummary(summaryResult.summary);
       setStudents(listResult.students);
       setTruncated(listResult.truncated);
+      if (surveyResult.ok) setSurvey(surveyResult.summary);
+      else if (surveyResult.error === "unauthorized") setIdToken("");
+      else setSurvey(null);
       setUpdatedAt(Date.now());
     })();
     return () => {
@@ -386,6 +422,7 @@ export function AdminPage() {
   const logout = () => {
     setIdToken("");
     setSummary(null);
+    setSurvey(null);
     setStudents(null);
     setTruncated(false);
     setFilter("");
@@ -554,6 +591,80 @@ export function AdminPage() {
         </div>
       </header>
       {lowStock && <p className="admin-alert">景品の残数が少なくなっています。</p>}
+      {survey && (
+        <section className="admin-metrics" aria-label="アンケート集計">
+          <h2>アンケート集計</h2>
+          <div className="admin-metrics__grid">
+            <article>
+              <span>回答数</span>
+              <strong>{survey.total}</strong>
+              <small>件 · 食品購入あり {survey.bought} 件</small>
+            </article>
+            <article>
+              <span>アプリ満足度</span>
+              <strong>
+                {survey.appRatingAvg == null ? "—" : survey.appRatingAvg.toFixed(1)}
+              </strong>
+              <small>平均（1–5）</small>
+            </article>
+            <article>
+              <span>食品満足度</span>
+              <strong>
+                {survey.foodRatingAvg == null ? "—" : survey.foodRatingAvg.toFixed(1)}
+              </strong>
+              <small>平均（購入者・1–5）</small>
+            </article>
+          </div>
+          {survey.regions.length > 0 && (
+            <div className="admin-survey-list">
+              <h3>来県</h3>
+              <ul>
+                {survey.regions.map((entry) => (
+                  <li key={entry.region}>
+                    <span>{regionLabel(entry.region)}</span>
+                    <strong>{entry.count}</strong>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {survey.foodItems.length > 0 && (
+            <div className="admin-survey-list">
+              <h3>購入メニュー</h3>
+              <ul>
+                {survey.foodItems.map((entry) => (
+                  <li key={entry.item}>
+                    <span>{foodItemLabel(entry.item)}</span>
+                    <strong>{entry.count}</strong>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {survey.recent.some((row) => row.appComment || row.foodComment) && (
+            <div className="admin-survey-comments">
+              <h3>最近のコメント</h3>
+              <ul>
+                {survey.recent
+                  .filter((row) => row.appComment || row.foodComment)
+                  .map((row) => (
+                    <li key={row.createdAt}>
+                      <time dateTime={new Date(row.createdAt).toISOString()}>
+                        {registeredAt(row.createdAt)}
+                      </time>
+                      <span className="admin-survey-comments__meta">
+                        {regionLabel(row.region)}
+                        {row.regionOther ? `（${row.regionOther}）` : ""}
+                      </span>
+                      {row.appComment ? <p>アプリ: {row.appComment}</p> : null}
+                      {row.foodComment ? <p>食品: {row.foodComment}</p> : null}
+                    </li>
+                  ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
       {summary && (
         <section className="admin-metrics" aria-label="景品・配布進捗">
           <h2>景品・配布進捗</h2>

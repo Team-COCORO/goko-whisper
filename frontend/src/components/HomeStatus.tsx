@@ -1,3 +1,4 @@
+import { openSurveyPage } from "../api";
 import { WHISPERS } from "../data/whispers";
 import { useApp } from "../context/AppContext";
 import { GoalPage } from "../pages/GoalPage";
@@ -225,6 +226,12 @@ export function HomeStatus() {
         <p className="sheet-line">
           <Phrases parts={["受取は完了しています。", "ありがとうございました。"]} />
         </p>
+        <p className="sheet-hint">
+          <Phrases parts={["任意のアンケートにご協力ください。", "別の画面が開きます。"]} />
+        </p>
+        <button className="b alt" type="button" onClick={openSurveyPage}>
+          アンケートを開く
+        </button>
       </div>
     );
   }
