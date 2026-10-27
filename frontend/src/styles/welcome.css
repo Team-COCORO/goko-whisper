@@ -35,7 +35,7 @@
 
 .welcome-title {
   margin: 0 0 6px;
-  font-size: clamp(24px, 7vw, 28px);
+  font-size: clamp(25px, 7.2vw, 29px);
   font-weight: bold;
   color: var(--nav);
   letter-spacing: 0.08em;
@@ -44,7 +44,7 @@
 }
 
 .welcome-lead {
-  font-size: clamp(12.5px, 3.6vw, 14px);
+  font-size: clamp(13px, 3.7vw, 14.5px);
   color: var(--brick);
   font-weight: bold;
   margin-bottom: 16px;
@@ -95,13 +95,13 @@
   display: block;
   margin-bottom: 2px;
   color: var(--ink);
-  font-size: 14.5px;
+  font-size: 15.5px;
 }
 
 .welcome-flow-body p {
   margin: 0;
   color: var(--welcome-sub);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -115,7 +115,7 @@
 }
 
 .welcome-label {
-  font-size: clamp(14.5px, 4.2vw, 16px);
+  font-size: clamp(15px, 4.3vw, 16.5px);
   font-weight: bold;
   color: var(--nav);
   margin-bottom: 4px;
@@ -124,7 +124,7 @@
 }
 
 .welcome-sub {
-  font-size: clamp(11.5px, 3.2vw, 12.5px);
+  font-size: clamp(12px, 3.3vw, 13px);
   color: #8c7d73;
   margin-bottom: 12px;
   line-height: 1.4;
@@ -134,7 +134,7 @@
 .welcome-name {
   width: 100%;
   padding: 12px 14px;
-  font-size: 16px;
+  font-size: 17px;
   font-family: inherit;
   border: 1.5px solid var(--welcome-border);
   border-radius: 6px;
@@ -157,7 +157,7 @@
   color: #fff;
   border: none;
   border-radius: 6px;
-  font-size: clamp(14.5px, 4vw, 16px);
+  font-size: clamp(15px, 4.1vw, 16.5px);
   font-weight: bold;
   font-family: inherit;
   letter-spacing: 0.06em;
@@ -180,11 +180,117 @@
   padding: 24px 0 32px;
 }
 
+.welcome--slip {
+  padding: 12px 0 16px;
+}
+
+.welcome--slip .welcome-card {
+  padding: 16px 14px 14px;
+}
+
+.welcome--slip .welcome-lead {
+  margin-bottom: 4px;
+}
+
+.welcome--slip .welcome-title {
+  margin-bottom: 2px;
+  font-size: clamp(23px, 6.4vw, 27px);
+}
+
+.welcome--slip .slip-name {
+  margin-bottom: 6px;
+}
+
+.welcome--slip .join-copy {
+  margin-bottom: 8px;
+  line-height: 1.55;
+}
+
+.welcome--slip .telegram-card {
+  margin-bottom: 8px;
+  padding: 10px 8px 12px;
+}
+
+.welcome--slip .telegram-header {
+  margin-bottom: 8px;
+  padding-bottom: 4px;
+}
+
+.welcome--slip .join-codes {
+  gap: 10px 6px;
+}
+
+.welcome--slip .join-codes-label {
+  margin-bottom: 2px;
+  font-size: 12px;
+}
+
+.welcome--slip .join-codes .goko-icon {
+  width: 30px;
+  height: 30px;
+  margin-bottom: 2px;
+}
+
+.welcome--slip .join-codes-word {
+  font-size: 16px;
+}
+
+.welcome--slip .slip-actions {
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  width: 100%;
+  margin-top: auto;
+  padding-top: 6px;
+  background: linear-gradient(to bottom, transparent, var(--welcome-paper) 10px);
+}
+
+.welcome--slip .join-check {
+  margin-bottom: 4px;
+  padding: 10px;
+  font-size: 15px;
+}
+
+.welcome--slip .welcome-sub {
+  margin-bottom: 0;
+}
+
+.welcome--slip .welcome-start {
+  margin-top: 8px;
+}
+
+@media (max-height: 760px) {
+  .welcome--slip {
+    padding: 8px 0 12px;
+  }
+
+  .welcome--slip .welcome-card {
+    padding: 12px 12px 10px;
+  }
+
+  .welcome--slip .join-codes {
+    gap: 8px 4px;
+  }
+
+  .welcome--slip .join-codes .goko-icon {
+    width: 26px;
+    height: 26px;
+  }
+
+  .welcome--slip .telegram-card {
+    padding: 8px 6px 10px;
+  }
+
+  .welcome--slip .join-check {
+    padding: 8px;
+  }
+}
+
 .join-copy,
 .join-error {
   width: 100%;
   margin: 0 0 12px;
-  font-size: clamp(13px, 3.6vw, 14px);
+  font-size: clamp(14px, 3.8vw, 15px);
   line-height: 1.7;
   text-align: center;
   color: var(--welcome-sub);
@@ -198,7 +304,7 @@
 
 .join-copy.prologue-lead {
   color: var(--ink);
-  font-size: 14.5px;
+  font-size: 15.5px;
   line-height: 1.65;
 }
 
@@ -244,7 +350,7 @@
 
 .slip-name {
   margin: 0 0 8px;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: bold;
   color: var(--brick);
 }
@@ -263,7 +369,7 @@
 .join-codes-label {
   display: block;
   margin-bottom: 4px;
-  font-size: 11px;
+  font-size: 12px;
   line-height: 1.35;
   color: #8c7d73;
   white-space: nowrap;
@@ -277,7 +383,7 @@
 
 .join-codes-word {
   display: block;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: bold;
   line-height: 1.3;
   color: var(--nav);
@@ -295,7 +401,7 @@
   margin-bottom: 8px;
   padding: 12px;
   text-align: left;
-  font-size: 14.5px;
+  font-size: 15.5px;
   color: var(--brick);
   background: rgba(139, 58, 43, 0.06);
   border: 1px solid rgba(139, 58, 43, 0.2);
@@ -322,7 +428,7 @@
   color: var(--welcome-sub);
   border: 1.5px solid var(--welcome-border);
   border-radius: 6px;
-  font-size: clamp(14.5px, 4vw, 16px);
+  font-size: clamp(15px, 4.1vw, 16.5px);
   font-weight: bold;
   font-family: inherit;
   letter-spacing: 0.06em;
@@ -479,7 +585,7 @@ svg.goko-icon .mark {
   background: transparent;
   color: var(--welcome-sub);
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   cursor: pointer;
 }
 
@@ -516,7 +622,7 @@ svg.goko-icon .mark {
   width: 100%;
   margin: 0 0 10px;
   color: var(--welcome-sub);
-  font-size: 11.5px;
+  font-size: 12.5px;
   line-height: 1.5;
   letter-spacing: 0.04em;
   text-align: center;
@@ -695,7 +801,7 @@ svg.goko-icon .mark {
 
 .welcome--enroll .enroll-lock {
   color: var(--brick);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .welcome--enroll .welcome-start:disabled {
