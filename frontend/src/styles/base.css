@@ -243,7 +243,7 @@ body {
 
 .place-story__name {
   margin: 0;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.08em;
   color: var(--ink);
@@ -256,13 +256,13 @@ body {
   border: 1px solid var(--brick);
   border-radius: 2px;
   color: var(--brick);
-  font-size: 10px;
+  font-size: 11px;
   letter-spacing: 0.08em;
 }
 
 .place-story__title {
   margin: 8px 0 6px;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.5;
   letter-spacing: 0.04em;
@@ -271,7 +271,7 @@ body {
 
 .place-story__body {
   margin: 0;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.75;
   letter-spacing: 0.03em;
   color: var(--ink);
@@ -579,7 +579,7 @@ h1 {
   margin: 0 0 8px;
   padding-bottom: 8px;
   border-bottom: 1px solid rgba(217, 207, 190, 0.8);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.6;
   letter-spacing: 0.03em;
   color: #5c554e;
@@ -625,7 +625,7 @@ h1 {
 
 .stage--home .card p {
   margin: 4px 0;
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.7;
 }
 
@@ -677,7 +677,7 @@ h1 {
 
 .stage--home .card p.sheet-line {
   margin: 0 0 8px;
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.7;
   letter-spacing: 0.04em;
   text-align: center;
@@ -701,7 +701,7 @@ h1 {
 
 .stage--home .card p.sheet-lead {
   margin: 0 0 4px;
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.6;
   text-align: center;
   color: #7d7266;
@@ -711,7 +711,7 @@ h1 {
 
 .sheet-name {
   margin: 0 0 2px;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: normal;
   letter-spacing: 0.04em;
   text-align: center;
@@ -721,7 +721,7 @@ h1 {
 
 .stage--home .card p.sheet-pending {
   margin: 4px 0 0;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.6;
   text-align: center;
   color: var(--brick);
@@ -734,7 +734,7 @@ h1 {
   margin: 0;
   padding-top: 6px;
   border-top: 1px dashed #d9cfbe;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
   text-align: center;
   color: #7d7266;
@@ -744,7 +744,7 @@ h1 {
 
 .stage--home .card p.sheet-hint {
   margin: 8px 0 0;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.6;
   letter-spacing: 0.03em;
   text-align: center;
@@ -822,7 +822,7 @@ h1 {
 .literary-card__body {
   margin: 0 0 10px;
   color: var(--nav);
-  font-size: 16px;
+  font-size: 17px;
   line-height: 1.75;
   letter-spacing: 0.04em;
   text-align: center;
@@ -839,7 +839,7 @@ h1 {
 
 .literary-card__source {
   color: #8c7d73;
-  font-size: 13px;
+  font-size: 14px;
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
@@ -851,17 +851,17 @@ h1 {
   background: none;
   color: #5c554e;
   font: inherit;
-  font-size: 13px;
+  font-size: 14px;
   white-space: nowrap;
   cursor: pointer;
 }
 
 .stage--home .card .sheet-name {
-  font-size: 17px;
+  font-size: 18px;
 }
 
 .stage--home .card p.note {
-  font-size: 14px;
+  font-size: 15px;
   word-break: keep-all;
   line-break: strict;
 }
@@ -870,7 +870,7 @@ h1 {
   width: auto;
   margin-inline: auto;
   padding: 10px 18px;
-  font-size: 15px;
+  font-size: 16px;
   letter-spacing: 0.05em;
   white-space: nowrap;
 }
@@ -2396,11 +2396,13 @@ input.pin {
 .present-page h1 {
   min-height: 0;
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 4px;
   padding-inline: 0;
   margin: 2px 0 4px;
+  white-space: nowrap;
 }
 
 .present-header {
@@ -2421,22 +2423,23 @@ input.pin {
 }
 
 .present-catch {
-  font-size: 25px;
+  font-size: clamp(19px, 6vw, 26px);
   font-weight: bold;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.06em;
 }
 
 .present-hat {
   display: inline-flex;
-  width: 28px;
-  height: 24px;
+  flex: 0 0 auto;
+  width: 1.1em;
+  height: 1em;
   color: var(--nav);
   animation: present-hat 2.8s infinite ease-in-out;
 }
 
 .present-hat svg {
-  width: 24px;
-  height: 24px;
+  width: 100%;
+  height: 100%;
 }
 
 @keyframes present-hat {
@@ -2452,9 +2455,9 @@ input.pin {
 .present-lead {
   margin: 0;
   color: #5c554e;
-  font-size: 11.5px;
+  font-size: clamp(12.5px, 3.5vw, 14px);
   line-height: 1.4;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   white-space: nowrap;
 }
 
@@ -2537,15 +2540,16 @@ input.pin {
 .present-ticket h2 {
   margin: 2px 0;
   color: var(--nav);
-  font-size: 19.5px;
+  font-size: 20.5px;
   letter-spacing: 0.08em;
 }
 
 .present-note {
   margin: 0 0 10px;
   color: var(--brick);
-  font-size: 12px;
+  font-size: clamp(13px, 3.7vw, 14.5px);
   font-weight: bold;
+  white-space: nowrap;
 }
 
 .present-perforation {
@@ -2566,12 +2570,12 @@ input.pin {
 .present-progress p {
   margin: 0;
   color: #5c554e;
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .present-progress strong {
   color: var(--brick);
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .present-dots {
