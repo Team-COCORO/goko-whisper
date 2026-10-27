@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -63,15 +64,20 @@ type AppContextValue = {
   beginPress: (id: WhisperId) => void;
   heldStamp: WhisperId | null;
   brushStamp: WhisperId | null;
+  mapFocusStamp: WhisperId | null;
+  acquiredStamp: WhisperId | null;
   holdBrush: (id: WhisperId) => void;
   playBrush: (id: WhisperId) => void;
+  revealStamp: (id: WhisperId, animate: boolean) => void;
   finishBrush: () => void;
   releaseBrush: () => void;
+  acknowledgeAcquired: () => void;
   openBook: () => void;
   closeBook: () => void;
   hideBook: () => void;
   setBookLocked: (locked: boolean) => void;
   showWhisper: (id: WhisperId, opensGoal?: boolean) => void;
+  queueWhisper: (id: WhisperId, opensGoal?: boolean) => void;
   dismissWhisper: () => void;
   openGoal: () => void;
   stampNotice: "retry" | "invalid" | null;
@@ -304,6 +310,7 @@ function deriveScreen(
   showGoal: boolean,
   isAdmin: boolean,
   soldOut: boolean,
+  acquiredStamp: WhisperId | null,
 ): Screen {
   if (isAdmin) return "admin";
   if (rally.redeemed) return "redeemed";
@@ -311,6 +318,7 @@ function deriveScreen(
     if (!rally.rewardCode && soldOut) return "soldOut";
     return "goal";
   }
+  if (acquiredStamp) return "acquired";
   if (whisperId) return "whisper";
   if (rally.pendingStamp) return "herald";
   const anyStamp = rally.stamp1Done || rally.stamp2Done || rally.stamp3Done;
@@ -319,6 +327,8 @@ function deriveScreen(
   if (!rally.rewardCode && soldOut) return "soldOut";
   return "top";
 }
+
+const REVEAL_FOCUS_MS = 620;
 
 function persistRally(next: StampRallyState) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
@@ -424,8 +434,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [bookLocked, setBookLocked] = useState(false);
   const [heldStamp, setHeldStamp] = useState<WhisperId | null>(null);
   const [brushStamp, setBrushStamp] = useState<WhisperId | null>(null);
+  const [mapFocusStamp, setMapFocusStamp] = useState<WhisperId | null>(null);
+  const [acquiredStamp, setAcquiredStamp] = useState<WhisperId | null>(null);
   const [whisperId, setWhisperId] = useState<WhisperId | null>(null);
   const [, setWhisperOpensGoal] = useState(false);
+  const brushStampRef = useRef<WhisperId | null>(null);
+  const pendingWhisperRef = useRef<{ id: WhisperId; opensGoal: boolean } | null>(null);
+  const revealTimerRef = useRef(0);
+  brushStampRef.current = brushStamp;
   const [showGoal, setShowGoal] = useState(() => Boolean(initial.rally.rewardCode));
   const [isAdmin, setIsAdmin] = useState(
     () => window.location.hash === "#admin",
@@ -584,7 +600,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })();
   }, [applyStampResult]);
 
-  const screen = deriveScreen(rally, whisperId, showGoal, isAdmin, soldOut);
+  const screen = deriveScreen(rally, whisperId, showGoal, isAdmin, soldOut, acquiredStamp);
 
   const beginPress = useCallback((id: WhisperId) => {
     setRally((prev) => {
@@ -610,14 +626,50 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setBrushStamp(id);
   }, []);
 
+  const revealStamp = useCallback((id: WhisperId, animate: boolean) => {
+    window.clearTimeout(revealTimerRef.current);
+    setActiveTab("home");
+    setMapFocusStamp(id);
+    if (!animate) {
+      setBrushStamp(null);
+      setHeldStamp(null);
+      setAcquiredStamp(id);
+      return;
+    }
+    revealTimerRef.current = window.setTimeout(() => {
+      setBrushStamp(id);
+    }, REVEAL_FOCUS_MS);
+  }, []);
+
   const finishBrush = useCallback(() => {
+    const id = brushStampRef.current;
     setBrushStamp(null);
     setHeldStamp(null);
+    if (id) setAcquiredStamp(id);
   }, []);
 
   const releaseBrush = useCallback(() => {
     setHeldStamp(null);
   }, []);
+
+  const showWhisper = useCallback((id: WhisperId, opensGoal = false) => {
+    setAcquiredStamp(null);
+    setWhisperId(id);
+    if (opensGoal) setWhisperOpensGoal(true);
+    setActiveTab("home");
+  }, []);
+
+  const queueWhisper = useCallback((id: WhisperId, opensGoal = false) => {
+    pendingWhisperRef.current = { id, opensGoal };
+  }, []);
+
+  const acknowledgeAcquired = useCallback(() => {
+    setAcquiredStamp(null);
+    setMapFocusStamp(null);
+    const pending = pendingWhisperRef.current;
+    pendingWhisperRef.current = null;
+    if (pending) showWhisper(pending.id, pending.opensGoal);
+  }, [showWhisper]);
 
   const openBook = useCallback(() => {
     setBookOpen(true);
@@ -630,12 +682,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   const hideBook = useCallback(() => {
     setBookOpen(false);
-  }, []);
-
-  const showWhisper = useCallback((id: WhisperId, opensGoal = false) => {
-    setWhisperId(id);
-    if (opensGoal) setWhisperOpensGoal(true);
-    setActiveTab("home");
   }, []);
 
   const dismissWhisper = useCallback(() => {
@@ -656,6 +702,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
       return false;
     });
+  }, []);
+
+  useEffect(() => {
+    return () => window.clearTimeout(revealTimerRef.current);
   }, []);
 
   const openGoal = useCallback(() => {
@@ -964,15 +1014,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       beginPress,
       heldStamp,
       brushStamp,
+      mapFocusStamp,
+      acquiredStamp,
       holdBrush,
       playBrush,
+      revealStamp,
       finishBrush,
       releaseBrush,
+      acknowledgeAcquired,
       openBook,
       closeBook,
       hideBook,
       setBookLocked,
       showWhisper,
+      queueWhisper,
       dismissWhisper,
       openGoal,
       stampNotice,
@@ -1016,15 +1071,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
       beginPress,
       heldStamp,
       brushStamp,
+      mapFocusStamp,
+      acquiredStamp,
       holdBrush,
       playBrush,
+      revealStamp,
       finishBrush,
       releaseBrush,
+      acknowledgeAcquired,
       openBook,
       closeBook,
       hideBook,
       setBookLocked,
       showWhisper,
+      queueWhisper,
       dismissWhisper,
       openGoal,
       stampNotice,

@@ -43,7 +43,7 @@ type LivePress = {
 type Bridge = {
   bump: () => void;
   hideBook: () => void;
-  showWhisper: (id: WhisperId, opensGoal?: boolean) => void;
+  queueWhisper: (id: WhisperId, opensGoal?: boolean) => void;
   setBookLocked: (locked: boolean) => void;
   beginPress: (id: WhisperId) => void;
 };
@@ -110,7 +110,7 @@ function arm() {
     livePress = null;
     bridge?.setBookLocked(false);
     bridge?.hideBook();
-    bridge?.showWhisper(id, true);
+    bridge?.queueWhisper(id, true);
     bridge?.bump();
   }, remain);
 }
@@ -345,13 +345,12 @@ export function StampBook() {
     bookOpen,
     beginPress,
     holdBrush,
-    playBrush,
-    releaseBrush,
+    revealStamp,
     openBook,
     closeBook,
     hideBook,
     setBookLocked,
-    showWhisper,
+    queueWhisper,
   } = useApp();
   const [, bump] = useState(0);
   const [page, setPage] = useState<PageIndex>(0);
@@ -367,10 +366,8 @@ export function StampBook() {
   const ceremonyId = useRef<WhisperId | null>(null);
   const settledClose = useRef(true);
   const closeTimer = useRef(0);
-  const playBrushRef = useRef(playBrush);
-  const releaseBrushRef = useRef(releaseBrush);
-  playBrushRef.current = playBrush;
-  releaseBrushRef.current = releaseBrush;
+  const revealStampRef = useRef(revealStamp);
+  revealStampRef.current = revealStamp;
   const hasSlip = Boolean(telegramCode && telegramWords(telegramCode));
   const sheets = sheetsFor(hasSlip);
   const lastPage = (sheets.length - 1) as PageIndex;
@@ -385,7 +382,7 @@ export function StampBook() {
     bridge = {
       bump: () => bump((n) => n + 1),
       hideBook,
-      showWhisper,
+      queueWhisper,
       setBookLocked,
       beginPress,
     };
@@ -403,8 +400,8 @@ export function StampBook() {
     const id = ceremonyId.current;
     ceremonyId.current = null;
     if (!id) return;
-    if (animate && !prefersReducedMotion()) playBrushRef.current(id);
-    else releaseBrushRef.current();
+    if (animate && !prefersReducedMotion()) revealStampRef.current(id, true);
+    else revealStampRef.current(id, false);
   };
 
   useEffect(() => {
@@ -555,7 +552,7 @@ export function StampBook() {
     livePress = null;
     setBookLocked(false);
     closeBook();
-    if (id) showWhisper(id, false);
+    if (id) queueWhisper(id, false);
   };
 
   const turnTo = (dir: TurnDir) => {

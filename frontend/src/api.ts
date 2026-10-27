@@ -546,3 +546,79 @@ export async function fetchSummary(
     return { ok: false, error: "error" };
   }
 }
+
+export type SurveyPayload = {
+  region: string;
+  regionOther: string;
+  boughtFood: boolean;
+  foodItem: string;
+  foodRating: number | null;
+  foodComment: string;
+  appRating: number | null;
+  appComment: string;
+};
+
+export type SurveySubmitResult =
+  | { ok: true }
+  | { ok: false; error: "invalid" | "locked" | "error" };
+
+export async function submitSurvey(payload: SurveyPayload): Promise<SurveySubmitResult> {
+  try {
+    const response = await fetchApi("/api/survey", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (response.status === 429) return { ok: false, error: "locked" };
+    if (response.status === 400) return { ok: false, error: "invalid" };
+    const body = (await response.json()) as { success?: unknown };
+    if (response.ok && body.success === true) return { ok: true };
+    return { ok: false, error: "error" };
+  } catch {
+    return { ok: false, error: "error" };
+  }
+}
+
+export type SurveySummary = {
+  total: number;
+  bought: number;
+  foodRatingAvg: number | null;
+  appRatingAvg: number | null;
+  regions: { region: string; count: number }[];
+  foodItems: { item: string; count: number }[];
+  recent: {
+    createdAt: number;
+    region: string;
+    regionOther: string;
+    boughtFood: boolean;
+    foodItem: string;
+    foodRating: number | null;
+    foodComment: string;
+    appRating: number | null;
+    appComment: string;
+  }[];
+};
+
+export async function fetchSurveySummary(
+  idToken: string,
+): Promise<{ ok: true; summary: SurveySummary } | { ok: false; error: OfficeError }> {
+  try {
+    const response = await fetchApi("/api/admin/survey/summary", {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+    if (!response.ok) return { ok: false, error: officeError(response.status) };
+    const body = (await response.json()) as SurveySummary & { success?: boolean };
+    if (body.success !== true || typeof body.total !== "number") {
+      return { ok: false, error: "error" };
+    }
+    return { ok: true, summary: body };
+  } catch {
+    return { ok: false, error: "error" };
+  }
+}
+
+export function openSurveyPage(): void {
+  const url = new URL("survey.html", window.location.href).href;
+  const opened = window.open(url, "_blank", "noopener,noreferrer");
+  if (!opened) window.location.assign(url);
+}
