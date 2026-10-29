@@ -88,7 +88,7 @@ export function EnrollPage({ onBack, withStamp = false }: EnrollPageProps) {
           入学する
         </button>
         <button className="join-back" type="button" onClick={onBack} disabled={busy}>
-          {withStamp ? "戻る" : "案内にもどる"}
+          戻る
         </button>
       </div>
     </main>
