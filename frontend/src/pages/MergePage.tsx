@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { mergeStudent } from "../api";
 import { useApp } from "../context/AppContext";
+import { markHomeGuideSeen } from "../components/HomeGuide";
 import { TelegramIcon } from "../components/TelegramIcon";
 import { TELEGRAM_FRAMES } from "../data/telegram";
 
@@ -50,7 +51,10 @@ export function MergePage({ onBack }: MergePageProps) {
     if (!completeMerge(result.student, result.redeemed)) {
       setBusy(false);
       setError("この場所の印を残せませんでした。QRを、もう一度読み取ってください。");
+      return;
     }
+    // 帳合わせする人は元端末で説明済み。このブラウザでは出し直さない。
+    markHomeGuideSeen();
   }
 
   return (
