@@ -1831,6 +1831,62 @@ input.pin {
   }
 }
 
+/* シートより手前・可視マップ帯（bottom = --map-inset）の四辺に固定 */
+.map-cardinals {
+  position: absolute;
+  z-index: 3;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: var(--map-inset, 45%);
+  pointer-events: none;
+  font-family: var(--font-serif);
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  color: #7a1d17;
+  text-shadow:
+    0 0 6px #efe6da,
+    0 0 3px #efe6da,
+    1px 0 0 #efe6da,
+    -1px 0 0 #efe6da,
+    0 1px 0 #efe6da,
+    0 -1px 0 #efe6da;
+}
+
+.map-cardinals span {
+  position: absolute;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: rgba(239, 230, 218, 0.72);
+}
+
+.map-cardinals__n {
+  /* float-header（ロゴ帯）の下へ避ける */
+  top: calc(12px + env(safe-area-inset-top, 0px) + 56px);
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.map-cardinals__s {
+  left: 50%;
+  bottom: 8px;
+  transform: translateX(-50%);
+}
+
+.map-cardinals__e {
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+}
+
+.map-cardinals__w {
+  top: 50%;
+  left: 10px;
+  transform: translateY(-50%);
+}
+
 .mz {
   position: absolute;
   left: 8px;

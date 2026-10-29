@@ -159,6 +159,12 @@ function HomeStage() {
           </>
         )}
       </BottomSheet>
+      <div className="map-cardinals" aria-hidden="true">
+        <span className="map-cardinals__n">北</span>
+        <span className="map-cardinals__e">東</span>
+        <span className="map-cardinals__s">南</span>
+        <span className="map-cardinals__w">西</span>
+      </div>
     </main>
   );
 }

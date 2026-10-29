@@ -11,6 +11,8 @@ const MIN_K = 0.4;
 const MAX_K = 5;
 const FOCUS_K = 2.35;
 const FOCUS_MS = 560;
+/** 全体表示: 1 未満ほど余白を削って拡大（シート上の可視領域基準） */
+const FIT_PAD = 0.86;
 
 const STAMP_FOCUS: Record<WhisperId, { x: number; y: number }> = {
   1: { x: 226, y: 36 },
@@ -196,16 +198,6 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
       return Math.min(0, Math.max(size - drawn, pos));
     };
 
-    const apply = () => {
-      const vbH = viewBoxHeight();
-      view.x = axis(view.x, view.k, MAP_W, MAP_W);
-      view.y = axis(view.y, view.k, vbH, MAP_H);
-      group.setAttribute(
-        "transform",
-        `translate(${view.x} ${view.y}) scale(${view.k})`,
-      );
-    };
-
     const visibleUserHeight = () => {
       const ratio = pixelRatio();
       if (ratio <= 0) return MAP_H;
@@ -213,15 +205,29 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
       return visiblePx / ratio;
     };
 
+    const apply = () => {
+      // viewBox は mapw 全体。縦パン制限だけシート上の可視領域に合わせる
+      viewBoxHeight();
+      const visible = visibleUserHeight();
+      view.x = axis(view.x, view.k, MAP_W, MAP_W);
+      view.y = axis(view.y, view.k, visible, MAP_H);
+      group.setAttribute(
+        "transform",
+        `translate(${view.x} ${view.y}) scale(${view.k})`,
+      );
+    };
+
     const fit = () => {
       const ratio = pixelRatio();
       if (ratio <= 0) return;
       const visibleUser = visibleUserHeight();
-      view.k = Math.min(1, visibleUser / MAP_H);
+      // 高さ contain を基準に FIT_PAD 分だけ拡大（上下余白を減らし、左右はわずかにクロップ可）
+      const containK = Math.min(1, visibleUser / MAP_H);
+      view.k = Math.min(MAX_K, Math.max(MIN_K, containK / FIT_PAD));
       const drawnH = MAP_H * view.k;
       const drawnW = MAP_W * view.k;
       view.x = (MAP_W - drawnW) / 2;
-      view.y = Math.max(0, (visibleUser - drawnH) / 2);
+      view.y = (visibleUser - drawnH) / 2;
       apply();
     };
 
@@ -235,6 +241,11 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
       view.k = next;
       apply();
     };
+
+    const visibleCenter = (): [number, number] => [
+      MAP_W / 2,
+      visibleUserHeight() / 2,
+    ];
 
     const targetFor = (id: WhisperId): View => {
       const spot = STAMP_FOCUS[id];
@@ -274,8 +285,14 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
     };
 
     apiRef.current = {
-      zoomIn: () => zoomAt(1.2, MAP_W / 2, MAP_H / 2),
-      zoomOut: () => zoomAt(1 / 1.2, MAP_W / 2, MAP_H / 2),
+      zoomIn: () => {
+        const [cx, cy] = visibleCenter();
+        zoomAt(1.2, cx, cy);
+      },
+      zoomOut: () => {
+        const [cx, cy] = visibleCenter();
+        zoomAt(1 / 1.2, cx, cy);
+      },
       fit: () => {
         userAdjusted = false;
         window.cancelAnimationFrame(focusRaf);
@@ -528,14 +545,6 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             <circle r={3} fill="#4a3f35" stroke="#efe6da" strokeWidth={1} />
             <text y={-5} textAnchor="middle" className="map-label" style={{ fontSize: 6 }}>
               生協 学生会館ショップ
-            </text>
-          </g>
-          <g transform="translate(282 130)" pointerEvents="none" aria-hidden="true">
-            <circle r={14} fill="#efe6da" stroke="#c5a059" strokeWidth={1} />
-            <polygon points="0,-11 3.2,1.5 0,-1 -3.2,1.5" fill="#8b3a2b" />
-            <polygon points="0,11 3.2,-1.5 0,1 -3.2,-1.5" fill="#4a3f35" />
-            <text y={-16} textAnchor="middle" className="map-label">
-              N
             </text>
           </g>
         </g>
