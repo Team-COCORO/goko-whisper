@@ -6,12 +6,12 @@ export type Screen =
   | "guide"
   | "herald"
   | "acquired"
-  | "goal"
   | "redeemed"
-  | "soldOut"
   | "admin";
 
 export type WhisperId = 1 | 2 | 3;
+
+export type CelebrationStampId = "goko" | "hean" | "natume" | "natume_hean";
 
 export type WhisperContent = {
   label: string;
@@ -32,6 +32,8 @@ export type StampRallyState = {
   pendingStamp: WhisperId | null;
   goalUnlocked: boolean;
   redeemed: boolean;
-  rewardCode?: string;
-  issuedAt?: number;
+  /** 満願モーダルで一度抽選した記念スタンプ */
+  celebrationStampId?: CelebrationStampId;
+  /** 満願モーダルを一度表示したか（再表示しない） */
+  celebrationSeen?: boolean;
 };

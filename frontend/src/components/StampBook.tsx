@@ -10,7 +10,6 @@ const BOOK_OUT_MS = 1000;
 const BOOK_IN_MS = 2000;
 const BEAT_MS = 1000;
 const PRESS_MS = 4000;
-const HOLD_MS = 5000;
 const IMPACT_MS = 1000;
 const TURN_MS = 1350;
 
@@ -31,7 +30,7 @@ type PageIndex = 0 | 1 | 2 | 3;
 type Sheet = "telegram" | WhisperId;
 type TurnDir = "next" | "prev";
 
-type Phase = "open" | "press" | "hold" | "wait-close";
+type Phase = "open" | "press" | "wait-close";
 
 type LivePress = {
   id: WhisperId;
@@ -77,12 +76,7 @@ function arm() {
   const current = livePress;
   if (!current || current.phase === "wait-close") return;
 
-  const duration =
-    current.phase === "open"
-      ? BOOK_IN_MS + BEAT_MS
-      : current.phase === "press"
-        ? PRESS_MS
-        : HOLD_MS;
+  const duration = current.phase === "open" ? BOOK_IN_MS + BEAT_MS : PRESS_MS;
   const remain = Math.max(0, duration - (Date.now() - current.startedAt));
   timer = window.setTimeout(() => {
     if (!livePress || livePress.id !== current.id || livePress.phase !== current.phase) {
@@ -97,20 +91,8 @@ function arm() {
       armImpact(livePress);
       return;
     }
-    if (current.phase === "press") {
-      livePress = current.willComplete
-        ? { ...current, phase: "hold", startedAt: Date.now() }
-        : { ...current, phase: "wait-close", startedAt: Date.now() };
-      bridge?.setBookLocked(livePress.phase === "hold");
-      bridge?.bump();
-      if (livePress.phase === "hold") arm();
-      return;
-    }
-    const id = current.id;
-    livePress = null;
+    livePress = { ...current, phase: "wait-close", startedAt: Date.now() };
     bridge?.setBookLocked(false);
-    bridge?.hideBook();
-    bridge?.queueWhisper(id, true);
     bridge?.bump();
   }, remain);
 }
@@ -408,7 +390,7 @@ export function StampBook() {
     if (livePress) {
       claimCeremony(livePress.id);
       openBook();
-      setBookLocked(livePress.phase === "open" || livePress.phase === "press" || livePress.phase === "hold");
+      setBookLocked(livePress.phase === "open" || livePress.phase === "press");
       arm();
       armImpact(livePress);
       return;
@@ -420,11 +402,7 @@ export function StampBook() {
     const willComplete = finished === 2;
     const wait = window.setTimeout(() => {
       if (livePress) return;
-      const nextPhase: Phase = prefersReducedMotion()
-        ? willComplete
-          ? "hold"
-          : "wait-close"
-        : "open";
+      const nextPhase: Phase = prefersReducedMotion() ? "wait-close" : "open";
       livePress = {
         id,
         phase: nextPhase,
@@ -543,16 +521,15 @@ export function StampBook() {
   const displayed: PageIndex = livePress ? pageFor(livePress.id, hasSlip) : page;
   const pressingNow = livePress?.phase === "press";
 
-  const locked =
-    livePress?.phase === "open" || livePress?.phase === "press" || livePress?.phase === "hold";
+  const locked = livePress?.phase === "open" || livePress?.phase === "press";
 
   const finishClose = () => {
-    const id = livePress?.phase === "wait-close" ? livePress.id : null;
+    const closing = livePress?.phase === "wait-close" ? livePress : null;
     window.clearTimeout(timer);
     livePress = null;
     setBookLocked(false);
     closeBook();
-    if (id) queueWhisper(id, false);
+    if (closing) queueWhisper(closing.id, closing.willComplete);
   };
 
   const turnTo = (dir: TurnDir) => {

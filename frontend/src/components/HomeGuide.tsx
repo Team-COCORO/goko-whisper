@@ -95,12 +95,17 @@ function guideSeen(): boolean {
   }
 }
 
-function markGuideSeen() {
+/** 帳合わせ成功時など、既に説明済みとみなすときに使う */
+export function markHomeGuideSeen() {
   try {
     localStorage.setItem(GUIDE_KEY, "seen");
   } catch {
     // 記録できない端末では、閉じたあと同じ画面では出し直さない。
   }
+}
+
+function markGuideSeen() {
+  markHomeGuideSeen();
 }
 
 function holeFrom(target: DOMRect, shell: DOMRect, pad: number, radius: number): Hole {

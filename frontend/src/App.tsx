@@ -5,12 +5,14 @@ import { CampusMap } from "./components/CampusMap";
 import { HomeGuide } from "./components/HomeGuide";
 import { HomeStatus, StampMarks } from "./components/HomeStatus";
 import { StampBook, StampBookButton } from "./components/StampBook";
+import { CelebrationModal } from "./components/CelebrationModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { StampNotice } from "./components/StampNotice";
 import { TelegramSlip } from "./components/TelegramSlip";
 import { AppProvider, useApp } from "./context/AppContext";
 import { placeById, type PlaceId, type PlaceStory } from "./data/places";
 import { AdminPage } from "./pages/AdminPage";
+import { ConsentPage } from "./pages/ConsentPage";
 import { EnrollPage } from "./pages/EnrollPage";
 import { FoodPage } from "./pages/FoodPage";
 import { MergePage } from "./pages/MergePage";
@@ -34,12 +36,8 @@ function sheetLabel(
       return "耳を澄ませ";
     case "acquired":
       return "印を得て";
-    case "goal":
-      return "ゴール";
     case "redeemed":
       return "受取完了";
-    case "soldOut":
-      return "配布終了";
     case "top":
       return stampCount >= 3 ? "満願" : "はじまり";
     default:
@@ -50,7 +48,6 @@ function sheetLabel(
 function sheetRatio(screen: Screen, placeName: string | null): number {
   if (placeName) return 0.45;
   // 実高さは expandToContent で合わせる。ここは初期・フォールバック用。
-  if (screen === "goal") return 0.55;
   if (screen === "whisper" || screen === "acquired" || screen === "herald") return 0.42;
   if (screen === "top" || screen === "guide") return 0.42;
   return 0.38;
@@ -64,9 +61,7 @@ function sheetHugsContent(screen: Screen, hasPlace: boolean): boolean {
     screen === "herald" ||
     screen === "acquired" ||
     screen === "whisper" ||
-    screen === "goal" ||
-    screen === "redeemed" ||
-    screen === "soldOut"
+    screen === "redeemed"
   );
 }
 
@@ -165,6 +160,12 @@ function HomeStage() {
           </>
         )}
       </BottomSheet>
+      <div className="map-cardinals" aria-hidden="true">
+        <span className="map-cardinals__n">北</span>
+        <span className="map-cardinals__e">東</span>
+        <span className="map-cardinals__s">南</span>
+        <span className="map-cardinals__w">西</span>
+      </div>
     </main>
   );
 }
@@ -192,22 +193,39 @@ function TabContent() {
 }
 
 function StampJoinGate({ pendingStamp }: { pendingStamp: 1 | 2 | 3 }) {
-  const [mode, setMode] = useState<"landing" | "enroll" | "merge">("landing");
-  if (mode === "enroll") return <EnrollPage withStamp onBack={() => setMode("landing")} />;
+  const [mode, setMode] = useState<"landing" | "consent" | "enroll" | "merge">("landing");
+  if (mode === "consent") {
+    return (
+      <ConsentPage
+        onAgree={() => setMode("enroll")}
+        onBack={() => setMode("landing")}
+        backLabel="戻る"
+      />
+    );
+  }
+  if (mode === "enroll") return <EnrollPage withStamp onBack={() => setMode("consent")} />;
   if (mode === "merge") return <MergePage onBack={() => setMode("landing")} />;
   return (
     <StampLandingPage
       pendingStamp={pendingStamp}
-      onEnroll={() => setMode("enroll")}
+      onEnroll={() => setMode("consent")}
       onMerge={() => setMode("merge")}
     />
   );
 }
 
 function JoinGate() {
-  const [enrolling, setEnrolling] = useState(false);
-  if (enrolling) return <EnrollPage onBack={() => setEnrolling(false)} />;
-  return <ProloguePage onEnroll={() => setEnrolling(true)} />;
+  const [mode, setMode] = useState<"prologue" | "consent" | "enroll">("prologue");
+  if (mode === "consent") {
+    return (
+      <ConsentPage
+        onAgree={() => setMode("enroll")}
+        onBack={() => setMode("prologue")}
+      />
+    );
+  }
+  if (mode === "enroll") return <EnrollPage onBack={() => setMode("consent")} />;
+  return <ProloguePage onEnroll={() => setMode("consent")} />;
 }
 
 function AppShell() {
@@ -275,6 +293,7 @@ function AppShell() {
       <BottomNav />
       {activeTab === "home" && <HomeGuide />}
       <SettingsModal />
+      <CelebrationModal />
     </div>
   );
 }

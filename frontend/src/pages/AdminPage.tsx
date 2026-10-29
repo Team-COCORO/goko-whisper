@@ -45,7 +45,7 @@ function googleIdentity(): GoogleIdentity | null {
 function officeMessage(error: OfficeError): string {
   if (error === "unauthorized") return "ログインし直してください";
   if (error === "missing") return "記録が見つかりません";
-  if (error === "no_token") return "引換コードが発行されていません";
+  if (error === "conflict") return "スタンプ未達成か、既に受取済みです";
   if (error === "invalid") return "入力を確認してください";
   if (error === "unavailable") return "運営管理の準備ができていません";
   return "通信が必要です";
@@ -121,6 +121,177 @@ function regionLabel(region: string): string {
 
 function foodItemLabel(item: string): string {
   return FOOD_LABELS[item] ?? item;
+}
+
+type CountSort = "count-desc" | "count-asc" | "name-asc" | "name-desc";
+type CommentSort = "newest" | "oldest";
+type CommentFilter = "all" | "app" | "food";
+
+type SurveyCountEntry = { id: string; label: string; count: number };
+
+function sortCountEntries(entries: SurveyCountEntry[], sort: CountSort): SurveyCountEntry[] {
+  const copy = [...entries];
+  copy.sort((a, b) => {
+    const byName = a.label.localeCompare(b.label, "ja");
+    if (sort === "count-desc") return b.count - a.count || byName;
+    if (sort === "count-asc") return a.count - b.count || byName;
+    if (sort === "name-asc") return byName || b.count - a.count;
+    return b.label.localeCompare(a.label, "ja") || b.count - a.count;
+  });
+  return copy;
+}
+
+function SurveyCountList({
+  title,
+  entries,
+  total,
+}: {
+  title: string;
+  entries: SurveyCountEntry[];
+  total: number;
+}) {
+  const [sort, setSort] = useState<CountSort>("count-desc");
+  const sorted = useMemo(() => sortCountEntries(entries, sort), [entries, sort]);
+  const max = Math.max(...sorted.map((entry) => entry.count), 1);
+
+  return (
+    <div className="admin-survey-list">
+      <div className="admin-survey-list__head">
+        <h3>{title}</h3>
+        <div className="admin-seg" role="group" aria-label={`${title}の並び替え`}>
+          {(
+            [
+              ["count-desc", "件数▼"],
+              ["count-asc", "件数▲"],
+              ["name-asc", "名前▲"],
+              ["name-desc", "名前▼"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-pressed={sort === value}
+              onClick={() => setSort(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <ul>
+        {sorted.map((entry) => (
+          <li key={entry.id}>
+            <div className="admin-survey-list__row">
+              <span className="admin-survey-list__label">{entry.label}</span>
+              <span className="admin-survey-list__stats">
+                <strong>{entry.count}</strong>
+                <em>{percent(entry.count, total)}</em>
+              </span>
+            </div>
+            <div
+              className="admin-survey-list__bar"
+              role="presentation"
+              aria-hidden="true"
+            >
+              <span style={{ width: `${Math.round((entry.count / max) * 100)}%` }} />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function SurveyComments({
+  rows,
+}: {
+  rows: SurveySummary["recent"];
+}) {
+  const [sort, setSort] = useState<CommentSort>("newest");
+  const [filter, setFilter] = useState<CommentFilter>("all");
+
+  const visible = useMemo(() => {
+    const filtered = rows.filter((row) => {
+      if (filter === "app") return Boolean(row.appComment);
+      if (filter === "food") return Boolean(row.foodComment);
+      return Boolean(row.appComment || row.foodComment);
+    });
+    const copy = [...filtered];
+    copy.sort((a, b) =>
+      sort === "newest" ? b.createdAt - a.createdAt : a.createdAt - b.createdAt,
+    );
+    return copy;
+  }, [rows, sort, filter]);
+
+  if (!rows.some((row) => row.appComment || row.foodComment)) return null;
+
+  return (
+    <div className="admin-survey-comments">
+      <div className="admin-survey-list__head">
+        <h3>最近のコメント</h3>
+        <div className="admin-survey-comments__tools">
+          <div className="admin-seg" role="group" aria-label="コメントの種類">
+            {(
+              [
+                ["all", "すべて"],
+                ["app", "アプリ"],
+                ["food", "食品"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={filter === value}
+                onClick={() => setFilter(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className="admin-seg" role="group" aria-label="コメントの並び替え">
+            {(
+              [
+                ["newest", "新しい順"],
+                ["oldest", "古い順"],
+              ] as const
+            ).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                aria-pressed={sort === value}
+                onClick={() => setSort(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+      {visible.length === 0 ? (
+        <p className="admin-panel__empty">該当するコメントはありません</p>
+      ) : (
+        <ul>
+          {visible.map((row) => (
+            <li key={`${row.createdAt}-${row.region}-${row.appComment}-${row.foodComment}`}>
+              <time dateTime={new Date(row.createdAt).toISOString()}>
+                {registeredAt(row.createdAt)}
+              </time>
+              <span className="admin-survey-comments__meta">
+                {regionLabel(row.region)}
+                {row.regionOther ? `（${row.regionOther}）` : ""}
+              </span>
+              {row.appComment && (filter === "all" || filter === "app") ? (
+                <p>アプリ: {row.appComment}</p>
+              ) : null}
+              {row.foodComment && (filter === "all" || filter === "food") ? (
+                <p>食品: {row.foodComment}</p>
+              ) : null}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
 }
 
 function wordsOf(student: OfficeStudent): string[] | null {
@@ -235,6 +406,8 @@ type DeskDialog =
   | { kind: "redeem"; student: OfficeStudent }
   | { kind: "stamps"; student: OfficeStudent };
 
+type MetricsTab = "survey" | "prize";
+
 type MenuState = {
   key: string;
   student: OfficeStudent;
@@ -259,6 +432,7 @@ export function AdminPage() {
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [dialog, setDialog] = useState<DeskDialog | null>(null);
   const [stampDraft, setStampDraft] = useState<string[]>([]);
+  const [metricsTab, setMetricsTab] = useState<MetricsTab>("prize");
   const cancelRef = useRef<HTMLButtonElement>(null);
   const buttonRef = useRef<HTMLDivElement>(null);
   const filterRef = useRef<HTMLInputElement>(null);
@@ -551,8 +725,8 @@ export function AdminPage() {
   const lowStock =
     summary !== null &&
     (summary.remaining <= 20 || (summary.limit > 0 && summary.remaining / summary.limit <= 0.1));
-  const pendingIssue = summary ? Math.max(0, summary.issued - summary.redeemed) : 0;
-  const used = summary && summary.limit > 0 ? Math.min(100, (summary.issued / summary.limit) * 100) : 0;
+  const used =
+    summary && summary.limit > 0 ? Math.min(100, (summary.redeemed / summary.limit) * 100) : 0;
   const mail = emailFromToken(idToken);
 
   return (
@@ -591,120 +765,151 @@ export function AdminPage() {
         </div>
       </header>
       {lowStock && <p className="admin-alert">景品の残数が少なくなっています。</p>}
-      {survey && (
-        <section className="admin-metrics" aria-label="アンケート集計">
-          <h2>アンケート集計</h2>
-          <div className="admin-metrics__grid">
-            <article>
-              <span>回答数</span>
-              <strong>{survey.total}</strong>
-              <small>件 · 食品購入あり {survey.bought} 件</small>
-            </article>
-            <article>
-              <span>アプリ満足度</span>
-              <strong>
-                {survey.appRatingAvg == null ? "—" : survey.appRatingAvg.toFixed(1)}
-              </strong>
-              <small>平均（1–5）</small>
-            </article>
-            <article>
-              <span>食品満足度</span>
-              <strong>
-                {survey.foodRatingAvg == null ? "—" : survey.foodRatingAvg.toFixed(1)}
-              </strong>
-              <small>平均（購入者・1–5）</small>
-            </article>
+      {(survey || summary) && (
+        <section className="admin-panel" aria-label="集計パネル">
+          <div className="admin-tabs" role="tablist" aria-label="集計の切替">
+            <button
+              type="button"
+              role="tab"
+              id="admin-tab-prize"
+              aria-selected={metricsTab === "prize"}
+              aria-controls="admin-panel-prize"
+              className={metricsTab === "prize" ? "is-active" : undefined}
+              onClick={() => setMetricsTab("prize")}
+            >
+              景品・配布進捗
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="admin-tab-survey"
+              aria-selected={metricsTab === "survey"}
+              aria-controls="admin-panel-survey"
+              className={metricsTab === "survey" ? "is-active" : undefined}
+              onClick={() => {
+                setMenu(null);
+                setMetricsTab("survey");
+              }}
+            >
+              アンケート集計
+            </button>
           </div>
-          {survey.regions.length > 0 && (
-            <div className="admin-survey-list">
-              <h3>来県</h3>
-              <ul>
-                {survey.regions.map((entry) => (
-                  <li key={entry.region}>
-                    <span>{regionLabel(entry.region)}</span>
-                    <strong>{entry.count}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {survey.foodItems.length > 0 && (
-            <div className="admin-survey-list">
-              <h3>購入メニュー</h3>
-              <ul>
-                {survey.foodItems.map((entry) => (
-                  <li key={entry.item}>
-                    <span>{foodItemLabel(entry.item)}</span>
-                    <strong>{entry.count}</strong>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {survey.recent.some((row) => row.appComment || row.foodComment) && (
-            <div className="admin-survey-comments">
-              <h3>最近のコメント</h3>
-              <ul>
-                {survey.recent
-                  .filter((row) => row.appComment || row.foodComment)
-                  .map((row) => (
-                    <li key={row.createdAt}>
-                      <time dateTime={new Date(row.createdAt).toISOString()}>
-                        {registeredAt(row.createdAt)}
-                      </time>
-                      <span className="admin-survey-comments__meta">
-                        {regionLabel(row.region)}
-                        {row.regionOther ? `（${row.regionOther}）` : ""}
-                      </span>
-                      {row.appComment ? <p>アプリ: {row.appComment}</p> : null}
-                      {row.foodComment ? <p>食品: {row.foodComment}</p> : null}
-                    </li>
-                  ))}
-              </ul>
-            </div>
-          )}
-        </section>
-      )}
-      {summary && (
-        <section className="admin-metrics" aria-label="景品・配布進捗">
-          <h2>景品・配布進捗</h2>
-          <div className="admin-metrics__grid">
-            <article className={lowStock ? "admin-metric--remain admin-metric--low" : "admin-metric--remain"}>
-              <span>景品残数</span>
-              <strong>{summary.remaining}</strong>
-              <small>
-                / {summary.limit} 個 · 消化率 {percent(summary.issued, summary.limit)}
-              </small>
-              <div className="admin-bar-meter" aria-hidden="true">
-                <span style={{ width: `${used}%` }} />
+          <div className="admin-panel__body">
+            {metricsTab === "prize" && (
+              <div
+                className="admin-metrics"
+                role="tabpanel"
+                id="admin-panel-prize"
+                aria-labelledby="admin-tab-prize"
+              >
+                {summary ? (
+                  <div className="admin-metrics__grid">
+                    <article
+                      className={
+                        lowStock ? "admin-metric--remain admin-metric--low" : "admin-metric--remain"
+                      }
+                    >
+                      <span>景品残数</span>
+                      <strong>{summary.remaining}</strong>
+                      <small>
+                        / {summary.limit} 個 · 消化率 {percent(summary.redeemed, summary.limit)}
+                      </small>
+                      <div className="admin-bar-meter" aria-hidden="true">
+                        <span style={{ width: `${used}%` }} />
+                      </div>
+                    </article>
+                    <article>
+                      <span>配布上限</span>
+                      <strong>{summary.limit}</strong>
+                      <small>個 · 設定値</small>
+                    </article>
+                    <article>
+                      <span>満願（3印）</span>
+                      <strong>{summary.completed}</strong>
+                      <small>名 · 引換待ち {summary.waiting} 名</small>
+                    </article>
+                    <article>
+                      <span>窓口受取済</span>
+                      <strong>{summary.redeemed}</strong>
+                      <small>件 · 消込率 {percent(summary.redeemed, summary.completed)}</small>
+                    </article>
+                    <article>
+                      <span>総参加者</span>
+                      <strong>{students?.length ?? 0}</strong>
+                      <small>
+                        名 · 完走 {percent(finished, students?.length ?? 0)}
+                        {truncated ? "（表示分）" : ""}
+                      </small>
+                    </article>
+                  </div>
+                ) : (
+                  <p className="admin-panel__empty">景品データを取得しています…</p>
+                )}
               </div>
-            </article>
-            <article>
-              <span>配布上限</span>
-              <strong>{summary.limit}</strong>
-              <small>個 · 設定値</small>
-            </article>
-            <article>
-              <span>引換チケット発行</span>
-              <strong>{summary.issued}</strong>
-              <small>件 · 未受取 {pendingIssue} 名</small>
-            </article>
-            <article>
-              <span>窓口受取済</span>
-              <strong>{summary.redeemed}</strong>
-              <small>件 · 消込率 {percent(summary.redeemed, summary.issued)}</small>
-            </article>
-            <article>
-              <span>総参加者</span>
-              <strong>{students?.length ?? 0}</strong>
-              <small>
-                名 · 完走 {percent(finished, students?.length ?? 0)}
-                {truncated ? "（表示分）" : ""}
-              </small>
-            </article>
+            )}
+            {metricsTab === "survey" && (
+              <div
+                className="admin-metrics"
+                role="tabpanel"
+                id="admin-panel-survey"
+                aria-labelledby="admin-tab-survey"
+              >
+                {survey ? (
+                  <>
+                    <div className="admin-metrics__grid">
+                      <article>
+                        <span>回答数</span>
+                        <strong>{survey.total}</strong>
+                        <small>件 · 食品購入あり {survey.bought} 件</small>
+                      </article>
+                      <article>
+                        <span>アプリ満足度</span>
+                        <strong>
+                          {survey.appRatingAvg == null ? "—" : survey.appRatingAvg.toFixed(1)}
+                        </strong>
+                        <small>平均（1–5）</small>
+                      </article>
+                      <article>
+                        <span>食品満足度</span>
+                        <strong>
+                          {survey.foodRatingAvg == null ? "—" : survey.foodRatingAvg.toFixed(1)}
+                        </strong>
+                        <small>平均（購入者・1–5）</small>
+                      </article>
+                    </div>
+                    {survey.regions.length > 0 && (
+                      <SurveyCountList
+                        title="来県"
+                        total={survey.total}
+                        entries={survey.regions.map((entry) => ({
+                          id: entry.region,
+                          label: regionLabel(entry.region),
+                          count: entry.count,
+                        }))}
+                      />
+                    )}
+                    {survey.foodItems.length > 0 && (
+                      <SurveyCountList
+                        title="購入メニュー"
+                        total={survey.bought > 0 ? survey.bought : survey.total}
+                        entries={survey.foodItems.map((entry) => ({
+                          id: entry.item,
+                          label: foodItemLabel(entry.item),
+                          count: entry.count,
+                        }))}
+                      />
+                    )}
+                    <SurveyComments rows={survey.recent} />
+                  </>
+                ) : (
+                  <p className="admin-panel__empty">アンケートデータを取得しています…</p>
+                )}
+              </div>
+            )}
           </div>
         </section>
       )}
+      {metricsTab === "prize" && (
       <section className="admin-roster" aria-label="参加者照会">
         <h2>参加者照会</h2>
         <div className="admin-search">
@@ -815,6 +1020,7 @@ export function AdminPage() {
           </table>
         </div>
       </section>
+      )}
       {menu && (
         <>
           <button className="admin-menu-backdrop" type="button" aria-label="編集メニューを閉じる" onClick={() => setMenu(null)} />
@@ -822,7 +1028,7 @@ export function AdminPage() {
             <button type="button" role="menuitem" onClick={() => openStamps(menu.student)}>
               スタンプを手動変更
             </button>
-            {menu.student.ticketIssued && !menu.student.redeemed && (
+            {stampCount(menu.student) === 3 && !menu.student.redeemed && (
               <button
                 type="button"
                 role="menuitem"
@@ -867,7 +1073,7 @@ export function AdminPage() {
                 <h2 id="admin-dialog-title">参加者データの削除</h2>
                 <p>
                   「{dialog.student.nickname}」（符丁: {deskLabel(dialog.student)}
-                  ）のデータを削除しますか？この操作は取り消せません。まだ受け取っていない引換コードも消えます。
+                  ）のデータを削除しますか？この操作は取り消せません。
                 </p>
                 <div className="admin-modal__actions">
                   <button
@@ -894,7 +1100,7 @@ export function AdminPage() {
               <>
                 <h2 id="admin-dialog-title">景品を引換済みにする</h2>
                 <p>
-                  「{dialog.student.nickname}」の景品を引換済みにします。6桁のコードは表示しません。この操作は取り消せません。
+                  「{dialog.student.nickname}」の景品を引換済みにします。この操作は取り消せません。
                 </p>
                 <div className="admin-modal__actions">
                   <button
