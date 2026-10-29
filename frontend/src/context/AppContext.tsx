@@ -14,7 +14,17 @@ import {
   type EnrollStudent,
   type StampVerifyResult,
 } from "../api";
-import type { Screen, StampRallyState, Tab, WhisperId } from "../types";
+import {
+  isCelebrationStampId,
+  pickCelebrationStampId,
+} from "../data/celebrationStamps";
+import type {
+  CelebrationStampId,
+  Screen,
+  StampRallyState,
+  Tab,
+  WhisperId,
+} from "../types";
 
 export type SyncNowResult =
   | { ok: true; stampCount: number; redeemed: boolean }
@@ -49,8 +59,6 @@ type AppContextValue = {
   clientId: string;
   hasJoined: boolean;
   telegramCode: string | null;
-  rewardCode?: string;
-  issuedAt?: number;
   slipVisible: boolean;
   setActiveTab: (tab: Tab) => void;
   reserveClientForEnroll: () => boolean;
@@ -58,9 +66,6 @@ type AppContextValue = {
   completeEnroll: (student: EnrollStudent) => boolean;
   completeMerge: (student: EnrollStudent, redeemed: boolean) => boolean;
   acknowledgeSlip: () => void;
-  saveIssued: (code: string, issuedAt: number) => void;
-  markRedeemed: () => void;
-  markSoldOut: () => void;
   beginPress: (id: WhisperId) => void;
   heldStamp: WhisperId | null;
   brushStamp: WhisperId | null;
@@ -79,7 +84,11 @@ type AppContextValue = {
   showWhisper: (id: WhisperId, opensGoal?: boolean) => void;
   queueWhisper: (id: WhisperId, opensGoal?: boolean) => void;
   dismissWhisper: () => void;
-  openGoal: () => void;
+  goPresent: () => void;
+  showCelebration: boolean;
+  celebrationStampId: CelebrationStampId | null;
+  dismissCelebration: () => void;
+  continueFromCelebration: () => void;
   stampNotice: "retry" | "invalid" | null;
   retryStamp: () => void;
   settingsOpen: boolean;
@@ -181,8 +190,10 @@ function parseRally(raw: string | null): StampRallyState {
     rally.pendingStamp = null;
   }
 
-  if (typeof record.rewardCode === "string") rally.rewardCode = record.rewardCode;
-  if (typeof record.issuedAt === "number") rally.issuedAt = record.issuedAt;
+  if (isCelebrationStampId(record.celebrationStampId)) {
+    rally.celebrationStampId = record.celebrationStampId;
+  }
+  if (record.celebrationSeen === true) rally.celebrationSeen = true;
   return rally;
 }
 
@@ -307,24 +318,17 @@ function stripStampQuery() {
 function deriveScreen(
   rally: StampRallyState,
   whisperId: WhisperId | null,
-  showGoal: boolean,
   isAdmin: boolean,
-  soldOut: boolean,
   acquiredStamp: WhisperId | null,
 ): Screen {
   if (isAdmin) return "admin";
   if (rally.redeemed) return "redeemed";
-  if (showGoal) {
-    if (!rally.rewardCode && soldOut) return "soldOut";
-    return "goal";
-  }
   if (acquiredStamp) return "acquired";
   if (whisperId) return "whisper";
   if (rally.pendingStamp) return "herald";
   const anyStamp = rally.stamp1Done || rally.stamp2Done || rally.stamp3Done;
   if (!anyStamp && !rally.pendingStamp) return "top";
   if (!allStamps(rally)) return "guide";
-  if (!rally.rewardCode && soldOut) return "soldOut";
   return "top";
 }
 
@@ -378,7 +382,7 @@ function withServerProgress(
     stamp2Done,
     stamp3Done,
     pendingStamp,
-    goalUnlocked: (stamp1Done && stamp2Done && stamp3Done) || Boolean(rally.rewardCode),
+    goalUnlocked: stamp1Done && stamp2Done && stamp3Done,
     redeemed,
   };
 }
@@ -429,7 +433,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [storageBlocked, setStorageBlocked] = useState(initial.storageBlocked);
   const [activeTab, setActiveTab] = useState<Tab>("home");
   const [rally, setRally] = useState(initial.rally);
-  const [soldOut, setSoldOut] = useState(false);
   const [bookOpen, setBookOpen] = useState(false);
   const [bookLocked, setBookLocked] = useState(false);
   const [heldStamp, setHeldStamp] = useState<WhisperId | null>(null);
@@ -442,7 +445,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const pendingWhisperRef = useRef<{ id: WhisperId; opensGoal: boolean } | null>(null);
   const revealTimerRef = useRef(0);
   brushStampRef.current = brushStamp;
-  const [showGoal, setShowGoal] = useState(() => Boolean(initial.rally.rewardCode));
+  const [showCelebration, setShowCelebration] = useState(false);
+  const rallyRef = useRef(rally);
+  rallyRef.current = rally;
   const [isAdmin, setIsAdmin] = useState(
     () => window.location.hash === "#admin",
   );
@@ -491,7 +496,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
           rememberBootRally(next);
           return next;
         });
-        setShowGoal(false);
         setSlipVisible(false);
         setWhisperId(null);
         return;
@@ -524,8 +528,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         !result.stamps.includes("spot2") ||
         !result.stamps.includes("spot3")
       ) {
-        setShowGoal(false);
-      }
+        }
     })();
 
     return () => {
@@ -600,7 +603,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     })();
   }, [applyStampResult]);
 
-  const screen = deriveScreen(rally, whisperId, showGoal, isAdmin, soldOut, acquiredStamp);
+  const screen = deriveScreen(rally, whisperId, isAdmin, acquiredStamp);
 
   const beginPress = useCallback((id: WhisperId) => {
     setRally((prev) => {
@@ -684,34 +687,95 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setBookOpen(false);
   }, []);
 
-  const dismissWhisper = useCallback(() => {
-    setWhisperId(null);
-    setWhisperOpensGoal((opens) => {
-      if (!opens) return false;
-      setShowGoal(true);
-      setRally((prev) => {
-        if (prev.goalUnlocked) return prev;
-        const next = { ...prev, goalUnlocked: true };
-        try {
-          persistRally(next);
-        } catch {
-          setStorageBlocked(true);
-          return prev;
-        }
-        return next;
-      });
-      return false;
+  const unlockGoalRally = useCallback((prev: StampRallyState): StampRallyState => {
+    if (prev.goalUnlocked) return prev;
+    const next = { ...prev, goalUnlocked: true };
+    try {
+      persistRally(next);
+    } catch {
+      setStorageBlocked(true);
+      return prev;
+    }
+    return next;
+  }, []);
+
+  /** 抽選・満願解除のみ。見たフラグはモーダル閉鎖時に立てる */
+  const beginCelebration = useCallback((prev: StampRallyState): StampRallyState | null => {
+    if (!allStamps(prev) || prev.celebrationSeen) return null;
+    if (prev.celebrationStampId && prev.goalUnlocked) return prev;
+    const stampId = prev.celebrationStampId ?? pickCelebrationStampId();
+    const next: StampRallyState = {
+      ...prev,
+      celebrationStampId: stampId,
+      goalUnlocked: true,
+    };
+    try {
+      persistRally(next);
+    } catch {
+      setStorageBlocked(true);
+      return null;
+    }
+    return next;
+  }, []);
+
+  const markCelebrationSeen = useCallback(() => {
+    setRally((prev) => {
+      if (prev.celebrationSeen) return prev;
+      const next: StampRallyState = {
+        ...prev,
+        celebrationSeen: true,
+        goalUnlocked: true,
+      };
+      try {
+        persistRally(next);
+      } catch {
+        setStorageBlocked(true);
+        return prev;
+      }
+      return next;
     });
   }, []);
+
+  const dismissWhisper = useCallback(() => {
+    setWhisperId(null);
+    setWhisperOpensGoal(false);
+    const prev = rallyRef.current;
+    // 3印揃い＆未表示なら、opensGoal に依らず満願モーダルを出す
+    const celebrated = beginCelebration(prev);
+    if (celebrated) {
+      setRally(celebrated);
+      setShowCelebration(true);
+      return;
+    }
+    if (allStamps(prev) && !prev.goalUnlocked) {
+      setRally((current) => unlockGoalRally(current));
+    }
+  }, [beginCelebration, unlockGoalRally]);
 
   useEffect(() => {
     return () => window.clearTimeout(revealTimerRef.current);
   }, []);
 
-  const openGoal = useCallback(() => {
-    setShowGoal(true);
-    setActiveTab("home");
-  }, []);
+  const goPresent = useCallback(() => {
+    setActiveTab("present");
+    const prev = rallyRef.current;
+    const celebrated = beginCelebration(prev);
+    if (celebrated) {
+      setRally(celebrated);
+      setShowCelebration(true);
+    }
+  }, [beginCelebration]);
+
+  const dismissCelebration = useCallback(() => {
+    setShowCelebration(false);
+    markCelebrationSeen();
+  }, [markCelebrationSeen]);
+
+  const continueFromCelebration = useCallback(() => {
+    setShowCelebration(false);
+    markCelebrationSeen();
+    setActiveTab("present");
+  }, [markCelebrationSeen]);
 
   const reserveClientForEnroll = useCallback(() => {
     if (rally.hasJoined) return false;
@@ -813,37 +877,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return saved;
   }, []);
 
-  const saveIssued = useCallback(
-    (code: string, issuedAt: number) => {
-      if (rally.rewardCode) return;
-      const next = { ...rally, rewardCode: code, issuedAt };
-      try {
-        persistRally(next);
-      } catch {
-        setStorageBlocked(true);
-        return;
-      }
-      setRally(next);
-    },
-    [rally],
-  );
-
-  const markRedeemed = useCallback(() => {
-    if (rally.redeemed) return;
-    const next = { ...rally, redeemed: true };
-    try {
-      persistRally(next);
-    } catch {
-      setStorageBlocked(true);
-      return;
-    }
-    setRally(next);
-  }, [rally]);
-
-  const markSoldOut = useCallback(() => {
-    setSoldOut(true);
-  }, []);
-
   const acknowledgeSlip = useCallback(() => {
     clearSlipOpen();
     setSlipVisible(false);
@@ -890,7 +923,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return next;
     });
     if (!stamps.includes("spot1") || !stamps.includes("spot2") || !stamps.includes("spot3")) {
-      setShowGoal(false);
+      setShowCelebration(false);
     }
     return stampCount;
   }, []);
@@ -922,7 +955,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           rememberBootRally(next);
           return next;
         });
-        setShowGoal(false);
+          setShowCelebration(false);
         setSlipVisible(false);
         setWhisperId(null);
         return { ok: false, error: "missing" };
@@ -973,7 +1006,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       return next;
     });
     if (saved) {
-      setShowGoal(false);
+      setShowCelebration(false);
       setSlipVisible(false);
       setWhisperId(null);
       setActiveTab("home");
@@ -991,16 +1024,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       stamp2Done: rally.stamp2Done,
       stamp3Done: rally.stamp3Done,
       pendingStamp: rally.pendingStamp,
-      goalUnlocked: rally.goalUnlocked || Boolean(rally.rewardCode),
+      goalUnlocked: rally.goalUnlocked,
       bookOpen,
       bookLocked,
       whisperId,
-      nicknameLocked: Boolean(rally.rewardCode),
+      nicknameLocked: rally.hasJoined,
       clientId: rally.clientId,
       hasJoined: rally.hasJoined,
       telegramCode: rally.telegramCode,
-      rewardCode: rally.rewardCode,
-      issuedAt: rally.issuedAt,
       slipVisible,
       setActiveTab,
       reserveClientForEnroll,
@@ -1008,9 +1039,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       completeEnroll,
       completeMerge,
       acknowledgeSlip,
-      saveIssued,
-      markRedeemed,
-      markSoldOut,
       beginPress,
       heldStamp,
       brushStamp,
@@ -1029,7 +1057,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       showWhisper,
       queueWhisper,
       dismissWhisper,
-      openGoal,
+      goPresent,
+      showCelebration,
+      celebrationStampId: rally.celebrationStampId ?? null,
+      dismissCelebration,
+      continueFromCelebration,
       stampNotice,
       retryStamp,
       settingsOpen,
@@ -1051,11 +1083,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       rally.stamp3Done,
       rally.pendingStamp,
       rally.goalUnlocked,
-      rally.rewardCode,
-      rally.issuedAt,
       rally.clientId,
       rally.hasJoined,
       rally.telegramCode,
+      rally.celebrationStampId,
       slipVisible,
       reserveClientForEnroll,
       readStampForEnroll,
@@ -1065,9 +1096,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       bookOpen,
       bookLocked,
       whisperId,
-      saveIssued,
-      markRedeemed,
-      markSoldOut,
       beginPress,
       heldStamp,
       brushStamp,
@@ -1086,7 +1114,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       showWhisper,
       queueWhisper,
       dismissWhisper,
-      openGoal,
+      goPresent,
+      showCelebration,
+      dismissCelebration,
+      continueFromCelebration,
       stampNotice,
       retryStamp,
       settingsOpen,

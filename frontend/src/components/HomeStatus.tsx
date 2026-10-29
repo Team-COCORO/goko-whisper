@@ -1,7 +1,6 @@
 import { openSurveyPage } from "../api";
 import { WHISPERS } from "../data/whispers";
 import { useApp } from "../context/AppContext";
-import { GoalPage } from "../pages/GoalPage";
 
 function inAppBrowser(): boolean {
   return /Line\/|Instagram|FBAN|FBAV|Twitter|MicroMessenger/i.test(navigator.userAgent);
@@ -218,8 +217,6 @@ export function HomeStatus() {
     );
   }
 
-  if (screen === "goal") return <GoalPage />;
-
   if (screen === "redeemed") {
     return (
       <div className="card">
@@ -232,19 +229,6 @@ export function HomeStatus() {
         <button className="b alt" type="button" onClick={openSurveyPage}>
           アンケートを開く
         </button>
-      </div>
-    );
-  }
-
-  if (screen === "soldOut") {
-    return (
-      <div className="card">
-        <p className="sheet-line is-alert">
-          <Phrases parts={["本日の配布は終了しました"]} />
-        </p>
-        <p className="sheet-caution">
-          <Phrases parts={["すでにコードをお持ちの方は、", "消込できます。"]} />
-        </p>
       </div>
     );
   }
