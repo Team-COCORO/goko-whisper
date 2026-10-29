@@ -12,6 +12,7 @@ import { TelegramSlip } from "./components/TelegramSlip";
 import { AppProvider, useApp } from "./context/AppContext";
 import { placeById, type PlaceId, type PlaceStory } from "./data/places";
 import { AdminPage } from "./pages/AdminPage";
+import { ConsentPage } from "./pages/ConsentPage";
 import { EnrollPage } from "./pages/EnrollPage";
 import { FoodPage } from "./pages/FoodPage";
 import { MergePage } from "./pages/MergePage";
@@ -186,22 +187,39 @@ function TabContent() {
 }
 
 function StampJoinGate({ pendingStamp }: { pendingStamp: 1 | 2 | 3 }) {
-  const [mode, setMode] = useState<"landing" | "enroll" | "merge">("landing");
-  if (mode === "enroll") return <EnrollPage withStamp onBack={() => setMode("landing")} />;
+  const [mode, setMode] = useState<"landing" | "consent" | "enroll" | "merge">("landing");
+  if (mode === "consent") {
+    return (
+      <ConsentPage
+        onAgree={() => setMode("enroll")}
+        onBack={() => setMode("landing")}
+        backLabel="戻る"
+      />
+    );
+  }
+  if (mode === "enroll") return <EnrollPage withStamp onBack={() => setMode("consent")} />;
   if (mode === "merge") return <MergePage onBack={() => setMode("landing")} />;
   return (
     <StampLandingPage
       pendingStamp={pendingStamp}
-      onEnroll={() => setMode("enroll")}
+      onEnroll={() => setMode("consent")}
       onMerge={() => setMode("merge")}
     />
   );
 }
 
 function JoinGate() {
-  const [enrolling, setEnrolling] = useState(false);
-  if (enrolling) return <EnrollPage onBack={() => setEnrolling(false)} />;
-  return <ProloguePage onEnroll={() => setEnrolling(true)} />;
+  const [mode, setMode] = useState<"prologue" | "consent" | "enroll">("prologue");
+  if (mode === "consent") {
+    return (
+      <ConsentPage
+        onAgree={() => setMode("enroll")}
+        onBack={() => setMode("prologue")}
+      />
+    );
+  }
+  if (mode === "enroll") return <EnrollPage onBack={() => setMode("consent")} />;
+  return <ProloguePage onEnroll={() => setMode("consent")} />;
 }
 
 function AppShell() {

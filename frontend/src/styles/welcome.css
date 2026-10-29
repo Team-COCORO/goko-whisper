@@ -594,15 +594,105 @@ svg.goko-icon .mark {
 }
 
 .welcome.welcome--prologue,
-.welcome.welcome--enroll {
+.welcome.welcome--enroll,
+.welcome.welcome--consent {
   background: var(--out);
 }
 
 .welcome--prologue .welcome-card,
-.welcome--enroll .welcome-card {
+.welcome--enroll .welcome-card,
+.welcome--consent .welcome-card {
   max-width: 440px;
   background: var(--card);
   padding-bottom: 28px;
+}
+
+.welcome--consent .welcome-lead {
+  margin-bottom: 6px;
+  letter-spacing: 0.15em;
+}
+
+.consent-scroll {
+  width: 100%;
+  max-height: min(42vh, 320px);
+  margin: 4px 0 14px;
+  padding: 12px 12px 12px 14px;
+  overflow: auto;
+  text-align: left;
+  background: #fdfbf7;
+  border: 1px dashed var(--welcome-border);
+  border-radius: 6px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.consent-doc-title {
+  margin: 0 0 8px;
+  color: var(--nav);
+  font-size: 14px;
+  font-weight: bold;
+  letter-spacing: 0.04em;
+}
+
+.consent-intro {
+  margin: 0 0 12px;
+  color: var(--ink);
+  font-size: 12.5px;
+  line-height: 1.7;
+}
+
+.consent-heading {
+  margin: 0 0 6px;
+  color: var(--brick);
+  font-size: 13px;
+  font-weight: bold;
+}
+
+.consent-heading + .consent-list {
+  margin-top: 0;
+}
+
+.consent-list {
+  margin: 0 0 12px;
+  padding-left: 1.15em;
+  color: var(--ink);
+  font-size: 12.5px;
+  line-height: 1.7;
+  list-style: disc;
+}
+
+.consent-list:last-child {
+  margin-bottom: 0;
+}
+
+.consent-list li + li {
+  margin-top: 6px;
+}
+
+.consent-list strong {
+  color: var(--nav);
+}
+
+.consent-mail {
+  color: var(--brick);
+  word-break: break-all;
+}
+
+.consent-check {
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.consent-check span {
+  white-space: normal;
+  text-align: left;
+  line-height: 1.45;
+}
+
+.welcome--consent .welcome-start:disabled {
+  background: #c9bfb5;
+  color: #fff;
 }
 
 .welcome--prologue .welcome-lead {
