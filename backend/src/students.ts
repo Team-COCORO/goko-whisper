@@ -188,10 +188,10 @@ async function findByTelegram(
 
 async function isRedeemed(db: D1Database, clientId: string): Promise<boolean> {
   const row = await db
-    .prepare("SELECT status FROM tokens WHERE client_id = ?")
+    .prepare("SELECT redeemed_at FROM students WHERE client_id = ?")
     .bind(clientId)
-    .first<{ status: string }>();
-  return row?.status === "redeemed";
+    .first<{ redeemed_at: number | null }>();
+  return row?.redeemed_at != null;
 }
 
 async function writeUnion(

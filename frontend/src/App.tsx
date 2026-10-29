@@ -5,6 +5,7 @@ import { CampusMap } from "./components/CampusMap";
 import { HomeGuide } from "./components/HomeGuide";
 import { HomeStatus, StampMarks } from "./components/HomeStatus";
 import { StampBook, StampBookButton } from "./components/StampBook";
+import { CelebrationModal } from "./components/CelebrationModal";
 import { SettingsModal } from "./components/SettingsModal";
 import { StampNotice } from "./components/StampNotice";
 import { TelegramSlip } from "./components/TelegramSlip";
@@ -34,12 +35,8 @@ function sheetLabel(
       return "耳を澄ませ";
     case "acquired":
       return "印を得て";
-    case "goal":
-      return "ゴール";
     case "redeemed":
       return "受取完了";
-    case "soldOut":
-      return "配布終了";
     case "top":
       return stampCount >= 3 ? "満願" : "はじまり";
     default:
@@ -50,7 +47,6 @@ function sheetLabel(
 function sheetRatio(screen: Screen, placeName: string | null): number {
   if (placeName) return 0.45;
   // 実高さは expandToContent で合わせる。ここは初期・フォールバック用。
-  if (screen === "goal") return 0.55;
   if (screen === "whisper" || screen === "acquired" || screen === "herald") return 0.42;
   if (screen === "top" || screen === "guide") return 0.42;
   return 0.38;
@@ -64,9 +60,7 @@ function sheetHugsContent(screen: Screen, hasPlace: boolean): boolean {
     screen === "herald" ||
     screen === "acquired" ||
     screen === "whisper" ||
-    screen === "goal" ||
-    screen === "redeemed" ||
-    screen === "soldOut"
+    screen === "redeemed"
   );
 }
 
@@ -275,6 +269,7 @@ function AppShell() {
       <BottomNav />
       {activeTab === "home" && <HomeGuide />}
       <SettingsModal />
+      <CelebrationModal />
     </div>
   );
 }

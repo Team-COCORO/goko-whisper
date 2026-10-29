@@ -45,7 +45,7 @@ function googleIdentity(): GoogleIdentity | null {
 function officeMessage(error: OfficeError): string {
   if (error === "unauthorized") return "ログインし直してください";
   if (error === "missing") return "記録が見つかりません";
-  if (error === "no_token") return "引換コードが発行されていません";
+  if (error === "conflict") return "スタンプ未達成か、既に受取済みです";
   if (error === "invalid") return "入力を確認してください";
   if (error === "unavailable") return "運営管理の準備ができていません";
   return "通信が必要です";
@@ -551,8 +551,8 @@ export function AdminPage() {
   const lowStock =
     summary !== null &&
     (summary.remaining <= 20 || (summary.limit > 0 && summary.remaining / summary.limit <= 0.1));
-  const pendingIssue = summary ? Math.max(0, summary.issued - summary.redeemed) : 0;
-  const used = summary && summary.limit > 0 ? Math.min(100, (summary.issued / summary.limit) * 100) : 0;
+  const used =
+    summary && summary.limit > 0 ? Math.min(100, (summary.redeemed / summary.limit) * 100) : 0;
   const mail = emailFromToken(idToken);
 
   return (
@@ -673,7 +673,7 @@ export function AdminPage() {
               <span>景品残数</span>
               <strong>{summary.remaining}</strong>
               <small>
-                / {summary.limit} 個 · 消化率 {percent(summary.issued, summary.limit)}
+                / {summary.limit} 個 · 消化率 {percent(summary.redeemed, summary.limit)}
               </small>
               <div className="admin-bar-meter" aria-hidden="true">
                 <span style={{ width: `${used}%` }} />
@@ -685,14 +685,14 @@ export function AdminPage() {
               <small>個 · 設定値</small>
             </article>
             <article>
-              <span>引換チケット発行</span>
-              <strong>{summary.issued}</strong>
-              <small>件 · 未受取 {pendingIssue} 名</small>
+              <span>満願（3印）</span>
+              <strong>{summary.completed}</strong>
+              <small>名 · 引換待ち {summary.waiting} 名</small>
             </article>
             <article>
               <span>窓口受取済</span>
               <strong>{summary.redeemed}</strong>
-              <small>件 · 消込率 {percent(summary.redeemed, summary.issued)}</small>
+              <small>件 · 消込率 {percent(summary.redeemed, summary.completed)}</small>
             </article>
             <article>
               <span>総参加者</span>
@@ -822,7 +822,7 @@ export function AdminPage() {
             <button type="button" role="menuitem" onClick={() => openStamps(menu.student)}>
               スタンプを手動変更
             </button>
-            {menu.student.ticketIssued && !menu.student.redeemed && (
+            {stampCount(menu.student) === 3 && !menu.student.redeemed && (
               <button
                 type="button"
                 role="menuitem"
@@ -867,7 +867,7 @@ export function AdminPage() {
                 <h2 id="admin-dialog-title">参加者データの削除</h2>
                 <p>
                   「{dialog.student.nickname}」（符丁: {deskLabel(dialog.student)}
-                  ）のデータを削除しますか？この操作は取り消せません。まだ受け取っていない引換コードも消えます。
+                  ）のデータを削除しますか？この操作は取り消せません。
                 </p>
                 <div className="admin-modal__actions">
                   <button
@@ -894,7 +894,7 @@ export function AdminPage() {
               <>
                 <h2 id="admin-dialog-title">景品を引換済みにする</h2>
                 <p>
-                  「{dialog.student.nickname}」の景品を引換済みにします。6桁のコードは表示しません。この操作は取り消せません。
+                  「{dialog.student.nickname}」の景品を引換済みにします。この操作は取り消せません。
                 </p>
                 <div className="admin-modal__actions">
                   <button

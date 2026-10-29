@@ -15,7 +15,6 @@ import {
   handleSync,
 } from "./students";
 import { handleSurveySubmit, handleSurveySummary } from "./survey";
-import { handleIssue, handleVerify } from "./tokens";
 
 async function handleApi(request: Request, env: Env): Promise<Response> {
   const url = new URL(request.url);
@@ -37,12 +36,6 @@ async function handleApi(request: Request, env: Env): Promise<Response> {
   }
   if (url.pathname === "/api/student/sync" && request.method === "POST") {
     return handleSync(request, env);
-  }
-  if (url.pathname === "/api/token/issue" && request.method === "POST") {
-    return handleIssue(request, env);
-  }
-  if (url.pathname === "/api/token/verify" && request.method === "POST") {
-    return handleVerify(request, env);
   }
   if (url.pathname === "/api/admin/summary" && request.method === "GET") {
     return handleSummary(request, env);

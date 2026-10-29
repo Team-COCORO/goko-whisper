@@ -8,16 +8,17 @@ const STAMPS = [
 ] as const;
 
 export function PresentPage() {
-  const { stamp1Done, stamp2Done, stamp3Done, goalUnlocked, screen, openGoal } = useApp();
+  const { stamp1Done, stamp2Done, stamp3Done, goalUnlocked, screen, goPresent } = useApp();
   const [mapOpen, setMapOpen] = useState(false);
   const done = { stamp1Done, stamp2Done, stamp3Done };
   const count = STAMPS.filter((stamp) => done[stamp.key]).length;
   const redeemed = screen === "redeemed";
   const remain = 3 - count;
 
-  let actionLabel = "ゴールへ進む（景品受取）";
+  let actionLabel = "受付案内を確認する";
   if (redeemed) actionLabel = "ぷく石をお連れ帰り済み";
   else if (!goalUnlocked && remain > 0) actionLabel = `あと${remain}つの印でゲット！`;
+  else if (goalUnlocked) actionLabel = "五高記念館で符丁を提示";
 
   useEffect(() => {
     if (!mapOpen) return;
@@ -76,10 +77,15 @@ export function PresentPage() {
           className={goalUnlocked && !redeemed ? "present-go is-ready" : "present-go"}
           type="button"
           disabled={!goalUnlocked || redeemed}
-          onClick={openGoal}
+          onClick={goPresent}
         >
           {actionLabel}
         </button>
+        {goalUnlocked && !redeemed && (
+          <p className="present-guide">
+            スタンプ帖の「符丁」を五高記念館のスタッフ（赤いビブス）へお見せください。コードの発行はありません。
+          </p>
+        )}
       </section>
 
       <div className="present-place">
@@ -87,7 +93,7 @@ export function PresentPage() {
           <p className="present-place__label">交換場所（スタンプラリーゴール）</p>
           <p className="present-place__spot">
             <span className="menu-shop__booth">重要文化財</span>
-            <span className="present-place__name">五校記念館</span>
+            <span className="present-place__name">五高記念館</span>
           </p>
         </div>
         <button type="button" onClick={() => setMapOpen(true)}>

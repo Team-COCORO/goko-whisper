@@ -1,23 +1,11 @@
-export type IssueResponse =
-  | { result: "issued"; code: string; issuedAt: number }
-  | { result: "sold_out" }
-  | { result: "invalid" }
-  | { result: "forbidden" }
-  | { result: "unavailable" }
-  | { result: "error" };
-
-export type VerifyResponse =
-  | { result: "redeemed" | "already_redeemed" }
-  | { result: "invalid_pin" | "unknown_code" | "locked" | "error" };
-
 export type Summary = {
-  issued: number;
+  completed: number;
   redeemed: number;
+  waiting: number;
   remaining: number;
   limit: number;
 };
 
-const issueFlights = new Map<string, Promise<IssueResponse>>();
 const API_TIMEOUT_MS = 10_000;
 
 export type StampVerifyResult = "ok" | "invalid" | "error";
@@ -51,67 +39,6 @@ function fetchApi(path: string, init?: RequestInit): Promise<Response> {
     ...init,
     signal: AbortSignal.timeout(API_TIMEOUT_MS),
   });
-}
-
-async function readResult(response: Response): Promise<string> {
-  try {
-    const body = (await response.json()) as { result?: unknown };
-    return typeof body.result === "string" ? body.result : "error";
-  } catch {
-    return "error";
-  }
-}
-
-async function postIssue(
-  nickname: string,
-  clientId: string,
-): Promise<IssueResponse> {
-  try {
-    const response = await fetchApi("/api/token/issue", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ nickname, clientId }),
-    });
-    const body = (await response.json()) as {
-      result?: unknown;
-      code?: unknown;
-      issuedAt?: unknown;
-    };
-    if (response.status === 403 || body.result === "forbidden") {
-      return { result: "forbidden" };
-    }
-    if (
-      body.result === "issued" &&
-      typeof body.code === "string" &&
-      typeof body.issuedAt === "number"
-    ) {
-      return { result: "issued", code: body.code, issuedAt: body.issuedAt };
-    }
-    if (
-      body.result === "sold_out" ||
-      body.result === "invalid" ||
-      body.result === "unavailable"
-    ) {
-      return { result: body.result };
-    }
-    return { result: "error" };
-  } catch {
-    return { result: "error" };
-  }
-}
-
-export function issueToken(
-  nickname: string,
-  clientId: string,
-): Promise<IssueResponse> {
-  const existing = issueFlights.get(clientId);
-  if (existing) return existing;
-
-  const flight = postIssue(nickname, clientId).finally(() => {
-    issueFlights.delete(clientId);
-  });
-  issueFlights.set(clientId, flight);
-  return flight;
 }
 
 async function postEnroll(
@@ -414,48 +341,27 @@ export async function verifyStamp(
   }
 }
 
-export async function verifyToken(
-  code: string,
-  pin: string,
-): Promise<VerifyResponse> {
-  try {
-    const response = await fetchApi("/api/token/verify", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, pin }),
-    });
-    const result = await readResult(response);
-    if (
-      result === "redeemed" ||
-      result === "already_redeemed" ||
-      result === "invalid_pin" ||
-      result === "unknown_code" ||
-      result === "locked"
-    ) {
-      return { result };
-    }
-    return { result: "error" };
-  } catch {
-    return { result: "error" };
-  }
-}
-
 export type OfficeStudent = {
   nickname: string;
   telegramCode: string;
   createdAt: number;
   stamps: string[];
   redeemed: boolean;
-  ticketIssued: boolean;
 };
 
-export type OfficeError = "unauthorized" | "invalid" | "missing" | "no_token" | "unavailable" | "error";
+export type OfficeError =
+  | "unauthorized"
+  | "invalid"
+  | "missing"
+  | "conflict"
+  | "unavailable"
+  | "error";
 
 function officeError(status: number): OfficeError {
   if (status === 401) return "unauthorized";
   if (status === 400) return "invalid";
   if (status === 404) return "missing";
-  if (status === 409) return "no_token";
+  if (status === 409) return "conflict";
   if (status === 503) return "unavailable";
   return "error";
 }
@@ -540,7 +446,15 @@ export async function fetchSummary(
     });
     if (!response.ok) return { ok: false, error: officeError(response.status) };
     const summary = (await response.json()) as Summary & { success?: boolean };
-    if (typeof summary.issued !== "number") return { ok: false, error: "error" };
+    if (
+      typeof summary.completed !== "number" ||
+      typeof summary.redeemed !== "number" ||
+      typeof summary.waiting !== "number" ||
+      typeof summary.remaining !== "number" ||
+      typeof summary.limit !== "number"
+    ) {
+      return { ok: false, error: "error" };
+    }
     return { ok: true, summary };
   } catch {
     return { ok: false, error: "error" };

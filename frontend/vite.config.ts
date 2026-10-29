@@ -48,8 +48,8 @@ export default defineConfig({
   build: {
     rollupOptions: {
       input: {
-        main: resolve(__dirname, "index.html"),
-        survey: resolve(__dirname, "survey.html"),
+        main: resolve(import.meta.dirname, "index.html"),
+        survey: resolve(import.meta.dirname, "survey.html"),
       },
     },
   },
