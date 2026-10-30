@@ -1,4 +1,3 @@
-import { useEffect, useState } from "react";
 import { useApp } from "../context/AppContext";
 
 const STAMPS = [
@@ -9,7 +8,6 @@ const STAMPS = [
 
 export function PresentPage() {
   const { stamp1Done, stamp2Done, stamp3Done, goalUnlocked, screen, goPresent } = useApp();
-  const [mapOpen, setMapOpen] = useState(false);
   const done = { stamp1Done, stamp2Done, stamp3Done };
   const count = STAMPS.filter((stamp) => done[stamp.key]).length;
   const redeemed = screen === "redeemed";
@@ -19,15 +17,6 @@ export function PresentPage() {
   if (redeemed) actionLabel = "ぷく石をお連れ帰り済み";
   else if (!goalUnlocked && remain > 0) actionLabel = `あと${remain}つの印でゲット！`;
   else if (goalUnlocked) actionLabel = "五高記念館で符丁を提示";
-
-  useEffect(() => {
-    if (!mapOpen) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setMapOpen(false);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [mapOpen]);
 
   return (
     <div className="present-page">
@@ -96,41 +85,12 @@ export function PresentPage() {
             <span className="present-place__name">五高記念館</span>
           </p>
         </div>
-        <button type="button" onClick={() => setMapOpen(true)}>
-          案内図 ≫
-        </button>
       </div>
 
       <footer className="present-meta">
         <span>開催日：11月1日(日)・11月3日(火)</span>
         <span>主催：熊本大学キャンパスミュージアム推進機構</span>
       </footer>
-
-      {mapOpen && (
-        <>
-          <button
-            className="menu-scrim"
-            type="button"
-            aria-label="案内図を閉じる"
-            onClick={() => setMapOpen(false)}
-          />
-          <div
-            className="menu-detail"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="present-map-title"
-          >
-            <h2 id="present-map-title">交換場所の案内図</h2>
-            <p>五高記念館と文法棟の間、18ばん 五高喫茶ブースです。</p>
-            <div className="menu-detail__photo">
-              <img src="/menu/shop_map.jpg" alt="18ばん 五高喫茶ブースの案内図" />
-            </div>
-            <button className="menu-detail__close" type="button" onClick={() => setMapOpen(false)}>
-              閉じる
-            </button>
-          </div>
-        </>
-      )}
     </div>
   );
 }

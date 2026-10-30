@@ -511,6 +511,14 @@ body {
   border: 1px solid #d9cfbe;
 }
 
+.menu-detail__photo--map {
+  aspect-ratio: 2208 / 1948;
+}
+
+.menu-detail__photo--map img {
+  object-fit: contain;
+}
+
 .menu-detail h2 {
   width: 100%;
   margin: 0 0 8px;
@@ -1841,7 +1849,7 @@ input.pin {
   bottom: var(--map-inset, 45%);
   pointer-events: none;
   font-family: var(--font-serif);
-  font-size: 13px;
+  font-size: 17px;
   font-weight: 800;
   letter-spacing: 0.2em;
   color: #7a1d17;
@@ -1857,7 +1865,7 @@ input.pin {
 .map-cardinals span {
   position: absolute;
   line-height: 1;
-  padding: 4px 6px;
+  padding: 5px 7px;
   border-radius: 4px;
   background: rgba(239, 230, 218, 0.72);
 }
@@ -3075,10 +3083,6 @@ input.pin {
 }
 
 .present-place {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
   margin-top: 12px;
   padding: 10px 4px;
   border-top: 1px dashed #d9cfbe;
@@ -3113,20 +3117,6 @@ input.pin {
 .present-place__booth {
   color: #5c554e;
   font-size: 12px;
-}
-
-.present-place button {
-  flex: none;
-  padding: 4px 10px;
-  border: 1.5px solid var(--brick);
-  border-radius: 4px;
-  background: none;
-  color: var(--brick);
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: bold;
-  white-space: nowrap;
-  cursor: pointer;
 }
 
 .present-page .menu-detail p {

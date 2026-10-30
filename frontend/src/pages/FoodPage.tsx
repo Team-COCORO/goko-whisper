@@ -60,7 +60,7 @@ type OpenId = ItemId | "map";
 
 const MAP = {
   title: "出店場所（18ばんブース）",
-  image: "/menu/shop_map.jpg",
+  image: "/menu/shop_map.webp",
   desc: "五高記念館と文法棟の間、ロータリー・サブステージ付近に出店しています。ブースの案内板やカップのどこかに『囁き』の手がかりが隠されています。",
 };
 
@@ -135,7 +135,7 @@ export function FoodPage() {
             onClick={() => setOpenId(null)}
           />
           <div className="menu-detail" role="dialog" aria-modal="true" aria-labelledby="menu-detail-title">
-            <div className="menu-detail__photo">
+            <div className={openId === "map" ? "menu-detail__photo menu-detail__photo--map" : "menu-detail__photo"}>
               <img src={open.image} alt={open.title} />
             </div>
             <h2 id="menu-detail-title">
