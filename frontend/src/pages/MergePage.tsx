@@ -1,9 +1,12 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { mergeStudent } from "../api";
 import { useApp } from "../context/AppContext";
 import { markHomeGuideSeen } from "../components/HomeGuide";
 import { TelegramIcon } from "../components/TelegramIcon";
 import { TELEGRAM_FRAMES } from "../data/telegram";
+import { telegramFrameHint, telegramFrameLabel } from "../i18n/telegramLabels";
+import { TelegramWordLabel } from "../components/TelegramWordLabel";
 
 const NICKNAME_MAX = 10;
 
@@ -12,6 +15,7 @@ type MergePageProps = {
 };
 
 export function MergePage({ onBack }: MergePageProps) {
+  const { t } = useTranslation();
   const { pendingStamp, readStampForEnroll, completeMerge } = useApp();
   const [input, setInput] = useState("");
   const [picks, setPicks] = useState<(number | null)[]>([null, null, null, null]);
@@ -20,6 +24,7 @@ export function MergePage({ onBack }: MergePageProps) {
   const name = input.trim();
   const chosen = picks.every((pick) => pick !== null);
   const ready = name.length > 0 && name.length <= NICKNAME_MAX && chosen && !busy && pendingStamp !== null;
+  const selectedCount = picks.filter((pick) => pick !== null).length;
 
   async function submit() {
     if (!ready) return;
@@ -28,7 +33,7 @@ export function MergePage({ onBack }: MergePageProps) {
     const claim = readStampForEnroll();
     if (!claim) {
       setBusy(false);
-      setError("QRを、もう一度スマホ本体のカメラで読み取ってください。");
+      setError(t("enroll.err.qr"));
       return;
     }
     const telegramCode = picks.join("-");
@@ -37,55 +42,48 @@ export function MergePage({ onBack }: MergePageProps) {
       setBusy(false);
       setError(
         result.error === "mismatch"
-          ? "ニックネームと4つの合言葉が合いません。入れ直してください。"
+          ? t("merge.err")
           : result.error === "invalid"
-            ? "名前を確認してください。"
+            ? t("enroll.err.name")
             : result.error === "locked"
-              ? "合わせるのを、しばらく待ってください。"
+              ? t("merge.err")
               : result.error === "forbidden"
-                ? "QRを、もう一度スマホ本体のカメラで読み取ってください。"
-                : "通信できませんでした。もう一度合わせられます。",
+                ? t("enroll.err.qr")
+                : t("enroll.err.net"),
       );
       return;
     }
     if (!completeMerge(result.student, result.redeemed)) {
       setBusy(false);
-      setError("この場所の印を残せませんでした。QRを、もう一度読み取ってください。");
+      setError(t("enroll.err.stamp"));
       return;
     }
-    // 帳合わせする人は元端末で説明済み。このブラウザでは出し直さない。
     markHomeGuideSeen();
   }
 
   return (
     <main className="welcome welcome--scroll">
       <div className="welcome-card">
-        <div className="welcome-lead">別の画面で始めた方へ</div>
-        <h1 className="welcome-title">続きから始める</h1>
-        <p className="join-copy">
-          <span className="u-nowrap">入学のときに控えた</span>
-          <span className="u-nowrap">ニックネームと、</span>
-          <span className="u-nowrap">4つの合言葉を選んでください。</span>
-          <span className="u-nowrap">これまでのスタンプを、</span>
-          <span className="u-nowrap">この画面に移します。</span>
-        </p>
+        <div className="welcome-lead">{t("merge.title").split(" / ")[0]}</div>
+        <h1 className="welcome-title">{t("merge.title").split(" / ").slice(-1)[0]}</h1>
+        <p className="join-copy">{t("merge.body")}</p>
         <label className="welcome-label" htmlFor="merge-nickname">
-          登録したニックネーム
+          {t("merge.nick")}
         </label>
         <input
           id="merge-nickname"
           className="welcome-name"
           type="text"
           maxLength={NICKNAME_MAX}
-          placeholder="例：そうせき"
+          placeholder={t("enroll.example")}
           autoComplete="nickname"
           value={input}
           onChange={(event) => setInput(event.target.value)}
         />
-        <p className="join-codes-label">控えた合言葉（{picks.filter((pick) => pick !== null).length} / 4）</p>
+        <p className="join-codes-label">{t("merge.words", { n: selectedCount })}</p>
         <div className="merge-preview">
           {picks.every((pick) => pick === null) ? (
-            <span className="merge-preview-empty">未選択</span>
+            <span className="merge-preview-empty">{t("merge.unselected")}</span>
           ) : (
             TELEGRAM_FRAMES.map((frame, index) => {
               const pick = picks[index];
@@ -94,7 +92,7 @@ export function MergePage({ onBack }: MergePageProps) {
               return (
                 <span className="merge-tag" key={frame.label}>
                   <TelegramIcon word={word} />
-                  <span>{word}</span>
+                  <TelegramWordLabel frameIndex={index} wordIndex={pick} />
                 </span>
               );
             })
@@ -103,8 +101,8 @@ export function MergePage({ onBack }: MergePageProps) {
         {TELEGRAM_FRAMES.map((frame, index) => (
           <fieldset className="merge-frame" key={frame.label}>
             <legend className="merge-frame-title">
-              {index + 1}. {frame.label}
-              <span> {frame.hint}から1つ</span>
+              {index + 1}. {telegramFrameLabel(t, index)}
+              <span> {telegramFrameHint(t, index)}</span>
             </legend>
             <div className="merge-grid">
               {frame.words.map((word, choice) => (
@@ -114,11 +112,13 @@ export function MergePage({ onBack }: MergePageProps) {
                   type="button"
                   aria-pressed={picks[index] === choice}
                   onClick={() =>
-                    setPicks((current) => current.map((pick, pickIndex) => (pickIndex === index ? choice : pick)))
+                    setPicks((current) =>
+                      current.map((pick, pickIndex) => (pickIndex === index ? choice : pick)),
+                    )
                   }
                 >
                   <TelegramIcon word={word} />
-                  <span>{word}</span>
+                  <TelegramWordLabel frameIndex={index} wordIndex={choice} />
                 </button>
               ))}
             </div>
@@ -126,13 +126,12 @@ export function MergePage({ onBack }: MergePageProps) {
         ))}
         {error ? <p className="join-error">{error}</p> : null}
         <button className="welcome-start" type="button" disabled={!ready} onClick={() => void submit()}>
-          スタンプを移す
+          {t("merge.submit")}
         </button>
         <button className="join-back" type="button" onClick={onBack} disabled={busy}>
-          戻る
+          {t("merge.back")}
         </button>
       </div>
     </main>
   );
 }
-

@@ -52,12 +52,13 @@ function Chevron({ open }: { open: boolean }) {
 }
 
 export function ProloguePage({ onEnroll }: ProloguePageProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { openSettings } = useApp();
   const [notesOpen, setNotesOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const dialogRef = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const isJa = i18n.language === "ja";
 
   useEffect(() => {
     if (!notesOpen) return;
@@ -85,64 +86,52 @@ export function ProloguePage({ onEnroll }: ProloguePageProps) {
           <img
             className="prologue-logo"
             src="/logo/logo_campus_museum.svg"
-            alt="熊本大学キャンパスミュージアム"
+            alt={t("prologue.organizer")}
           />
           <h1 className="welcome-title">
-            五高の<ruby>囁<rt>ささや</rt></ruby>き
+            {isJa ? (
+              <>
+                五高の<ruby>囁<rt>ささや</rt></ruby>き
+              </>
+            ) : (
+              t("prologue.appname")
+            )}
           </h1>
         </div>
-        <p className="prologue-host">主催：熊本大学キャンパスミュージアム推進機構</p>
-        <p className="join-copy prologue-lead">
-          <span className="u-nowrap">スマホをかざして、</span>
-          <span className="u-nowrap">熊本大学校内に潜む</span>
-          <span className="u-nowrap">百年前の声を探そう。</span>
-        </p>
+        <p className="prologue-host">{t("prologue.organizer")}</p>
+        <p className="join-copy prologue-lead">{t("prologue.tagline")}</p>
         <ol className="welcome-flow">
           <li className="welcome-flow-item">
             <span className="welcome-flow-num">1</span>
             <span className="welcome-flow-body">
-              <strong>探す</strong>
-              <p>
-                <span className="u-nowrap">大学校内の3か所</span>
-                （<span className="u-nowrap">化学実験場</span>・<span className="u-nowrap">五高喫茶</span>・
-                <span className="u-nowrap">五高記念館</span>）へ。
-                <span className="u-nowrap">順番は自由です。</span>
-              </p>
+              <strong>{t("prologue.step1.title")}</strong>
+              <p>{t("prologue.step1.body")}</p>
             </span>
           </li>
           <li className="welcome-flow-item">
             <span className="welcome-flow-num">2</span>
             <span className="welcome-flow-body">
-              <strong>かざす</strong>
-              <p>
-                <span className="u-nowrap">スマホ本体の「カメラ」</span>
-                <span className="u-nowrap">アプリで、</span>
-                <span className="u-nowrap">QRを読み取ります。</span>
-              </p>
+              <strong>{t("prologue.step2.title")}</strong>
+              <p>{t("prologue.step2.body")}</p>
             </span>
           </li>
           <li className="welcome-flow-item">
             <span className="welcome-flow-num">3</span>
             <span className="welcome-flow-body">
-              <strong>もらう</strong>
-              <p>
-                <span className="u-nowrap">3つ集まったら、</span>
-                <span className="u-nowrap">五高記念館で</span>
-                <span className="u-nowrap">景品「ぷく石」</span>
-                <span className="u-nowrap">と交換します。</span>
-              </p>
+              <strong>{t("prologue.step3.title")}</strong>
+              <p>{t("prologue.step3.body")}</p>
             </span>
           </li>
         </ol>
         <button className="welcome-start" type="button" onClick={onEnroll}>
-          参加（入学）する
+          {t("prologue.cta")}
         </button>
         <button className="join-secondary" type="button" onClick={() => openSettings("restore")}>
-          記録を復元する
+          {t("set.restore")}
         </button>
         <button className="prologue-note" type="button" onClick={() => setNotesOpen(true)}>
           <NoticeMark />
-          <span>ご参加にあたっての注意事項（LINEカメラ等）</span>
+          <span>{t("prologue.notes.link")}</span>
         </button>
         <section className="prologue-about">
           <button
@@ -153,31 +142,28 @@ export function ProloguePage({ onEnroll }: ProloguePageProps) {
           >
             <span className="prologue-about-label">
               <HostMark />
-              <span>主催・学生アンバサダーについて</span>
+              <span>{t("prologue.about.link")}</span>
             </span>
             <Chevron open={aboutOpen} />
           </button>
           {aboutOpen ? (
             <div className="prologue-about-body">
               <p>
-                <strong>熊本大学キャンパスミュージアム推進機構</strong>
+                <strong>{t("prologue.about.orgName")}</strong>
                 <br />
-                重要文化財を含む歴史的建造物や学術資料を保存・活用し、学内外へ広く魅力を伝える活動を行っています。
+                {t("prologue.about.org")}
               </p>
               <p>
-                <strong>学生アンバサダーチーム「COCORO」</strong>
+                <strong>{t("prologue.about.cocoroName")}</strong>
                 <br />
-                キャンパス内の歴史や文化財を親しみやすく発信・案内する学生団体です。本スタンプラリーの企画・制作・運営を担当しています。
+                {t("prologue.about.cocoro")}
               </p>
             </div>
           ) : null}
         </section>
       </div>
       {notesOpen ? (
-        <div
-          className="prologue-modal"
-          onClick={() => setNotesOpen(false)}
-        >
+        <div className="prologue-modal" onClick={() => setNotesOpen(false)}>
           <div
             ref={dialogRef}
             className="prologue-modal-body"
@@ -189,24 +175,20 @@ export function ProloguePage({ onEnroll }: ProloguePageProps) {
           >
             <h2 id={titleId} className="prologue-modal-title">
               <NoticeMark />
-              <span>ご確認・注意事項</span>
+              <span>{t("prologue.notes.title")}</span>
             </h2>
             <div className="prologue-modal-alert">
-              <strong>LINEなどのアプリ内カメラは使わないでください</strong>
+              <strong>{t("prologue.notes.1h")}</strong>
               <br />
-              スタンプの記録が消えてしまう原因になります。
+              {t("prologue.notes.1b")}
             </div>
             <ul className="prologue-modal-desc">
-              <li>
-                QRコードは必ずiPhoneなら「Safari」、Androidなら「Chrome」などの標準ブラウザで開いてください。
-              </li>
-              <li>
-                プライベートブラウズモード（シークレットモード）で開くと、画面を閉じた際にスタンプが消える場合があります。
-              </li>
-              <li>もし画面が消えてしまった場合でも、入学時に発行される「4つの合言葉」で復元できます。</li>
+              <li>{t("prologue.notes.2")}</li>
+              <li>{t("prologue.notes.3")}</li>
+              <li>{t("prologue.notes.4")}</li>
             </ul>
             <button className="welcome-start" type="button" onClick={() => setNotesOpen(false)}>
-              理解しました
+              {t("prologue.notes.ok")}
             </button>
           </div>
         </div>

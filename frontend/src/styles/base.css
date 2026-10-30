@@ -57,8 +57,8 @@ body {
 }
 
 .map-layer {
+  /* z-index を付けない（スタッキングコンテキスト化すると .mz がシートの下に閉じ込められる） */
   position: absolute;
-  z-index: 1;
   inset: 0;
 }
 
@@ -1842,7 +1842,7 @@ input.pin {
 /* シートより手前・可視マップ帯（bottom = --map-inset）の四辺に固定 */
 .map-cardinals {
   position: absolute;
-  z-index: 3;
+  z-index: 4;
   left: 0;
   right: 0;
   top: 0;
@@ -1891,17 +1891,19 @@ input.pin {
 
 .map-cardinals__w {
   top: 50%;
-  left: 10px;
+  /* 左のズーム列（44px + 余白）と重ならないよう少し右へ */
+  left: 56px;
   transform: translateY(-50%);
 }
 
+/* シート高さに依存せず、ヘッダー直下に固定（高いシートに埋もれない） */
 .mz {
   position: absolute;
   left: 8px;
   right: auto;
-  top: auto;
-  bottom: calc(var(--map-inset, 45%) + 12px);
-  z-index: 2;
+  top: calc(12px + env(safe-area-inset-top, 0px) + 56px);
+  bottom: auto;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   gap: 6px;

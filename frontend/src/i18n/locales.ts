@@ -4,7 +4,7 @@ export const LOCALES = ["ja", "en", "ko", "zh-CN", "zh-TW"] as const;
 export type AppLocale = (typeof LOCALES)[number];
 
 /** Locales selectable in the LanguageSwitcher (roll out one-by-one). */
-export const ENABLED_LOCALES: readonly AppLocale[] = ["ja"];
+export const ENABLED_LOCALES: readonly AppLocale[] = ["ja", "en", "ko", "zh-CN", "zh-TW"];
 
 export const DEFAULT_LOCALE: AppLocale = "ja";
 

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { BottomNav } from "./components/BottomNav";
 import { BottomSheet } from "./components/BottomSheet";
 import { CampusMap } from "./components/CampusMap";
@@ -193,13 +194,14 @@ function TabContent() {
 }
 
 function StampJoinGate({ pendingStamp }: { pendingStamp: 1 | 2 | 3 }) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<"landing" | "consent" | "enroll" | "merge">("landing");
   if (mode === "consent") {
     return (
       <ConsentPage
         onAgree={() => setMode("enroll")}
         onBack={() => setMode("landing")}
-        backLabel="戻る"
+        backLabel={t("consent.back")}
       />
     );
   }
@@ -229,6 +231,7 @@ function JoinGate() {
 }
 
 function AppShell() {
+  const { t } = useTranslation();
   const {
     storageBlocked,
     screen,
@@ -254,9 +257,7 @@ function AppShell() {
       <div className="app-shell">
         <main className="stage">
           <div className="card">
-            <p className="err">
-              このブラウザでは記録を残せません。通常のタブで開いてください。
-            </p>
+            <p className="err">{t("storage.unavailable")}</p>
           </div>
         </main>
         <BottomNav />

@@ -137,13 +137,21 @@
 }
 
 .prologue-lead-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
-  gap: 10px;
+  column-gap: 8px;
   margin-bottom: 6px;
 }
 
 .prologue-lead-row .welcome-lead {
+  grid-column: 2;
+  justify-self: center;
   margin-bottom: 0;
+  text-align: center;
+}
+
+.prologue-lead-row .lang-switcher {
+  grid-column: 3;
+  justify-self: end;
 }
