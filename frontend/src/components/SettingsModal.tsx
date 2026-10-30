@@ -73,7 +73,7 @@ export function SettingsModal() {
     }
     setNotice({
       ok: true,
-      text: `最新の状態に同期しました（印 ${result.stampCount}/3）`,
+      text: `最新の状態に更新しました（印 ${result.stampCount}/3）`,
     });
   };
 
@@ -166,9 +166,9 @@ export function SettingsModal() {
                   <img src="/settings/sync.svg" alt="" />
                 </span>
                 <span className="settings-card__text">
-                  <span className="settings-card__title">最新の記録を同期する</span>
+                  <span className="settings-card__title">最新の記録に更新する</span>
                   <span className="settings-card__desc">
-                    {syncing ? "同期しています…" : "電波が途切れた時・スタンプが反映されない時"}
+                    {syncing ? "更新しています…" : "電波が途切れた時・スタンプが反映されない時"}
                   </span>
                 </span>
               </button>
@@ -178,7 +178,9 @@ export function SettingsModal() {
                 </span>
                 <span className="settings-card__text">
                   <span className="settings-card__title">記録を復元する</span>
-                  <span className="settings-card__desc">別のブラウザで開いた方・画面を閉じた方</span>
+                  <span className="settings-card__desc">
+                    別のブラウザで開いた方・画面を閉じた方（ニックネームと4つの合言葉が必要です）
+                  </span>
                 </span>
               </button>
               <button className="settings-card" type="button" onClick={() => setView("staff")}>
