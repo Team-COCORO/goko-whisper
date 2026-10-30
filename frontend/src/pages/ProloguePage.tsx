@@ -1,4 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { StampNotice } from "../components/StampNotice";
 import { useApp } from "../context/AppContext";
 
@@ -50,6 +52,7 @@ function Chevron({ open }: { open: boolean }) {
 }
 
 export function ProloguePage({ onEnroll }: ProloguePageProps) {
+  const { t } = useTranslation();
   const { openSettings } = useApp();
   const [notesOpen, setNotesOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
@@ -74,7 +77,10 @@ export function ProloguePage({ onEnroll }: ProloguePageProps) {
     <main className="welcome welcome--scroll welcome--prologue">
       <div className="welcome-card">
         <StampNotice />
-        <div className="welcome-lead">案内状</div>
+        <div className="prologue-lead-row">
+          <div className="welcome-lead">{t("prologue.title")}</div>
+          <LanguageSwitcher variant="compact" />
+        </div>
         <div className="prologue-title-row">
           <img
             className="prologue-logo"

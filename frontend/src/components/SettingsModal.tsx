@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { openSurveyPage, restoreStudent } from "../api";
 import { useApp } from "../context/AppContext";
 import { TELEGRAM_FRAMES } from "../data/telegram";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { TelegramIcon } from "./TelegramIcon";
 
 const NICKNAME_MAX = 10;
@@ -9,6 +11,7 @@ const NICKNAME_MAX = 10;
 type View = "menu" | "restore" | "staff";
 
 export function SettingsModal() {
+  const { t } = useTranslation();
   const {
     settingsOpen,
     settingsStartView,
@@ -156,6 +159,11 @@ export function SettingsModal() {
 
           {view === "menu" && (
             <div className="settings-modal__actions">
+              <div className="lang-switcher-field">
+                <span className="lang-switcher-field__label">{t("lang.label")}</span>
+                <LanguageSwitcher variant="block" />
+                <p className="lang-switcher-field__note">{t("lang.note")}</p>
+              </div>
               <button
                 className="settings-card"
                 type="button"
