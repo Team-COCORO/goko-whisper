@@ -3075,10 +3075,6 @@ input.pin {
 }
 
 .present-place {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
   margin-top: 12px;
   padding: 10px 4px;
   border-top: 1px dashed #d9cfbe;
@@ -3113,20 +3109,6 @@ input.pin {
 .present-place__booth {
   color: #5c554e;
   font-size: 12px;
-}
-
-.present-place button {
-  flex: none;
-  padding: 4px 10px;
-  border: 1.5px solid var(--brick);
-  border-radius: 4px;
-  background: none;
-  color: var(--brick);
-  font: inherit;
-  font-size: 12.5px;
-  font-weight: bold;
-  white-space: nowrap;
-  cursor: pointer;
 }
 
 .present-page .menu-detail p {
