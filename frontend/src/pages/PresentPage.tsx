@@ -16,7 +16,7 @@ export function PresentPage() {
   let actionLabel = "受付案内を確認する";
   if (redeemed) actionLabel = "ぷく石をお連れ帰り済み";
   else if (!goalUnlocked && remain > 0) actionLabel = `あと${remain}つの印でゲット！`;
-  else if (goalUnlocked) actionLabel = "五高記念館で符丁を提示";
+  else if (goalUnlocked) actionLabel = "五高記念館で合言葉を提示";
 
   return (
     <div className="present-page">
@@ -72,7 +72,7 @@ export function PresentPage() {
         </button>
         {goalUnlocked && !redeemed && (
           <p className="present-guide">
-            スタンプ帖の「符丁」を五高記念館のスタッフ（赤いビブス）へお見せください。コードの発行はありません。
+            スタンプ帖の「合言葉」を五高記念館のスタッフ（赤いビブス）へお見せください。コードの発行はありません。
           </p>
         )}
       </section>

@@ -81,7 +81,7 @@ export function EnrollPage({ onBack, withStamp = false }: EnrollPageProps) {
         />
         <p className="welcome-sub">
           <span className="u-nowrap">入学すると、別の画面でも続けられる</span>
-          <span className="u-nowrap">4つのしるしが発行されます。</span>
+          <span className="u-nowrap">4つの合言葉が発行されます。</span>
         </p>
         {error ? <p className="join-error">{error}</p> : null}
         <button className="welcome-start" type="button" disabled={!ready} onClick={() => void submit()}>

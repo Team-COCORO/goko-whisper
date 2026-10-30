@@ -64,7 +64,7 @@ export function SettingsModal() {
           result.error === "not_joined"
             ? "先に入学するか、記録を復元してください。"
             : result.error === "missing"
-              ? "サーバに記録がありません。符丁で復元してください。"
+              ? "サーバに記録がありません。合言葉で復元してください。"
               : result.error === "forbidden"
                 ? "ニックネームが合いません。"
                 : "通信できませんでした。もう一度お試しください。",
@@ -73,7 +73,7 @@ export function SettingsModal() {
     }
     setNotice({
       ok: true,
-      text: `最新の状態に同期しました（印 ${result.stampCount}/3）`,
+      text: `最新の状態に更新しました（印 ${result.stampCount}/3）`,
     });
   };
 
@@ -81,7 +81,7 @@ export function SettingsModal() {
     if (!restoreReady) return;
     if (
       hasJoined &&
-      !window.confirm("この端末の記録を、符丁の記録で上書きします。よろしいですか？")
+      !window.confirm("この端末の記録を、合言葉の記録で上書きします。よろしいですか？")
     ) {
       return;
     }
@@ -94,7 +94,7 @@ export function SettingsModal() {
       setBusy(false);
       setError(
         result.error === "mismatch"
-          ? "ニックネームと4つのしるしが合いません。入れ直してください。"
+          ? "ニックネームと4つの合言葉が合いません。入れ直してください。"
           : result.error === "invalid"
             ? "名前を確認してください。"
             : result.error === "locked"
@@ -166,9 +166,9 @@ export function SettingsModal() {
                   <img src="/settings/sync.svg" alt="" />
                 </span>
                 <span className="settings-card__text">
-                  <span className="settings-card__title">最新の記録を同期する</span>
+                  <span className="settings-card__title">最新の記録に更新する</span>
                   <span className="settings-card__desc">
-                    {syncing ? "同期しています…" : "電波が途切れた時・スタンプが反映されない時"}
+                    {syncing ? "更新しています…" : "電波が途切れた時・スタンプが反映されない時"}
                   </span>
                 </span>
               </button>
@@ -178,7 +178,9 @@ export function SettingsModal() {
                 </span>
                 <span className="settings-card__text">
                   <span className="settings-card__title">記録を復元する</span>
-                  <span className="settings-card__desc">別のブラウザで開いた方・画面を閉じた方</span>
+                  <span className="settings-card__desc">
+                    別のブラウザで開いた方・画面を閉じた方（ニックネームと4つの合言葉が必要です）
+                  </span>
                 </span>
               </button>
               <button className="settings-card" type="button" onClick={() => setView("staff")}>
@@ -202,7 +204,7 @@ export function SettingsModal() {
           {view === "restore" && (
             <div className="settings-restore">
               <p className="settings-restore__lead">
-                入学時に登録したニックネームと、4つの符丁を選んでください。
+                入学時に登録したニックネームと、4つの合言葉を選んでください。
               </p>
               <label className="welcome-label" htmlFor="settings-restore-nickname">
                 登録したニックネーム
@@ -218,7 +220,7 @@ export function SettingsModal() {
                 onChange={(event) => setInput(event.target.value)}
               />
               <p className="join-codes-label">
-                控えたしるし（{picks.filter((pick) => pick !== null).length} / 4）
+                控えた合言葉（{picks.filter((pick) => pick !== null).length} / 4）
               </p>
               <div className="merge-preview">
                 {picks.every((pick) => pick === null) ? (
