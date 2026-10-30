@@ -187,8 +187,8 @@ function TelegramPaper({
         <div className="orihon-rule orihon-rule--inner" />
         <header className="orihon-head">
           <span className="orihon-act">合言葉</span>
-          <span className="orihon-spot orihon-spot--slip">あなたの符丁</span>
-          <span className="orihon-spot__sub">符丁控</span>
+          <span className="orihon-spot orihon-spot--slip">あなたの合言葉</span>
+          <span className="orihon-spot__sub">合言葉控</span>
         </header>
         <div className="orihon-telegram">
           <p className="orihon-telegram__name">
@@ -204,14 +204,15 @@ function TelegramPaper({
             ))}
           </ul>
           <p className="orihon-telegram__note">
-            <span className="u-nowrap">ページが消えてしまったときは、</span>
-            <span className="u-nowrap">この4つの言葉で記録を復元できます。</span>
+            <span className="u-nowrap">この4つの合言葉は、</span>
+            <span className="u-nowrap">別の画面で続きを遊ぶときと、</span>
+            <span className="u-nowrap">景品を受け取るときに使います。</span>
             <span className="orihon-telegram__hint u-nowrap">※スクリーンショットをお勧めします</span>
           </p>
         </div>
         <footer className="orihon-foot">
           <Dots active={0} total={dotTotal} />
-          <span>符丁</span>
+          <span>合言葉</span>
         </footer>
       </div>
     </div>
@@ -640,7 +641,7 @@ export function StampBook() {
   ) as PageIndex;
   const underSheet = sheets[turning === "next" ? destination : displayed] ?? sheets[0];
   const leafSheet = sheets[turning === "prev" ? destination : displayed] ?? sheets[0];
-  const pageLabel = underSheet === "telegram" ? "あなたの符丁" : frameOf(underSheet).label;
+  const pageLabel = underSheet === "telegram" ? "あなたの合言葉" : frameOf(underSheet).label;
   const leafFlipped = turning === "prev" ? !flipped : flipped;
 
   return (

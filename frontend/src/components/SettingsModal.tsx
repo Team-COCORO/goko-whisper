@@ -64,7 +64,7 @@ export function SettingsModal() {
           result.error === "not_joined"
             ? "先に入学するか、記録を復元してください。"
             : result.error === "missing"
-              ? "サーバに記録がありません。符丁で復元してください。"
+              ? "サーバに記録がありません。合言葉で復元してください。"
               : result.error === "forbidden"
                 ? "ニックネームが合いません。"
                 : "通信できませんでした。もう一度お試しください。",
@@ -81,7 +81,7 @@ export function SettingsModal() {
     if (!restoreReady) return;
     if (
       hasJoined &&
-      !window.confirm("この端末の記録を、符丁の記録で上書きします。よろしいですか？")
+      !window.confirm("この端末の記録を、合言葉の記録で上書きします。よろしいですか？")
     ) {
       return;
     }
@@ -94,7 +94,7 @@ export function SettingsModal() {
       setBusy(false);
       setError(
         result.error === "mismatch"
-          ? "ニックネームと4つのしるしが合いません。入れ直してください。"
+          ? "ニックネームと4つの合言葉が合いません。入れ直してください。"
           : result.error === "invalid"
             ? "名前を確認してください。"
             : result.error === "locked"
@@ -202,7 +202,7 @@ export function SettingsModal() {
           {view === "restore" && (
             <div className="settings-restore">
               <p className="settings-restore__lead">
-                入学時に登録したニックネームと、4つの符丁を選んでください。
+                入学時に登録したニックネームと、4つの合言葉を選んでください。
               </p>
               <label className="welcome-label" htmlFor="settings-restore-nickname">
                 登録したニックネーム
@@ -218,7 +218,7 @@ export function SettingsModal() {
                 onChange={(event) => setInput(event.target.value)}
               />
               <p className="join-codes-label">
-                控えたしるし（{picks.filter((pick) => pick !== null).length} / 4）
+                控えた合言葉（{picks.filter((pick) => pick !== null).length} / 4）
               </p>
               <div className="merge-preview">
                 {picks.every((pick) => pick === null) ? (

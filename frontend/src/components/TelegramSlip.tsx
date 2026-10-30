@@ -39,15 +39,16 @@ export function TelegramSlip({ nickname, telegramCode, onConfirm }: TelegramSlip
   return (
     <main className="welcome welcome--scroll welcome--slip">
       <div className="welcome-card">
-        <div className="welcome-lead">ふちょうのひかえ</div>
-        <h1 className="welcome-title">符丁の控え</h1>
+        <div className="welcome-lead">あいことばのひかえ</div>
+        <h1 className="welcome-title">囁きの合言葉</h1>
         <p className="slip-name">
           <span className="u-nowrap">{nickname}</span> 様
         </p>
         <p className="join-copy">
-          <span className="u-nowrap">この4つのしるしを保存してください。</span>
-          <span className="u-nowrap">別の画面では、ニックネームとこの4つで</span>
-          <span className="u-nowrap">スタンプを引き継げます。</span>
+          <span className="u-nowrap">この4つの合言葉は、</span>
+          <span className="u-nowrap">別の画面で続きを遊ぶときと、</span>
+          <span className="u-nowrap">景品を受け取るときに使います。</span>
+          <span className="u-nowrap">この画面を保存してください。</span>
         </p>
         <TelegramCard telegramCode={telegramCode} />
         <div className="slip-actions">

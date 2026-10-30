@@ -915,8 +915,8 @@ export function AdminPage() {
         <div className="admin-search">
           <input
             ref={filterRef}
-            aria-label="ニックネーム・符丁で絞り込む"
-            placeholder="ニックネーム・符丁（例: けい、朝凪、書庫）で絞り込み"
+            aria-label="ニックネーム・合言葉で絞り込む"
+            placeholder="ニックネーム・合言葉（例: けい、朝凪、書庫）で絞り込み"
             value={filter}
             onChange={(event) => setFilter(event.target.value)}
           />
@@ -984,7 +984,7 @@ export function AdminPage() {
               <tr>
                 <th>登録日時</th>
                 <th>お名前</th>
-                <th>符丁</th>
+                <th>合言葉</th>
                 <th>スタンプ進捗</th>
                 <th>景品ステータス</th>
                 <th>編集</th>
@@ -1072,7 +1072,7 @@ export function AdminPage() {
               <>
                 <h2 id="admin-dialog-title">参加者データの削除</h2>
                 <p>
-                  「{dialog.student.nickname}」（符丁: {deskLabel(dialog.student)}
+                  「{dialog.student.nickname}」（合言葉: {deskLabel(dialog.student)}
                   ）のデータを削除しますか？この操作は取り消せません。
                 </p>
                 <div className="admin-modal__actions">
@@ -1126,7 +1126,7 @@ export function AdminPage() {
             {dialog.kind === "stamps" && (
               <>
                 <h2 id="admin-dialog-title">スタンプを手動変更</h2>
-                <p>「{dialog.student.nickname}」（符丁: {deskLabel(dialog.student)}）</p>
+                <p>「{dialog.student.nickname}」（合言葉: {deskLabel(dialog.student)}）</p>
                 <div className="admin-checks">
                   {STAMPS.map(([id, label]) => (
                     <label key={id}>
