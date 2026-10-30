@@ -803,17 +803,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     let saved = false;
     setRally((prev) => {
-      if (prev.pendingStamp && !stampFlags(student.stamps, prev.pendingStamp)) return prev;
+      const pending = prev.pendingStamp;
+      if (pending && !stampFlags(student.stamps, pending)) return prev;
+      // 仮押印分は StampBook の押印／色塗りセレモニーに任せる。他の印だけ先に確定する。
+      const stamp1Done = stampFlags(student.stamps, 1) && pending !== 1;
+      const stamp2Done = stampFlags(student.stamps, 2) && pending !== 2;
+      const stamp3Done = stampFlags(student.stamps, 3) && pending !== 3;
       const next: StampRallyState = {
         ...prev,
         clientId,
         nickname,
         telegramCode,
         hasJoined: true,
-        stamp1Done: stampFlags(student.stamps, 1),
-        stamp2Done: stampFlags(student.stamps, 2),
-        stamp3Done: stampFlags(student.stamps, 3),
-        pendingStamp: null,
+        stamp1Done,
+        stamp2Done,
+        stamp3Done,
+        pendingStamp: pending,
+        goalUnlocked: stamp1Done && stamp2Done && stamp3Done,
       };
       try {
         persistRally(next);
