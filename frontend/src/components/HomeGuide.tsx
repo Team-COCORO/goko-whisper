@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useApp } from "../context/AppContext";
+import type { WhisperId } from "../types";
 
 const GUIDE_KEY = "goko-home-guide";
 
@@ -169,8 +170,38 @@ function clearGuideSeen() {
   }
 }
 
+function stampCeremonyBusy(
+  pendingStamp: WhisperId | null,
+  brushStamp: WhisperId | null,
+  heldStamp: WhisperId | null,
+  acquiredStamp: WhisperId | null,
+  whisperId: WhisperId | null,
+  bookOpen: boolean,
+  showCelebration: boolean,
+): boolean {
+  return Boolean(
+    pendingStamp ||
+      brushStamp ||
+      heldStamp ||
+      acquiredStamp ||
+      whisperId ||
+      bookOpen ||
+      showCelebration,
+  );
+}
+
 export function HomeGuide() {
-  const { activeTab, guideReplayToken } = useApp();
+  const {
+    activeTab,
+    guideReplayToken,
+    pendingStamp,
+    brushStamp,
+    heldStamp,
+    acquiredStamp,
+    whisperId,
+    bookOpen,
+    showCelebration,
+  } = useApp();
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [layout, setLayout] = useState<Layout | null>(null);
@@ -180,22 +211,32 @@ export function HomeGuide() {
   const seenReplay = useRef(0);
   const current = STEPS[step];
   const last = step === STEPS.length - 1;
+  const ceremonyBusy = stampCeremonyBusy(
+    pendingStamp,
+    brushStamp,
+    heldStamp,
+    acquiredStamp,
+    whisperId,
+    bookOpen,
+    showCelebration,
+  );
 
   useEffect(() => {
-    if (activeTab !== "home" || started.current || guideSeen()) return;
+    // 押印〜配色〜囁きが終わるまで待つ。待ち中は started を立てない。
+    if (activeTab !== "home" || started.current || guideSeen() || ceremonyBusy) return;
     started.current = true;
     setOpen(true);
-  }, [activeTab]);
+  }, [activeTab, ceremonyBusy]);
 
   useEffect(() => {
     if (guideReplayToken === 0 || guideReplayToken === seenReplay.current) return;
-    if (activeTab !== "home") return;
+    if (activeTab !== "home" || ceremonyBusy) return;
     seenReplay.current = guideReplayToken;
     clearGuideSeen();
     started.current = true;
     setStep(0);
     setOpen(true);
-  }, [guideReplayToken, activeTab]);
+  }, [guideReplayToken, activeTab, ceremonyBusy]);
 
   useLayoutEffect(() => {
     if (!open) return;
