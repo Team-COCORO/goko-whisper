@@ -13,12 +13,12 @@ const STEPS: {
 }[] = [
   {
     target: "stamp",
-    title: "印と符丁の確認",
+    title: "印と合言葉の確認",
     body: (
       <>
         <span className="u-nowrap">獲得したスタンプの確認や、</span>
         <span className="u-nowrap">あなたに授けられた</span>
-        <span className="u-nowrap">「4つの符丁」の閲覧は、</span>
+        <span className="u-nowrap">「4つの合言葉」の閲覧は、</span>
         <span className="u-nowrap">右上のスタンプ帖を</span>
         <span className="u-nowrap">タップします。</span>
       </>

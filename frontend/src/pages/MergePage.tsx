@@ -37,7 +37,7 @@ export function MergePage({ onBack }: MergePageProps) {
       setBusy(false);
       setError(
         result.error === "mismatch"
-          ? "ニックネームと4つのしるしが合いません。入れ直してください。"
+          ? "ニックネームと4つの合言葉が合いません。入れ直してください。"
           : result.error === "invalid"
             ? "名前を確認してください。"
             : result.error === "locked"
@@ -65,7 +65,7 @@ export function MergePage({ onBack }: MergePageProps) {
         <p className="join-copy">
           <span className="u-nowrap">入学のときに控えた</span>
           <span className="u-nowrap">ニックネームと、</span>
-          <span className="u-nowrap">4つのしるしを入れてください。</span>
+          <span className="u-nowrap">4つの合言葉を選んでください。</span>
           <span className="u-nowrap">これまでのスタンプを、</span>
           <span className="u-nowrap">この画面に移します。</span>
         </p>
@@ -82,7 +82,7 @@ export function MergePage({ onBack }: MergePageProps) {
           value={input}
           onChange={(event) => setInput(event.target.value)}
         />
-        <p className="join-codes-label">控えたしるし（{picks.filter((pick) => pick !== null).length} / 4）</p>
+        <p className="join-codes-label">控えた合言葉（{picks.filter((pick) => pick !== null).length} / 4）</p>
         <div className="merge-preview">
           {picks.every((pick) => pick === null) ? (
             <span className="merge-preview-empty">未選択</span>

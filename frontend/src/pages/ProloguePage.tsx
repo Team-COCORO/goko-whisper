@@ -197,7 +197,7 @@ export function ProloguePage({ onEnroll }: ProloguePageProps) {
               <li>
                 プライベートブラウズモード（シークレットモード）で開くと、画面を閉じた際にスタンプが消える場合があります。
               </li>
-              <li>もし画面が消えてしまった場合でも、入学時に発行される「4つの符丁」で復元できます。</li>
+              <li>もし画面が消えてしまった場合でも、入学時に発行される「4つの合言葉」で復元できます。</li>
             </ul>
             <button className="welcome-start" type="button" onClick={() => setNotesOpen(false)}>
               理解しました
