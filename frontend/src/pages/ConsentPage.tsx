@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const CONTACT_EMAIL = "campusmuseum@example.kumamoto-u.ac.jp";
+const CONTACT_EMAIL = "museum@jimu-kumamoto-u.ac.jp";
 
 type ConsentPageProps = {
   onAgree: () => void;
