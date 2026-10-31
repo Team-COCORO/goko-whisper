@@ -126,6 +126,8 @@ type Props = {
   imageW: number;
   imageH: number;
   onDone: () => void;
+  /** 指定時、筆で塗った箇所から線画を徐々に消す */
+  lineHref?: string;
 };
 
 export function BrushReveal({
@@ -136,6 +138,7 @@ export function BrushReveal({
   imageW,
   imageH,
   onDone,
+  lineHref,
 }: Props) {
   const [frame, setFrame] = useState<BrushFrame | null>(null);
   const onDoneRef = useRef(onDone);
@@ -207,14 +210,20 @@ export function BrushReveal({
     };
   }, [imageH, imageW, stampId]);
 
-  const maskId = `brush-mask-${stampId}`;
+  const colorMaskId = `brush-mask-${stampId}`;
+  const lineMaskId = `brush-line-mask-${stampId}`;
   const lift = frame ? (1 - frame.z) * -12 : -12;
+  const strokeProps = {
+    fill: "none" as const,
+    strokeLinecap: "round" as const,
+    strokeLinejoin: "round" as const,
+  };
 
   return (
     <g transform={`translate(${imageX} ${imageY})`} pointerEvents="none">
       <defs>
         <mask
-          id={maskId}
+          id={colorMaskId}
           maskUnits="userSpaceOnUse"
           maskContentUnits="userSpaceOnUse"
           x={0}
@@ -226,16 +235,45 @@ export function BrushReveal({
             <path
               key={index}
               d={segment.d}
-              fill="none"
+              {...strokeProps}
               stroke="white"
               strokeWidth={segment.width}
-              strokeLinecap="round"
-              strokeLinejoin="round"
             />
           ))}
         </mask>
+        {lineHref && (
+          <mask
+            id={lineMaskId}
+            maskUnits="userSpaceOnUse"
+            maskContentUnits="userSpaceOnUse"
+            x={0}
+            y={0}
+            width={imageW}
+            height={imageH}
+          >
+            <rect x={0} y={0} width={imageW} height={imageH} fill="white" />
+            {frame?.segments.map((segment, index) => (
+              <path
+                key={index}
+                d={segment.d}
+                {...strokeProps}
+                stroke="black"
+                strokeWidth={segment.width}
+              />
+            ))}
+          </mask>
+        )}
       </defs>
-      <image href={colorHref} width={imageW} height={imageH} mask={`url(#${maskId})`} />
+      {lineHref && (
+        <image
+          className="building-illust locked"
+          href={lineHref}
+          width={imageW}
+          height={imageH}
+          mask={`url(#${lineMaskId})`}
+        />
+      )}
+      <image href={colorHref} width={imageW} height={imageH} mask={`url(#${colorMaskId})`} />
       {frame && (
         <g transform={`translate(${frame.x} ${frame.y})`}>
           <ellipse
