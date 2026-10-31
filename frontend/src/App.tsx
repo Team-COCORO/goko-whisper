@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { BottomNav } from "./components/BottomNav";
 import { BottomSheet } from "./components/BottomSheet";
 import { CampusMap } from "./components/CampusMap";
@@ -10,7 +11,7 @@ import { SettingsModal } from "./components/SettingsModal";
 import { StampNotice } from "./components/StampNotice";
 import { TelegramSlip } from "./components/TelegramSlip";
 import { AppProvider, useApp } from "./context/AppContext";
-import { placeById, type PlaceId, type PlaceStory } from "./data/places";
+import { placeById, type PlaceId } from "./data/places";
 import { AdminPage } from "./pages/AdminPage";
 import { ConsentPage } from "./pages/ConsentPage";
 import { EnrollPage } from "./pages/EnrollPage";
@@ -22,6 +23,7 @@ import { StampLandingPage } from "./pages/StampLandingPage";
 import type { Screen } from "./types";
 
 function sheetLabel(
+  t: (key: string) => string,
   screen: Screen,
   placeName: string | null,
   stampCount: number,
@@ -29,19 +31,19 @@ function sheetLabel(
   if (placeName) return placeName;
   switch (screen) {
     case "whisper":
-      return "囁き";
+      return t("sheet.title.0");
     case "guide":
-      return "案内";
+      return t("sheet.title.1");
     case "herald":
-      return "耳を澄ませ";
+      return t("sheet.title.2");
     case "acquired":
-      return "印を得て";
+      return t("sheet.title.3");
     case "redeemed":
-      return "受取完了";
+      return t("sheet.title.4");
     case "top":
-      return stampCount >= 3 ? "満願" : "はじまり";
+      return stampCount >= 3 ? t("sheet.title.5") : t("sheet.title.6");
     default:
-      return "耳を澄ませ";
+      return t("sheet.title.2");
   }
 }
 
@@ -65,20 +67,58 @@ function sheetHugsContent(screen: Screen, hasPlace: boolean): boolean {
   );
 }
 
-function PlaceStoryCard({ story }: { story: PlaceStory }) {
+function PlaceStoryName({ text }: { text: string }) {
+  const matched = text.match(/^(.+?)\s*([（(][^）)]+[）)])\s*$/);
+  if (!matched) return <>{text}</>;
+  const [, head, paren] = matched;
   return (
-    <article className="place-story">
+    <>
+      <span className="place-story__name-main">{head}</span>
+      <br />
+      <span className="place-story__name-paren">{paren}</span>
+    </>
+  );
+}
+
+function PlaceStoryCard({ placeId }: { placeId: PlaceId }) {
+  const { t, i18n } = useTranslation();
+  const place = placeById(placeId);
+  const story = place.story;
+  if (!story) return null;
+  const key =
+    placeId === "kagaku"
+      ? "chem"
+      : placeId === "goko"
+        ? "goko"
+        : placeId === "relief"
+          ? "relief"
+          : placeId === "akamon"
+            ? "gate"
+            : null;
+  if (!key) return null;
+  const name =
+    placeId === "relief"
+      ? t("place.relief.storyName")
+      : placeId === "akamon"
+        ? t("place.gate.name")
+        : t(`place.${key}.name`);
+  const isJa = i18n.language === "ja" || i18n.language.startsWith("ja");
+  return (
+    <article className={isJa ? "place-story" : "place-story place-story--i18n"}>
       <header className="place-story__head">
-        <h2 className="place-story__name">{story.name}</h2>
-        {story.heritage && <p className="place-story__badge">重要文化財</p>}
+        <h2 className="place-story__name">
+          {isJa ? name : <PlaceStoryName text={name} />}
+        </h2>
+        {story.heritage && <p className="place-story__badge">{t("place.badge.heritage")}</p>}
       </header>
-      <p className="place-story__title">{story.title}</p>
-      <p className="place-story__body">{story.body}</p>
+      <p className="place-story__title">{t(`place.${key}.title`)}</p>
+      <p className="place-story__body">{t(`place.${key}.body`)}</p>
     </article>
   );
 }
 
 function HomeStage() {
+  const { t } = useTranslation();
   const { screen, setActiveTab, stamp1Done, stamp2Done, stamp3Done } = useApp();
   const insetRef = useRef(0);
   const refitRef = useRef<() => void>(() => {});
@@ -87,6 +127,17 @@ function HomeStage() {
   const place = browsing && placeId ? placeById(placeId) : null;
   const stampCount = [stamp1Done, stamp2Done, stamp3Done].filter(Boolean).length;
   const showMarks = !place && (screen === "top" || screen === "guide");
+  const placeLabel = place
+    ? place.id === "kagaku"
+      ? t("place.chem.name")
+      : place.id === "goko"
+        ? t("place.goko.name")
+        : place.id === "cafe"
+          ? t("place.cafe.name")
+          : place.id === "relief"
+            ? t("place.relief.name")
+            : t("place.gate.mapName")
+    : null;
 
   useEffect(() => {
     if (!browsing) setPlaceId(null);
@@ -131,13 +182,13 @@ function HomeStage() {
             rel="noopener noreferrer"
           >
             <span className="home-logo" aria-hidden="true" />
-            五高の囁き
+            {t("app.name.short")}
           </a>
         </h1>
       </header>
       <BottomSheet
-        label={sheetLabel(screen, place?.name ?? null, stampCount)}
-        preferredRatio={sheetRatio(screen, place?.name ?? null)}
+        label={sheetLabel(t, screen, placeLabel, stampCount)}
+        preferredRatio={sheetRatio(screen, placeLabel)}
         contentKey={place ? `${screen}:${place.id}` : `${screen}:${stampCount}`}
         expandToContent={sheetHugsContent(screen, place !== null)}
         onHeightChange={(height) => {
@@ -146,12 +197,22 @@ function HomeStage() {
         }}
       >
         <StampNotice />
-        {place?.story ? (
-          <PlaceStoryCard story={place.story} />
+        {place?.story && placeId ? (
+          <PlaceStoryCard placeId={placeId} />
         ) : place ? (
           <div className="card">
             {place.image && <img className="map-place__photo" src={place.image} alt="" />}
-            <p className="sheet-line">{place.summary}</p>
+            <p className="sheet-line">
+              {place.id === "kagaku"
+                ? t("place.chem.summary")
+                : place.id === "goko"
+                  ? t("place.goko.summary")
+                  : place.id === "relief"
+                    ? t("place.relief.summary")
+                    : place.id === "akamon"
+                      ? t("place.gate.summary")
+                      : t("place.cafe.summary")}
+            </p>
           </div>
         ) : (
           <>
@@ -161,10 +222,10 @@ function HomeStage() {
         )}
       </BottomSheet>
       <div className="map-cardinals" aria-hidden="true">
-        <span className="map-cardinals__n">北</span>
-        <span className="map-cardinals__e">東</span>
-        <span className="map-cardinals__s">南</span>
-        <span className="map-cardinals__w">西</span>
+        <span className="map-cardinals__n">{t("map.dir.n")}</span>
+        <span className="map-cardinals__e">{t("map.dir.e")}</span>
+        <span className="map-cardinals__s">{t("map.dir.s")}</span>
+        <span className="map-cardinals__w">{t("map.dir.w")}</span>
       </div>
     </main>
   );
@@ -193,13 +254,14 @@ function TabContent() {
 }
 
 function StampJoinGate({ pendingStamp }: { pendingStamp: 1 | 2 | 3 }) {
+  const { t } = useTranslation();
   const [mode, setMode] = useState<"landing" | "consent" | "enroll" | "merge">("landing");
   if (mode === "consent") {
     return (
       <ConsentPage
         onAgree={() => setMode("enroll")}
         onBack={() => setMode("landing")}
-        backLabel="戻る"
+        backLabel={t("consent.back")}
       />
     );
   }
@@ -229,6 +291,7 @@ function JoinGate() {
 }
 
 function AppShell() {
+  const { t } = useTranslation();
   const {
     storageBlocked,
     screen,
@@ -254,9 +317,7 @@ function AppShell() {
       <div className="app-shell">
         <main className="stage">
           <div className="card">
-            <p className="err">
-              このブラウザでは記録を残せません。通常のタブで開いてください。
-            </p>
+            <p className="err">{t("storage.unavailable")}</p>
           </div>
         </main>
         <BottomNav />

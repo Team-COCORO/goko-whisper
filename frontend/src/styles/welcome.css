@@ -306,6 +306,7 @@
   color: var(--ink);
   font-size: 15.5px;
   line-height: 1.65;
+  text-wrap: balance;
 }
 
 .join-error {
@@ -366,6 +367,10 @@
   text-align: center;
 }
 
+.join-codes > li {
+  min-width: 0;
+}
+
 .join-codes-label {
   display: block;
   margin-bottom: 4px;
@@ -382,13 +387,42 @@
 }
 
 .join-codes-word {
-  display: block;
-  font-size: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+  font-size: 15px;
   font-weight: bold;
   line-height: 1.3;
   color: var(--nav);
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
   border-bottom: 1px dashed rgba(124, 104, 83, 0.5);
+  padding-bottom: 2px;
+}
+
+.telegram-word {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  width: 100%;
+  min-width: 0;
+}
+
+.telegram-word__ja {
+  font-weight: bold;
+  line-height: 1.25;
+}
+
+.telegram-word__loc {
+  font-size: 0.82em;
+  font-weight: 600;
+  line-height: 1.25;
+  color: #5c534c;
+  overflow-wrap: anywhere;
 }
 
 .join-check {
@@ -465,6 +499,7 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
+  max-width: 100%;
   padding: 3px 6px;
   color: var(--brick);
   background: rgba(139, 58, 43, 0.1);
@@ -472,7 +507,11 @@
   border-radius: 2px;
   font-size: 12.5px;
   font-weight: bold;
-  white-space: nowrap;
+  white-space: normal;
+}
+
+.merge-tag .telegram-word {
+  align-items: flex-start;
 }
 
 .merge-tag .goko-icon {
@@ -512,6 +551,7 @@
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  min-width: 0;
   min-height: 72px;
   padding: 8px 4px;
   background: #fcfbf9;
@@ -530,9 +570,13 @@
   flex: none;
 }
 
-.merge-choice span {
+.merge-choice .telegram-word,
+.merge-choice > span {
+  width: 100%;
   font-weight: 600;
-  white-space: nowrap;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: center;
 }
 
 .merge-choice.is-selected {
@@ -541,18 +585,24 @@
   border-color: var(--brick);
 }
 
+.merge-choice.is-selected .telegram-word__loc {
+  color: rgba(255, 255, 255, 0.88);
+}
+
 .merge-choice.is-selected .goko-icon :not(.mark) {
   stroke: #fff;
 }
 
 .shuin-badge {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 78px;
   height: 78px;
   margin: 4px 0 14px;
-  padding: 4px;
+  padding: 6px 4px;
+  box-sizing: border-box;
   color: #b73e2d;
   background: rgba(183, 62, 45, 0.05);
   border: 2px dashed #b73e2d;
@@ -561,9 +611,24 @@
   font-size: 16px;
   font-weight: bold;
   letter-spacing: 0.1em;
-  line-height: 1.25;
+  line-height: 1.2;
   text-align: center;
   transform: rotate(-6deg);
+}
+
+.shuin-badge__line {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+html:not([lang="ja"]) .shuin-badge {
+  width: 86px;
+  height: 86px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
 }
 
 svg.goko-icon {

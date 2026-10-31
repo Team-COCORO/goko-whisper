@@ -1,13 +1,15 @@
+import { useTranslation } from "react-i18next";
 import { useApp } from "../context/AppContext";
 
 export function StampNotice() {
+  const { t } = useTranslation();
   const { stampNotice, retryStamp } = useApp();
   if (stampNotice === "retry") {
     return (
       <div className="card">
-        <p className="sheet-line is-alert">通信が必要です</p>
+        <p className="sheet-line is-alert">{t("notice.net")}</p>
         <button className="b alt" type="button" onClick={retryStamp}>
-          再試行
+          {t("notice.retry")}
         </button>
       </div>
     );
@@ -15,7 +17,7 @@ export function StampNotice() {
   if (stampNotice === "invalid") {
     return (
       <div className="card">
-        <p className="sheet-line is-alert">このQRは確認できません</p>
+        <p className="sheet-line is-alert">{t("notice.invalidQr")}</p>
       </div>
     );
   }
