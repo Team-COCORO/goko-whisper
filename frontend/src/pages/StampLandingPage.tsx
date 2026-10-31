@@ -26,7 +26,7 @@ export function StampLandingPage({ pendingStamp, onEnroll, onMerge }: StampLandi
           <div className="welcome-lead">{t(STAMP_PLACE_KEY[pendingStamp])}</div>
           <LanguageSwitcher variant="compact" />
         </div>
-        <h1 className="welcome-title">{t("landing.found")}</h1>
+        <h1 className="welcome-title welcome-title--found">{t("landing.found")}</h1>
         <div className="shuin-badge" aria-hidden="true">
           <span className="shuin-badge__line">{t("landing.state.done")}</span>
           <span className="shuin-badge__line">{t("landing.state.wait")}</span>

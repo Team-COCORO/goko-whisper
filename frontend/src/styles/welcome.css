@@ -43,6 +43,11 @@
   white-space: normal;
 }
 
+.welcome-title--found {
+  white-space: pre-line;
+  text-align: center;
+}
+
 .welcome-lead {
   font-size: clamp(13px, 3.7vw, 14.5px);
   color: var(--brick);
@@ -50,6 +55,12 @@
   margin-bottom: 16px;
   letter-spacing: 0.05em;
   white-space: nowrap;
+}
+
+.prologue-lead-row .welcome-lead {
+  white-space: normal;
+  text-wrap: balance;
+  max-width: 100%;
 }
 
 .welcome-flow {
