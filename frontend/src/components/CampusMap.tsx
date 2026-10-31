@@ -134,7 +134,7 @@ function MapLabelText({
   x?: number;
   y?: number;
   textAnchor?: "start" | "middle" | "end";
-  dominantBaseline?: string;
+  dominantBaseline?: "auto" | "middle" | "central" | "hanging" | "mathematical" | "alphabetic";
   style?: CSSProperties;
   children: string;
 }) {
