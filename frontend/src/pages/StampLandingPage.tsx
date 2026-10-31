@@ -9,6 +9,20 @@ const STAMP_PLACE_KEY: Record<WhisperId, "landing.place.chem" | "landing.place.c
   3: "landing.place.goko",
 };
 
+/** 末尾の（）／() は次行へ。括弧内の途中改行を防ぐ */
+function PlaceLead({ text }: { text: string }) {
+  const matched = text.match(/^(.+?)\s*([（(][^）)]+[）)])\s*$/);
+  if (!matched) return <>{text}</>;
+  const [, head, paren] = matched;
+  return (
+    <>
+      <span className="welcome-lead__main">{head}</span>
+      <br />
+      <span className="welcome-lead__paren">{paren}</span>
+    </>
+  );
+}
+
 type StampLandingPageProps = {
   pendingStamp: WhisperId;
   onEnroll: () => void;
@@ -23,7 +37,9 @@ export function StampLandingPage({ pendingStamp, onEnroll, onMerge }: StampLandi
       <div className="welcome-card">
         <StampNotice />
         <div className="prologue-lead-row">
-          <div className="welcome-lead welcome-lead--place">{t(STAMP_PLACE_KEY[pendingStamp])}</div>
+          <div className="welcome-lead welcome-lead--place">
+            <PlaceLead text={t(STAMP_PLACE_KEY[pendingStamp])} />
+          </div>
           <LanguageSwitcher variant="compact" />
         </div>
         <h1 className="welcome-title welcome-title--found">{t("landing.found")}</h1>
