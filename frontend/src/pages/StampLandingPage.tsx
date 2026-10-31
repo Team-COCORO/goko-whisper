@@ -23,7 +23,7 @@ export function StampLandingPage({ pendingStamp, onEnroll, onMerge }: StampLandi
       <div className="welcome-card">
         <StampNotice />
         <div className="prologue-lead-row">
-          <div className="welcome-lead">{t(STAMP_PLACE_KEY[pendingStamp])}</div>
+          <div className="welcome-lead welcome-lead--place">{t(STAMP_PLACE_KEY[pendingStamp])}</div>
           <LanguageSwitcher variant="compact" />
         </div>
         <h1 className="welcome-title welcome-title--found">{t("landing.found")}</h1>
