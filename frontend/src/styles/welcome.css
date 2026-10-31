@@ -63,6 +63,30 @@
   max-width: 100%;
 }
 
+.welcome-lead--place {
+  font-size: clamp(20px, 5.8vw, 26px);
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.welcome-lead--place .welcome-lead__main,
+.welcome-lead--place .welcome-lead__paren {
+  white-space: nowrap;
+}
+
+.welcome-lead--place .welcome-lead__paren {
+  display: inline-block;
+  font-size: 0.82em;
+  letter-spacing: 0.04em;
+}
+
+html[lang="en"] .welcome-lead--place .welcome-lead__main,
+html[lang="en"] .welcome-lead--place .welcome-lead__paren {
+  white-space: normal;
+}
+
 .welcome-flow {
   list-style: none;
   width: 100%;
