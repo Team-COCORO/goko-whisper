@@ -53,9 +53,9 @@ export const MAP_PLACES: MapPlace[] = [
   {
     id: "cafe",
     name: "五高喫茶",
-    x: 185,
-    y: 86,
-    half: 24,
+    x: 159,
+    y: 97,
+    half: 28,
     action: "food",
     summary: "",
   },

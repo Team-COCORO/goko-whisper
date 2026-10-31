@@ -155,3 +155,28 @@
   grid-column: 3;
   justify-self: end;
 }
+
+/* StampLanding: 地点名を広く取り、言語切替は右上固定 */
+.prologue-lead-row--place {
+  display: block;
+  position: relative;
+  min-height: 2.4em;
+  padding-inline: 0 5.75rem;
+  margin-bottom: 8px;
+  text-align: center;
+}
+
+.prologue-lead-row--place .welcome-lead {
+  display: inline-block;
+  grid-column: unset;
+  justify-self: unset;
+  max-width: 100%;
+}
+
+.prologue-lead-row--place .lang-switcher {
+  position: absolute;
+  top: 0;
+  right: 0;
+  grid-column: unset;
+  justify-self: unset;
+}
