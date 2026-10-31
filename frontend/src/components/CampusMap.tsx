@@ -54,6 +54,8 @@ type SpotProps = {
   painting: boolean;
   showColor: boolean;
   onPaintDone: () => void;
+  /** 筆に合わせて線画を消し、配色後は線画を出さない（構図ずれスポット用） */
+  hideLineWhenColored?: boolean;
 };
 
 function Spot({
@@ -74,7 +76,10 @@ function Spot({
   painting,
   showColor,
   onPaintDone,
+  hideLineWhenColored = false,
 }: SpotProps) {
+  // 筆中は BrushReveal 側で線画を筆マスクに合わせて消す。配色完了後は線画なし。
+  const showLine = !(hideLineWhenColored && (painting || showColor));
   return (
     <g transform={`translate(${x} ${y})`}>
       {!done && (
@@ -86,14 +91,16 @@ function Spot({
         fill="#efe6da"
         pointerEvents="none"
       />
-      <image
-        className="building-illust locked"
-        href={href}
-        x={imageX}
-        y={imageY}
-        width={imageW}
-        height={imageH}
-      />
+      {showLine && (
+        <image
+          className="building-illust locked"
+          href={href}
+          x={imageX}
+          y={imageY}
+          width={imageW}
+          height={imageH}
+        />
+      )}
       {showColor && (
         <image
           className="building-illust"
@@ -113,6 +120,7 @@ function Spot({
           imageW={imageW}
           imageH={imageH}
           onDone={onPaintDone}
+          lineHref={hideLineWhenColored ? href : undefined}
         />
       )}
       <MapLabelText x={labelX} y={labelY} textAnchor="middle">
@@ -564,6 +572,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             painting={brushStamp === 2}
             showColor={colorOf(2, stamp2Done)}
             onPaintDone={finishBrush}
+            hideLineWhenColored
           />
           <Mystery x={133} y={207} href="/maps/akamon.svg" />
           <Mystery x={148} y={109} href="/maps/heam-relief.svg" />
