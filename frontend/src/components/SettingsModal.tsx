@@ -86,7 +86,7 @@ export function SettingsModal() {
 
   const runRestore = async () => {
     if (!restoreReady) return;
-    if (hasJoined && !window.confirm(t("set.overwriteConfirm"))) {
+    if (hasJoined && !window.confirm(t("set.restoreConfirm"))) {
       return;
     }
     setBusy(true);

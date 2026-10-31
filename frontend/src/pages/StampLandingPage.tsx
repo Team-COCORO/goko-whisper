@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { StampNotice } from "../components/StampNotice";
 import type { WhisperId } from "../types";
 
@@ -21,12 +22,14 @@ export function StampLandingPage({ pendingStamp, onEnroll, onMerge }: StampLandi
     <main className="welcome welcome--scroll">
       <div className="welcome-card">
         <StampNotice />
-        <div className="welcome-lead">{t(STAMP_PLACE_KEY[pendingStamp])}</div>
+        <div className="prologue-lead-row">
+          <div className="welcome-lead">{t(STAMP_PLACE_KEY[pendingStamp])}</div>
+          <LanguageSwitcher variant="compact" />
+        </div>
         <h1 className="welcome-title">{t("landing.found")}</h1>
         <div className="shuin-badge" aria-hidden="true">
-          {t("landing.state.done")}
-          <br />
-          {t("landing.state.wait")}
+          <span className="shuin-badge__line">{t("landing.state.done")}</span>
+          <span className="shuin-badge__line">{t("landing.state.wait")}</span>
         </div>
         <p className="join-copy join-copy--start">{t("landing.body")}</p>
         <button className="welcome-start" type="button" onClick={onEnroll}>

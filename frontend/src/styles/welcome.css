@@ -595,12 +595,14 @@
 
 .shuin-badge {
   display: inline-flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   width: 78px;
   height: 78px;
   margin: 4px 0 14px;
-  padding: 4px;
+  padding: 6px 4px;
+  box-sizing: border-box;
   color: #b73e2d;
   background: rgba(183, 62, 45, 0.05);
   border: 2px dashed #b73e2d;
@@ -609,9 +611,24 @@
   font-size: 16px;
   font-weight: bold;
   letter-spacing: 0.1em;
-  line-height: 1.25;
+  line-height: 1.2;
   text-align: center;
   transform: rotate(-6deg);
+}
+
+.shuin-badge__line {
+  display: block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+html:not([lang="ja"]) .shuin-badge {
+  width: 86px;
+  height: 86px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
 }
 
 svg.goko-icon {

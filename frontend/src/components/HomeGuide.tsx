@@ -1,4 +1,5 @@
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useApp } from "../context/AppContext";
 import type { WhisperId } from "../types";
 
@@ -6,76 +7,16 @@ const GUIDE_KEY = "goko-home-guide";
 
 const STEPS: {
   target: "stamp" | "map" | "sheet" | "nav";
-  title: string;
-  body: ReactNode;
+  titleKey: string;
+  bodyKey: string;
   side: "top" | "bottom";
   padding: number;
   radius: number;
 }[] = [
-  {
-    target: "stamp",
-    title: "印と合言葉の確認",
-    body: (
-      <>
-        <span className="u-nowrap">獲得したスタンプの確認や、</span>
-        <span className="u-nowrap">あなたに授けられた</span>
-        <span className="u-nowrap">「4つの合言葉」の閲覧は、</span>
-        <span className="u-nowrap">右上のスタンプ帖を</span>
-        <span className="u-nowrap">タップします。</span>
-      </>
-    ),
-    side: "bottom",
-    padding: 6,
-    radius: 8,
-  },
-  {
-    target: "map",
-    title: "百年前の学び舎を巡る",
-    body: (
-      <>
-        <span className="u-nowrap">地図上の建物をタップすると、</span>
-        <span className="u-nowrap">百年前の物語が読めます。</span>
-        <span className="u-nowrap">点滅するピンの場所を目指し、</span>
-        <span className="u-nowrap">QRを探しましょう。</span>
-      </>
-    ),
-    side: "bottom",
-    padding: 8,
-    radius: 12,
-  },
-  {
-    target: "sheet",
-    title: "囁きに耳を澄ます",
-    body: (
-      <>
-        <span className="u-nowrap">下部の案内枠は</span>
-        <span className="u-nowrap">上に引き上げられます。</span>
-        <span className="u-nowrap">次に向かうべき場所や</span>
-        <span className="u-nowrap">ヒントを確認し、</span>
-        <span className="u-nowrap">3つの印を集めましょう。</span>
-      </>
-    ),
-    side: "top",
-    padding: 4,
-    radius: 16,
-  },
-  {
-    target: "nav",
-    title: "模擬店と景品への道",
-    body: (
-      <>
-        <span className="u-nowrap">下のメニューから、</span>
-        <span className="u-nowrap">紫熊祭の模擬店が並ぶ「食品」や、</span>
-        <span className="u-nowrap">3つの印を集めたあとに</span>
-        <span className="u-nowrap">記念品を受け取る</span>
-        <span className="u-nowrap">「プレゼント」へ</span>
-        <span className="u-nowrap">切り替えられます。</span>
-      </>
-    ),
-    side: "top",
-    padding: 2,
-    radius: 6,
-  },
+  { target: "stamp", titleKey: "guide.1.t", bodyKey: "guide.1.b", side: "bottom", padding: 6, radius: 8 },
+  { target: "map", titleKey: "guide.2.t", bodyKey: "guide.2.b", side: "bottom", padding: 8, radius: 12 },
+  { target: "sheet", titleKey: "guide.3.t", bodyKey: "guide.3.b", side: "top", padding: 4, radius: 16 },
+  { target: "nav", titleKey: "guide.4.t", bodyKey: "guide.4.b", side: "top", padding: 2, radius: 6 },
 ];
 
 type Side = "top" | "bottom";
@@ -191,6 +132,7 @@ function stampCeremonyBusy(
 }
 
 export function HomeGuide() {
+  const { t } = useTranslation();
   const {
     activeTab,
     guideReplayToken,
@@ -322,17 +264,15 @@ export function HomeGuide() {
         }
       >
         <div className="home-guide__head">
-          <span className="home-guide__count">
-            五高の手引（{step + 1} / {STEPS.length}）
-          </span>
+          <span className="home-guide__count">{t("guide.title", { n: step + 1 })}</span>
           <button className="home-guide__skip" type="button" onClick={finish}>
-            スキップ
+            {t("guide.skip")}
           </button>
         </div>
         <h2 id="home-guide-title" className="home-guide__title">
-          {current.title}
+          {t(current.titleKey)}
         </h2>
-        <p className="home-guide__body">{current.body}</p>
+        <p className="home-guide__body">{t(current.bodyKey)}</p>
         <div className="home-guide__actions">
           <button
             className="home-guide__prev"
@@ -340,7 +280,7 @@ export function HomeGuide() {
             hidden={step === 0}
             onClick={() => setStep((value) => value - 1)}
           >
-            もどる
+            {t("guide.prev")}
           </button>
           <button
             className="home-guide__next"
@@ -350,7 +290,7 @@ export function HomeGuide() {
               else setStep((value) => value + 1);
             }}
           >
-            {last ? "散策をはじめる" : "次へ"}
+            {last ? t("guide.done") : t("guide.next")}
           </button>
         </div>
       </div>

@@ -1,4 +1,11 @@
-import { useEffect, useRef, type MutableRefObject, type RefObject } from "react";
+import {
+  useEffect,
+  useRef,
+  type CSSProperties,
+  type MutableRefObject,
+  type RefObject,
+} from "react";
+import { useTranslation } from "react-i18next";
 import { BrushReveal } from "./BrushReveal";
 import { useApp } from "../context/AppContext";
 import { BUILDING_PLATES, type BuildingPlate } from "../data/buildingPlates";
@@ -108,19 +115,55 @@ function Spot({
           onDone={onPaintDone}
         />
       )}
-      <text x={labelX} y={labelY} textAnchor="middle" className="map-label">
+      <MapLabelText x={labelX} y={labelY} textAnchor="middle">
         {label}
-      </text>
+      </MapLabelText>
       <circle cx={0} cy={0} r={2} fill="#c5a059" />
     </g>
   );
 }
 
+function MapLabelText({
+  x = 0,
+  y = 0,
+  textAnchor = "middle",
+  dominantBaseline,
+  style,
+  children,
+}: {
+  x?: number;
+  y?: number;
+  textAnchor?: "start" | "middle" | "end";
+  dominantBaseline?: string;
+  style?: CSSProperties;
+  children: string;
+}) {
+  const lines = children.split("\n").filter((line) => line.length > 0);
+  return (
+    <text
+      x={x}
+      y={y}
+      textAnchor={textAnchor}
+      dominantBaseline={dominantBaseline}
+      className="map-label"
+      style={style}
+    >
+      {lines.length <= 1
+        ? children
+        : lines.map((line, index) => (
+            <tspan key={index} x={x} dy={index === 0 ? 0 : "1.15em"}>
+              {line}
+            </tspan>
+          ))}
+    </text>
+  );
+}
+
 function PlaceName({ x, y, children }: { x: number; y: number; children: string }) {
   return (
-    <text x={x} y={y} textAnchor="middle" dominantBaseline="middle" className="map-label">
+    <MapLabelText x={x} y={y} textAnchor="middle" dominantBaseline="middle">
       {children}
-    </text>
+    </MapLabelText>
   );
 }
 
@@ -145,6 +188,7 @@ type Props = {
 };
 
 export function CampusMap({ insetRef, refitRef, onPick }: Props) {
+  const { t } = useTranslation();
   const {
     stamp1Done,
     stamp2Done,
@@ -444,7 +488,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
   }, [mapFocusStamp]);
 
   return (
-    <div className="mapw" ref={wrapRef} aria-label="キャンパスの見取り図">
+    <div className="mapw" ref={wrapRef} aria-label={t("map.aria")}>
       <svg ref={svgRef} viewBox={`0 0 ${MAP_W} ${MAP_H}`} preserveAspectRatio="xMidYMin meet">
         <g ref={groupRef}>
           <rect
@@ -469,7 +513,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
           <Spot
             x={226}
             y={36}
-            label="化学実験場"
+            label={t("map.place.chem")}
             labelY={18}
             href="/maps/chemical_laboratory.svg"
             colorHref="/maps/chemical_laboratory-color.svg"
@@ -487,7 +531,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
           <Spot
             x={167}
             y={30}
-            label="五高記念館"
+            label={t("map.place.goko")}
             labelY={24}
             href="/maps/goko.svg"
             colorHref="/maps/goko-color.svg"
@@ -505,7 +549,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
           <Spot
             x={159}
             y={97}
-            label="五高喫茶（模擬店）"
+            label={t("map.place.cafe")}
             labelX={30}
             labelY={17}
             href="/maps/goko-cafe.svg"
@@ -524,50 +568,50 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
           <Mystery x={133} y={207} href="/maps/akamon.svg" />
           <Mystery x={148} y={109} href="/maps/heam-relief.svg" />
           <PlaceName x={219} y={219}>
-            旧57号線
+            {t("map.place.route57")}
           </PlaceName>
           <PlaceName x={92} y={40}>
-            グラウンド
+            {t("map.place.ground")}
           </PlaceName>
           <PlaceName x={235} y={156}>
-            ひご未来図書館
+            {t("map.place.library")}
           </PlaceName>
           <PlaceName x={239} y={92}>
-            共用棟黒髪
+            {t("map.place.kyoyo")}
           </PlaceName>
           <g transform="translate(126 164)">
             <circle r={2.5} fill="#4a3f35" />
-            <text y={-8} textAnchor="middle" className="map-label">
-              メインステージ
-            </text>
+            <MapLabelText y={-8} textAnchor="middle">
+              {t("map.place.mainstage")}
+            </MapLabelText>
           </g>
           <g transform="translate(132 137)">
             <circle r={3} fill="#4a3f35" stroke="#efe6da" strokeWidth={1} />
-            <text y={-5} textAnchor="middle" className="map-label" style={{ fontSize: 6 }}>
-              生協 学生会館ショップ
-            </text>
+            <MapLabelText y={-5} textAnchor="middle" style={{ fontSize: 6 }}>
+              {t("map.place.coop")}
+            </MapLabelText>
           </g>
         </g>
       </svg>
       <div className="mz">
-        <button type="button" aria-label="拡大" onClick={() => apiRef.current.zoomIn()}>
+        <button type="button" aria-label={t("map.zoomIn")} onClick={() => apiRef.current.zoomIn()}>
           ＋
         </button>
-        <button type="button" aria-label="縮小" onClick={() => apiRef.current.zoomOut()}>
+        <button type="button" aria-label={t("map.zoomOut")} onClick={() => apiRef.current.zoomOut()}>
           －
         </button>
         <button
           type="button"
           className="fit"
-          aria-label="全体表示"
+          aria-label={t("map.fitAria")}
           onClick={() => apiRef.current.fit()}
         >
-          全体
+          {t("map.fit")}
         </button>
         <button
           type="button"
           className="settings"
-          aria-label="設定と手引き"
+          aria-label={t("map.settingsAria")}
           onClick={() => openSettings()}
         >
           <svg viewBox="0 0 24 24" aria-hidden="true" fill="none">

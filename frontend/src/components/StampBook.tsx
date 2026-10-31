@@ -1,8 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import type { AnimationEvent, CSSProperties, PointerEvent, TouchEvent, TransitionEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { TELEGRAM_FRAMES, telegramWords } from "../data/telegram";
 import type { WhisperId } from "../types";
+import { telegramFrameLabel } from "../i18n/telegramLabels";
 import { TelegramIcon } from "./TelegramIcon";
+import { TelegramWordLabel } from "./TelegramWordLabel";
 import { useApp } from "../context/AppContext";
 
 const HERALD_MS = 3000;
@@ -15,15 +18,12 @@ const TURN_MS = 1350;
 
 const FRAMES: {
   id: WhisperId;
-  label: string;
-  act: string;
-  volume: string;
   tilt: number;
   stamp: string;
 }[] = [
-  { id: 1, label: "化学実験場", act: "第一幕", volume: "一の巻", tilt: -1.2, stamp: "/stamps/soseki.svg" },
-  { id: 2, label: "五高喫茶（模擬店）", act: "第二幕", volume: "二の巻", tilt: 0.8, stamp: "/stamps/cat.svg" },
-  { id: 3, label: "五高記念館", act: "第三幕", volume: "三の巻", tilt: -0.6, stamp: "/stamps/heam.svg" },
+  { id: 1, tilt: -1.2, stamp: "/stamps/soseki.svg" },
+  { id: 2, tilt: 0.8, stamp: "/stamps/cat.svg" },
+  { id: 3, tilt: -0.6, stamp: "/stamps/heam.svg" },
 ];
 
 type PageIndex = 0 | 1 | 2 | 3;
@@ -140,6 +140,7 @@ function Paper({
   dotActive: number;
   dotTotal: number;
 }) {
+  const { t } = useTranslation();
   const frame = frameOf(id);
   return (
     <div className={face ? `orihon-face is-${side} orihon-face--${face}` : `orihon-face is-${side}`}>
@@ -148,16 +149,16 @@ function Paper({
         <div className="orihon-rule orihon-rule--iron" />
         <div className="orihon-rule orihon-rule--inner" />
         <header className="orihon-head">
-          <span className="orihon-act">{frame.act}</span>
-          <span className="orihon-spot">{frame.label}</span>
+          <span className="orihon-act">{t(`book.act.${id}`)}</span>
+          <span className="orihon-spot">{t(`book.spot.${id}`)}</span>
         </header>
         <div className={pressed ? "orihon-well orihon-well--on" : "orihon-well"}>
-          {!pressed && !quiet && <span className="orihon-guide">QR読取りで押印</span>}
-          {pressed && <Seal frame={frame} pressing={pressing} />}
+          {!pressed && !quiet && <span className="orihon-guide">{t("book.qrScan")}</span>}
+          {pressed && <Seal frame={frame} pressing={pressing} spot={t(`book.spot.${id}`)} />}
         </div>
         <footer className="orihon-foot">
           <Dots active={dotActive} total={dotTotal} />
-          <span>{frame.volume}</span>
+          <span>{t(`book.vol.${id}`)}</span>
         </footer>
       </div>
     </div>
@@ -177,6 +178,7 @@ function TelegramPaper({
   face?: "front" | "back";
   dotTotal: number;
 }) {
+  const { t } = useTranslation();
   const words = telegramWords(telegramCode);
   if (!words) return null;
   return (
@@ -186,33 +188,36 @@ function TelegramPaper({
         <div className="orihon-rule orihon-rule--iron" />
         <div className="orihon-rule orihon-rule--inner" />
         <header className="orihon-head">
-          <span className="orihon-act">合言葉</span>
-          <span className="orihon-spot orihon-spot--slip">あなたの合言葉</span>
-          <span className="orihon-spot__sub">合言葉控</span>
+          <span className="orihon-act">{t("book.words")}</span>
+          <span className="orihon-spot orihon-spot--slip">{t("book.title")}</span>
+          <span className="orihon-spot__sub">{t("book.slip")}</span>
         </header>
         <div className="orihon-telegram">
-          <p className="orihon-telegram__name">
-            <span className="u-nowrap">{nickname}</span> 様
-          </p>
+          <p className="orihon-telegram__name">{t("book.for", { nickname })}</p>
           <ul className="orihon-telegram__grid">
-            {TELEGRAM_FRAMES.map((frame, index) => (
-              <li key={frame.label}>
-                <span className="orihon-telegram__label">{frame.label}</span>
-                <TelegramIcon word={words[index]} />
-                <span className="orihon-telegram__word">{words[index]}</span>
-              </li>
-            ))}
+            {TELEGRAM_FRAMES.map((frame, index) => {
+              const jaWord = words[index] ?? "";
+              const wordIndex = (frame.words as readonly string[]).indexOf(jaWord);
+              return (
+                <li key={frame.label}>
+                  <span className="orihon-telegram__label">{telegramFrameLabel(t, index)}</span>
+                  <TelegramIcon word={jaWord} />
+                  <span className="orihon-telegram__word">
+                    {wordIndex >= 0 ? (
+                      <TelegramWordLabel frameIndex={index} wordIndex={wordIndex} />
+                    ) : (
+                      jaWord
+                    )}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
-          <p className="orihon-telegram__note">
-            <span className="u-nowrap">この4つの合言葉は、</span>
-            <span className="u-nowrap">別の画面で続きを遊ぶときと、</span>
-            <span className="u-nowrap">景品を受け取るときに使います。</span>
-            <span className="orihon-telegram__hint u-nowrap">※スクリーンショットをお勧めします</span>
-          </p>
+          <p className="orihon-telegram__note">{t("book.body")}</p>
         </div>
         <footer className="orihon-foot">
           <Dots active={0} total={dotTotal} />
-          <span>合言葉</span>
+          <span>{t("book.words")}</span>
         </footer>
       </div>
     </div>
@@ -222,10 +227,13 @@ function TelegramPaper({
 function Seal({
   frame,
   pressing,
+  spot,
 }: {
   frame: (typeof FRAMES)[number];
   pressing: boolean;
+  spot: string;
 }) {
+  const { t } = useTranslation();
   const style = {
     "--stamp": `url("${encodeURI(frame.stamp)}")`,
     "--tilt": `${frame.tilt}deg`,
@@ -235,7 +243,7 @@ function Seal({
       className={pressing ? "seal seal--press" : "seal"}
       style={style}
       role="img"
-      aria-label={`${frame.label}の印`}
+      aria-label={t("book.aria.seal", { place: spot })}
     />
   );
 }
@@ -266,12 +274,13 @@ function GuideHand({ motion }: { motion: "swipe" | "tap" }) {
 }
 
 function PageGuide({ open, onDismiss }: { open: boolean; onDismiss: () => void }) {
+  const { t } = useTranslation();
   return (
     <div
       className={open ? "book-guide is-on" : "book-guide"}
       role="button"
       tabIndex={open ? 0 : -1}
-      aria-label="操作ガイドを閉じる"
+      aria-label={t("book.guide.close")}
       aria-hidden={!open}
       onClick={(event) => {
         stopGuide(event);
@@ -290,7 +299,7 @@ function PageGuide({ open, onDismiss }: { open: boolean; onDismiss: () => void }
         onDismiss();
       }}
     >
-      <div className="book-guide__head">折本のめくり方</div>
+      <div className="book-guide__head">{t("book.guide.title")}</div>
       <div className="book-guide__body">
         <div className="book-guide__zone">
           <div className="book-guide__icon">
@@ -300,24 +309,25 @@ function PageGuide({ open, onDismiss }: { open: boolean; onDismiss: () => void }
             </svg>
             <GuideHand motion="swipe" />
           </div>
-          <div className="book-guide__title">横スワイプ</div>
-          <div className="book-guide__sub">左右に払ってめくる</div>
+          <div className="book-guide__title">{t("book.guide.swipeTitle")}</div>
+          <div className="book-guide__sub">{t("book.guide.swipeDesc")}</div>
         </div>
         <div className="book-guide__zone">
           <div className="book-guide__icon">
             <div className="book-guide__ripple" />
             <GuideHand motion="tap" />
           </div>
-          <div className="book-guide__title">端をタップ</div>
-          <div className="book-guide__sub">左右の端を押して送る</div>
+          <div className="book-guide__title">{t("book.guide.tapTitle")}</div>
+          <div className="book-guide__sub">{t("book.guide.tapDesc")}</div>
         </div>
       </div>
-      <div className="book-guide__foot">画面をタップして閉じる</div>
+      <div className="book-guide__foot">{t("book.guide.tapClose")}</div>
     </div>
   );
 }
 
 export function StampBook() {
+  const { t } = useTranslation();
   const {
     nickname,
     telegramCode,
@@ -641,14 +651,15 @@ export function StampBook() {
   ) as PageIndex;
   const underSheet = sheets[turning === "next" ? destination : displayed] ?? sheets[0];
   const leafSheet = sheets[turning === "prev" ? destination : displayed] ?? sheets[0];
-  const pageLabel = underSheet === "telegram" ? "あなたの合言葉" : frameOf(underSheet).label;
+  const pageLabel =
+    underSheet === "telegram" ? t("book.title") : t(`book.spot.${underSheet}`);
   const leafFlipped = turning === "prev" ? !flipped : flipped;
 
   return (
     <div
       className={bookOpen ? "stamp-book is-open" : "stamp-book is-closing"}
       role="dialog"
-      aria-label="スタンプ帳"
+      aria-label={t("book.aria.book")}
       onAnimationEnd={onBookAnimationEnd}
       onClick={(event) => {
         if (swallowClick.current) {
@@ -661,7 +672,7 @@ export function StampBook() {
       <div className="orihon-toolbar">
         {!locked && (
           <button className="orihon-dismiss" type="button" onClick={requestClose}>
-            閉じる
+            {t("home.close")}
           </button>
         )}
       </div>
@@ -678,7 +689,7 @@ export function StampBook() {
           if (gesture.current?.kind === "pointer") gesture.current = null;
         }}
       >
-        <article className="orihon-page" aria-label={`${pageLabel}の頁`}>
+        <article className="orihon-page" aria-label={t("book.aria.page", { page: pageLabel })}>
           {sheet(underSheet, "left")}
         </article>
         <PageGuide open={guideOn} onDismiss={() => setGuideOn(false)} />
@@ -702,19 +713,21 @@ export function StampBook() {
 }
 
 export function StampBookButton() {
+  const { t, i18n } = useTranslation();
   const { bookOpen, screen, activeTab, openBook, stamp1Done, stamp2Done, stamp3Done } = useApp();
   if (bookOpen || screen === "admin" || activeTab === "present") return null;
   const done = [stamp1Done, stamp2Done, stamp3Done].filter(Boolean).length;
+  const isJa = i18n.language === "ja" || i18n.language.startsWith("ja");
 
   return (
     <button
-      className="stamp-fab"
+      className={isJa ? "stamp-fab" : "stamp-fab stamp-fab--i18n"}
       type="button"
-      aria-label={`スタンプ帳、${done}つ`}
+      aria-label={t("book.aria.count", { n: done })}
       onClick={openBook}
     >
       <span className="stamp-fab__spine" aria-hidden="true" />
-      <span className="stamp-fab__label">スタンプ帖</span>
+      <span className="stamp-fab__label">{isJa ? "スタンプ帖" : t("book.fab")}</span>
       <span className="stamp-fab__badge">{done}/3</span>
     </button>
   );
