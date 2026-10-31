@@ -1,12 +1,13 @@
 import { useEffect, useState, type ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 
 const BREAK_AFTER =
-  /[、。！？）)]|(?:から|まで|より|は|が|を|に|で(?!す)|と|も|へ|の|な|て(?!い))/g;
+  /[、。，！？；）)]|(?:から|まで|より|は|が|を|に|で(?!す)|と|も|へ|の|な|て(?!い))/g;
 
-function Phrased({ text }: { text: string }) {
+function phraseSegment(text: string, keyOffset: number): { nodes: ReactNode[]; nextKey: number } {
   const nodes: ReactNode[] = [];
   let last = 0;
-  let key = 0;
+  let key = keyOffset;
   for (const match of text.matchAll(BREAK_AFTER)) {
     const index = match.index ?? 0;
     const end = index + match[0].length;
@@ -17,66 +18,94 @@ function Phrased({ text }: { text: string }) {
     last = end;
   }
   nodes.push(text.slice(last));
+  return { nodes, nextKey: key };
+}
+
+function Phrased({ text }: { text: string }) {
+  const nodes: ReactNode[] = [];
+  let key = 0;
+  const lines = text.split("\n");
+  lines.forEach((line, index) => {
+    const phrased = phraseSegment(line, key);
+    nodes.push(...phrased.nodes);
+    key = phrased.nextKey;
+    if (index < lines.length - 1) {
+      nodes.push(<br key={`br-${index}`} />);
+    }
+  });
   return nodes;
 }
 
-const ITEMS = [
-  {
-    id: "soda_akane",
-    name: "茜空クリームソーダ",
-    title: "茜空（あかねぞら）クリームソーダ",
-    image: "/menu/akane_soda.webp",
-    short: "茜色に染まった炭酸ソーダに、バニラアイスを添えた一杯。",
-    desc: "夕焼けのような茜色がグラスいっぱいに広がるクリームソーダ。バニラアイスのまろやかさと、シュワシュワ弾ける炭酸をお楽しみください。",
-  },
-  {
-    id: "soda_blue",
-    name: "碧空クリームソーダ",
-    title: "碧空（あおぞら）クリームソーダ",
-    image: "/menu/blue_soda.webp",
-    short: "澄んだ青のグラデーションが目を惹く、爽やかな炭酸ソーダにバニラアイスを添えて。",
-    desc: "深い青から空色へと移ろうグラデーションが目を惹く一杯。カップには五高喫茶特製の記念シールが貼られています。シュワシュワ弾ける炭酸とアイスのまろやかさをお楽しみください。",
-  },
-  {
-    id: "soda_green",
-    name: "新緑クリームソーダ",
-    title: "新緑（しんりょく）クリームソーダ",
-    image: "/menu/melon_soda.webp",
-    short: "昔懐かしい喫茶の味わい。鮮やかなエメラルドグリーンと真っ赤なチェリーが彩る王道の一杯。",
-    desc: "明治の洋食喫茶文化を想起させる王道のクリームソーダ。赤いチェリーと特製猫シールが目印です。散策の合間のひと休みにどうぞ。",
-  },
-  {
-    id: "soda_yugiri",
-    name: "夕霧クリームソーダ",
-    title: "夕霧（ゆうぎり）クリームソーダ",
-    image: "/menu/yugiri_soda.webp",
-    short: "夕暮れの霧のような淡い色合いのクリームソーダに、バニラアイスを添えて。",
-    desc: "夕霧のような淡い色がグラスに広がるクリームソーダ。バニラアイスのまろやかさと、シュワシュワ弾ける炭酸をお楽しみください。",
-  },
-] as const;
+/** 末尾の []／（）／() の直前で改行し、括弧内は途中改行しない */
+function TitleWithParenBreak({ text }: { text: string }) {
+  const matched =
+    text.match(/^(.+?)\s*(\[[^\]]+\])\s*$/) ??
+    text.match(/^(.+?)\s*([（(][^）)]+[）)])\s*$/);
+  if (!matched) return <Phrased text={text} />;
+  const [, head, paren] = matched;
+  return (
+    <>
+      <span className="menu-detail__title-main">
+        <Phrased text={head ?? text} />
+      </span>
+      <br />
+      <span className="menu-detail__title-paren">{paren}</span>
+    </>
+  );
+}
 
-type ItemId = (typeof ITEMS)[number]["id"];
+const ITEM_IDS = ["akane", "aoi", "shin", "yugi"] as const;
+type ItemId = (typeof ITEM_IDS)[number];
 type OpenId = ItemId | "map";
 
-const MAP = {
-  title: "出店場所（18ばんブース）",
-  image: "/menu/shop_map.webp",
-  desc: "五高記念館と文法棟の間、ロータリー・サブステージ付近に出店しています。ブースの案内板やカップのどこかに『囁き』の手がかりが隠されています。",
+const ITEM_META: Record<ItemId, { image: string }> = {
+  akane: { image: "/menu/akane_soda.webp" },
+  aoi: { image: "/menu/blue_soda.webp" },
+  shin: { image: "/menu/melon_soda.webp" },
+  yugi: { image: "/menu/yugiri_soda.webp" },
 };
 
+const SHOP_MAP_BY_LANG: Record<string, string> = {
+  ja: "/menu/shop_map.webp",
+  en: "/menu/shop_map_en.webp",
+  ko: "/menu/shop_map_ko.webp",
+  "zh-CN": "/menu/shop_map_zh-CN.webp",
+  "zh-TW": "/menu/shop_map_zh-TW.webp",
+};
+
+function shopMapForLanguage(language: string): string {
+  if (language in SHOP_MAP_BY_LANG) return SHOP_MAP_BY_LANG[language]!;
+  const base = language.split("-")[0] ?? language;
+  return SHOP_MAP_BY_LANG[base] ?? SHOP_MAP_BY_LANG.ja!;
+}
+
 export function FoodPage() {
+  const { t, i18n } = useTranslation();
   const [openId, setOpenId] = useState<OpenId | null>(null);
-  const item = ITEMS.find((entry) => entry.id === openId);
-  const open = openId === "map" ? MAP : item ?? null;
+
+  const openView =
+    openId === "map"
+      ? {
+          title: t("food.mapTitle"),
+          image: shopMapForLanguage(i18n.language),
+          desc: t("food.where"),
+        }
+      : openId
+        ? {
+            title: t(`food.item.${openId}.title`),
+            image: ITEM_META[openId].image,
+            desc: t(`food.item.${openId}.desc`),
+          }
+        : null;
 
   useEffect(() => {
-    if (!open) return;
+    if (!openView) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpenId(null);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [open]);
+  }, [openView]);
 
   return (
     <div className="menu-page">
@@ -84,68 +113,79 @@ export function FoodPage() {
         <img
           className="menu-seal"
           src="/menu/goko_kissaten_seal.jpeg"
-          alt="五高喫茶のカップシール。レース枠の中に猫の親子"
+          alt={t("food.cupAlt")}
           width={148}
           height={148}
         />
         <div className="menu-shop__title">
-          <span className="menu-shop__booth">18ばん</span>
-          <span className="menu-shop__name">五高喫茶</span>
+          <span className="menu-shop__booth">{t("food.booth")}</span>
+          <span className="menu-shop__name">
+            {t("food.shop")}
+            {t("food.shop.sub") ? (
+              <>
+                <br />
+                <span className="menu-shop__name-sub">{t("food.shop.sub")}</span>
+              </>
+            ) : null}
+          </span>
         </div>
       </header>
       <div className="menu-place">
-        <span>場所：サブステージ横</span>
+        <span>{t("food.location")}</span>
         <button type="button" onClick={() => setOpenId("map")}>
-          案内図 ≫
+          {t("food.mapBtn")}
         </button>
       </div>
-      <h1>お品書き</h1>
+      <h1>{t("food.menu")}</h1>
       <p className="sub">
-        <Phrased text="囁きは、このお店のどこかに眠っている。" />
+        <Phrased text={t("food.hint")} />
       </p>
       <div className="menu-list">
-        {ITEMS.map((item) => (
-          <button
-            key={item.id}
-            className="menu-card"
-            type="button"
-            onClick={() => setOpenId(item.id)}
-          >
+        {ITEM_IDS.map((id) => (
+          <button key={id} className="menu-card" type="button" onClick={() => setOpenId(id)}>
             <span className="menu-thumb">
-              <img src={item.image} alt="" width={88} height={88} />
+              <img src={ITEM_META[id].image} alt="" width={88} height={88} />
             </span>
             <span className="menu-info">
               <span className="menu-name">
-                <Phrased text={item.name} />
+                <Phrased text={t(`food.item.${id}.name`)} />
               </span>
               <span className="menu-short">
-                <Phrased text={item.short} />
+                <Phrased text={t(`food.item.${id}.short`)} />
               </span>
-              <span className="menu-hint">詳細を見る ≫</span>
+              <span className="menu-hint">{t("food.detailBtn")}</span>
             </span>
           </button>
         ))}
       </div>
-      {open && (
+      {openView && (
         <>
           <button
             className="menu-scrim"
             type="button"
-            aria-label="詳細を閉じる"
+            aria-label={t("food.closeAria")}
             onClick={() => setOpenId(null)}
           />
           <div className="menu-detail" role="dialog" aria-modal="true" aria-labelledby="menu-detail-title">
-            <div className={openId === "map" ? "menu-detail__photo menu-detail__photo--map" : "menu-detail__photo"}>
-              <img src={open.image} alt={open.title} />
+            <div
+              className={
+                openId === "map" ? "menu-detail__photo menu-detail__photo--map" : "menu-detail__photo"
+              }
+            >
+              <img src={openView.image} alt={openView.title} />
             </div>
             <h2 id="menu-detail-title">
-              <Phrased text={open.title} />
+              {openId === "map" ? (
+                <Phrased text={openView.title} />
+              ) : (
+                <TitleWithParenBreak text={openView.title} />
+              )}
             </h2>
             <p>
-              <Phrased text={open.desc} />
+              <Phrased text={openView.desc} />
             </p>
             <button className="menu-detail__close" type="button" onClick={() => setOpenId(null)}>
-              閉じる
+              {t("food.close")}
             </button>
           </div>
         </>

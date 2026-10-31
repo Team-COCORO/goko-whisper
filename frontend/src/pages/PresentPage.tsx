@@ -1,63 +1,76 @@
+import { useTranslation } from "react-i18next";
 import { useApp } from "../context/AppContext";
 
 const STAMPS = [
-  { key: "stamp1Done", label: "壱" },
-  { key: "stamp2Done", label: "弐" },
-  { key: "stamp3Done", label: "参" },
+  { key: "stamp1Done", labelKey: "book.stamp.1" },
+  { key: "stamp2Done", labelKey: "book.stamp.2" },
+  { key: "stamp3Done", labelKey: "book.stamp.3" },
 ] as const;
 
 export function PresentPage() {
+  const { t, i18n } = useTranslation();
   const { stamp1Done, stamp2Done, stamp3Done, goalUnlocked, screen, goPresent } = useApp();
   const done = { stamp1Done, stamp2Done, stamp3Done };
   const count = STAMPS.filter((stamp) => done[stamp.key]).length;
   const redeemed = screen === "redeemed";
   const remain = 3 - count;
+  const isJa = i18n.language === "ja" || i18n.language.startsWith("ja");
 
-  let actionLabel = "受付案内を確認する";
-  if (redeemed) actionLabel = "ぷく石をお連れ帰り済み";
-  else if (!goalUnlocked && remain > 0) actionLabel = `あと${remain}つの印でゲット！`;
-  else if (goalUnlocked) actionLabel = "五高記念館で合言葉を提示";
+  let actionLabel = t("present.cta.check");
+  if (redeemed) actionLabel = t("present.cta.done");
+  else if (!goalUnlocked && remain > 0) actionLabel = t("present.cta.remain", { remaining: remain });
+  else if (goalUnlocked) actionLabel = t("present.cta.show");
 
   return (
     <div className="present-page">
       <header className="present-header">
-        <p className="present-tag">紫熊祭 2026</p>
-        <h1 className="present-catch">
-          <span>漱石先生、</span>
-          <span className="present-hat" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 10.5l1.436 -4c.318 -.876 .728 -1.302 1.359 -1.302c.219 0 1.054 .365 1.88 .583c.825 .219 .733 -.329 .908 -.487c.176 -.158 .355 -.294 .61 -.294c.242 0 .553 .048 1.692 .448c.759 .267 1.493 .574 2.204 .922c1.175 .582 1.426 .913 1.595 1.507l.816 4.623c2.086 .898 3.5 2.357 3.5 3.682c0 1.685 -1.2 3.818 -5.957 3.818c-6.206 0 -14.043 -4.042 -14.043 -7.32c0 -1.044 1.333 -1.77 4 -2.18" />
-              <path d="M6 10.5c0 .969 4.39 3.5 9.5 3.5c1.314 0 3 .063 3 -1.5" />
-            </svg>
-          </span>
-          <span>浮かれます。</span>
+        <p className="present-tag">{t("present.event")}</p>
+        <h1 className={isJa ? "present-catch" : "present-catch present-catch--i18n"}>
+          {isJa ? (
+            <>
+              <span>漱石先生、</span>
+              <span className="present-hat" aria-hidden="true">
+                <HatIcon />
+              </span>
+              <span>浮かれます。</span>
+            </>
+          ) : (
+            <span>{t("present.catch")}</span>
+          )}
         </h1>
-        <p className="present-lead">三か所めぐると、漱石先生と一緒にお帰りいただけます。</p>
+        <p className={isJa ? "present-lead" : "present-lead present-lead--i18n"}>{t("present.sub")}</p>
       </header>
 
       <section className="present-ticket">
-        <div className="present-badge" aria-hidden="true">
-          <span>スタンプ3つで</span>
-          <span>ぷく石</span>
-          <span>GET!</span>
+        <div className={isJa ? "present-badge" : "present-badge present-badge--i18n"} aria-hidden="true">
+          {t("present.get")
+            .split(" / ")
+            .map((part) => (
+              <span key={part}>{part}</span>
+            ))}
         </div>
         <div className="present-balloon">
           <Pukuishi />
         </div>
-        <h2>限定風船「ぷく石」</h2>
-        <p className="present-note">数量限定・なくなり次第終了</p>
+        <h2>{t("present.item")}</h2>
+        <p className={isJa ? "present-note" : "present-note present-note--i18n"}>{t("present.limit")}</p>
         <div className="present-perforation" />
         <div className="present-progress">
           <p>
-            印の収集状況：<strong>{count} / 3</strong>
+            {t("present.progress", { n: count })
+              .split(/(\d+\s*\/\s*3)/)
+              .map((part, index) =>
+                /\d+\s*\/\s*3/.test(part) ? (
+                  <strong key={index}>{part}</strong>
+                ) : (
+                  <span key={index}>{part}</span>
+                ),
+              )}
           </p>
           <div className="present-dots">
             {STAMPS.map((stamp) => (
-              <span
-                key={stamp.key}
-                className={done[stamp.key] ? "is-filled" : undefined}
-              >
-                {stamp.label}
+              <span key={stamp.key} className={done[stamp.key] ? "is-filled" : undefined}>
+                {t(stamp.labelKey)}
               </span>
             ))}
           </div>
@@ -70,34 +83,40 @@ export function PresentPage() {
         >
           {actionLabel}
         </button>
-        {goalUnlocked && !redeemed && (
-          <p className="present-guide">
-            スタンプ帖の「合言葉」を五高記念館のスタッフ（赤いビブス）へお見せください。コードの発行はありません。
-          </p>
-        )}
+        {goalUnlocked && !redeemed && <p className="present-guide">{t("present.how")}</p>}
       </section>
 
       <div className="present-place">
         <div>
-          <p className="present-place__label">交換場所（スタンプラリーゴール）</p>
-          <p className="present-place__spot">
-            <span className="menu-shop__booth">重要文化財</span>
-            <span className="present-place__name">五高記念館</span>
+          <p className="present-place__label">{t("present.place")}</p>
+          <p className={isJa ? "present-place__spot" : "present-place__spot present-place__spot--i18n"}>
+            <span className="menu-shop__booth">{t("present.cultural")}</span>
+            <span className="present-place__name">{t("place.goko.name")}</span>
           </p>
         </div>
       </div>
 
       <footer className="present-meta">
-        <span>開催日：11月1日(日)・11月3日(火)</span>
-        <span>主催：熊本大学キャンパスミュージアム推進機構</span>
+        <span>{t("present.dates")}</span>
+        <span>{t("present.org")}</span>
       </footer>
     </div>
   );
 }
 
-function Pukuishi() {
+function HatIcon() {
   return (
-    <svg viewBox="0 0 240 300" width="100%" height="100%" role="img" aria-label="五高の囁き 限定風船 ぷく石">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M6 10.5l1.436 -4c.318 -.876 .728 -1.302 1.359 -1.302c.219 0 1.054 .365 1.88 .583c.825 .219 .733 -.329 .908 -.487c.176 -.158 .355 -.294 .61 -.294c.242 0 .553 .048 1.692 .448c.759 .267 1.493 .574 2.204 .922c1.175 .582 1.426 .913 1.595 1.507l.816 4.623c2.086 .898 3.5 2.357 3.5 3.682c0 1.685 -1.2 3.818 -5.957 3.818c-6.206 0 -14.043 -4.042 -14.043 -7.32c0 -1.044 1.333 -1.77 4 -2.18" />
+      <path d="M6 10.5c0 .969 4.39 3.5 9.5 3.5c1.314 0 3 .063 3 -1.5" />
+    </svg>
+  );
+}
+
+function Pukuishi() {
+  const { t } = useTranslation();
+  return (
+    <svg viewBox="0 0 240 300" width="100%" height="100%" role="img" aria-label={t("present.aria.balloon")}>
       <defs>
         <radialGradient id="balloonBeige" cx="35%" cy="32%" r="68%">
           <stop offset="0%" stopColor="#F5EBE1" />
@@ -142,8 +161,15 @@ function Pukuishi() {
         <path d="M 120 166 L 123.5 171 L 120 176 L 116.5 171 Z" />
         <line x1="88" y1="171" x2="112" y2="171" stroke="#1C1815" strokeWidth="0.8" />
         <line x1="128" y1="171" x2="152" y2="171" stroke="#1C1815" strokeWidth="0.8" />
-        <text x="120" y="188" fontFamily="Hiragino Mincho ProN, Yu Mincho, serif" fontSize="8.5" letterSpacing="2" textAnchor="middle">
-          五高の囁き
+        <text
+          x="120"
+          y="188"
+          fontFamily="Hiragino Mincho ProN, Yu Mincho, serif"
+          fontSize="8.5"
+          letterSpacing="2"
+          textAnchor="middle"
+        >
+          {t("app.name.short")}
         </text>
       </g>
     </svg>

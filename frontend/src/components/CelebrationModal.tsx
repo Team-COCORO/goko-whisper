@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from "react";
+import { useTranslation } from "react-i18next";
 import { celebrationStampById } from "../data/celebrationStamps";
 import {
   playCelebrationStampSound,
@@ -6,6 +7,14 @@ import {
   prefersReducedMotion,
 } from "../celebrationEffects";
 import { useApp } from "../context/AppContext";
+import type { CelebrationStampId } from "../types";
+
+const CELE_LOCALE_KEY: Record<CelebrationStampId, string> = {
+  goko: "honkan",
+  hean: "hearn",
+  natume: "soseki",
+  natume_hean: "tea",
+};
 
 type Particle = {
   x: number;
@@ -194,6 +203,7 @@ function buildStreamChars(lines: readonly string[]): StreamChar[] {
 }
 
 export function CelebrationModal() {
+  const { t } = useTranslation();
   const { showCelebration, celebrationStampId, dismissCelebration } = useApp();
   const [toolActive, setToolActive] = useState(false);
   const [impressed, setImpressed] = useState(false);
@@ -203,16 +213,18 @@ export function CelebrationModal() {
   const timersRef = useRef<number[]>([]);
 
   const stamp = celebrationStampId ? celebrationStampById(celebrationStampId) : null;
-  const streamChars = useMemo(
-    () => (stamp ? buildStreamChars(stamp.lines) : []),
-    [stamp],
-  );
+  const celeKey = celebrationStampId ? CELE_LOCALE_KEY[celebrationStampId] : null;
+  const lines = useMemo(() => {
+    if (!celeKey) return [] as string[];
+    return t(`cele.${celeKey}.lines`)
+      .split(/\s*[/／]\s*/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+  }, [celeKey, t]);
+  const streamChars = useMemo(() => buildStreamChars(lines), [lines]);
   const lineBuckets = useMemo(() => {
-    if (!stamp) return [] as StreamChar[][];
-    return stamp.lines.map((_, lineIndex) =>
-      streamChars.filter((entry) => entry.line === lineIndex),
-    );
-  }, [stamp, streamChars]);
+    return lines.map((_, lineIndex) => streamChars.filter((entry) => entry.line === lineIndex));
+  }, [lines, streamChars]);
 
   useEffect(() => {
     if (!showCelebration) return;
@@ -237,7 +249,12 @@ export function CelebrationModal() {
     }
 
     const reduce = prefersReducedMotion();
-    const chars = buildStreamChars(celebrationStampById(celebrationStampId).lines);
+    const key = CELE_LOCALE_KEY[celebrationStampId];
+    const localeLines = t(`cele.${key}.lines`)
+      .split(/\s*[/／]\s*/)
+      .map((line) => line.trim())
+      .filter(Boolean);
+    const chars = buildStreamChars(localeLines);
     const push = (fn: () => void, ms: number) => {
       timersRef.current.push(window.setTimeout(fn, ms));
     };
@@ -289,9 +306,14 @@ export function CelebrationModal() {
       timersRef.current.forEach((id) => window.clearTimeout(id));
       timersRef.current = [];
     };
-  }, [showCelebration, celebrationStampId]);
+  }, [showCelebration, celebrationStampId, t]);
 
-  if (!showCelebration || !celebrationStampId || !stamp) return null;
+  if (!showCelebration || !celebrationStampId || !stamp || !celeKey) return null;
+
+  const ribbon = t(`cele.${celeKey}.ribbon`);
+  const seal = t(`cele.${celeKey}.seal`);
+  const tag = t(`cele.${celeKey}.tag`);
+  const source = t(`cele.${celeKey}.source`);
 
   const artStyle = {
     "--stamp": `url("${encodeURI(stamp.src)}")`,
@@ -319,11 +341,9 @@ export function CelebrationModal() {
         <span className="celebration-modal__corner celebration-modal__corner--br" aria-hidden="true" />
 
         <header className="celebration-modal__head">
-          <p className="celebration-modal__badge">❖ 第五高等学校 史跡巡礼之証 ❖</p>
-          <h2 id="celebration-modal-title">全てのスタンプをゲットしました！</h2>
-          <p className="celebration-modal__lead">
-            百年の刻を越え、すべての印を帳面へ刻銘せり
-          </p>
+          <p className="celebration-modal__badge">{t("cele.head")}</p>
+          <h2 id="celebration-modal-title">{t("cele.all")}</h2>
+          <p className="celebration-modal__lead">{t("cele.lead")}</p>
         </header>
 
         <div className="celebration-modal__body">
@@ -365,16 +385,16 @@ export function CelebrationModal() {
                   className="celebration-modal__art"
                   style={artStyle}
                   role="img"
-                  aria-label={`${stamp.ribbon}の記念印`}
+                  aria-label={t("cele.aria.seal", { ribbon })}
                 />
 
                 <div className="celebration-modal__stamp-meta">
                   <div className="celebration-modal__ribbon-wrap">
-                    <span className="celebration-modal__ribbon">{stamp.ribbon}</span>
-                    <span className="celebration-modal__credit">team COCORO</span>
+                    <span className="celebration-modal__ribbon">{ribbon}</span>
+                    <span className="celebration-modal__credit">{t("cele.credit")}</span>
                   </div>
                   <span className="celebration-modal__rakkan" aria-hidden="true">
-                    {stamp.seal}
+                    {seal}
                   </span>
                 </div>
               </div>
@@ -387,9 +407,9 @@ export function CelebrationModal() {
                 <span className="celebration-modal__tribute-mark" aria-hidden="true">
                   ❖
                 </span>
-                {stamp.tag}
+                {tag}
               </span>
-              <span className="celebration-modal__tribute-sub">百年知脈</span>
+              <span className="celebration-modal__tribute-sub">{t("cele.motto")}</span>
             </div>
 
             <div className="celebration-modal__tribute-body">
@@ -431,14 +451,14 @@ export function CelebrationModal() {
               }
             >
               <span aria-hidden="true">――</span>
-              <cite>{stamp.source}</cite>
+              <cite>{source}</cite>
             </div>
           </section>
         </div>
 
         <footer className="celebration-modal__foot">
           <button type="button" className="celebration-modal__primary" onClick={dismissCelebration}>
-            帳面を閉じる
+            {t("cele.close")}
           </button>
         </footer>
       </article>

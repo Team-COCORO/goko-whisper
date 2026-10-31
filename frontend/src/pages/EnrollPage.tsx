@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { enrollStudent } from "../api";
 import { useApp } from "../context/AppContext";
 
@@ -10,6 +11,7 @@ type EnrollPageProps = {
 };
 
 export function EnrollPage({ onBack, withStamp = false }: EnrollPageProps) {
+  const { t } = useTranslation();
   const { clientId, pendingStamp, reserveClientForEnroll, readStampForEnroll, completeEnroll } =
     useApp();
   const [input, setInput] = useState("");
@@ -29,7 +31,7 @@ export function EnrollPage({ onBack, withStamp = false }: EnrollPageProps) {
     const stamp = withStamp ? readStampForEnroll() : null;
     if (withStamp && !stamp) {
       setBusy(false);
-      setError("QRを、もう一度スマホ本体のカメラで読み取ってください。");
+      setError(t("enroll.err.qr"));
       return;
     }
     if (!reserveClientForEnroll()) {
@@ -41,54 +43,46 @@ export function EnrollPage({ onBack, withStamp = false }: EnrollPageProps) {
       setBusy(false);
       setError(
         result.error === "invalid"
-          ? "名前を確認してください。"
+          ? t("enroll.err.name")
           : result.error === "forbidden"
-            ? "QRを、もう一度スマホ本体のカメラで読み取ってください。"
-            : "通信できませんでした。同じ名前でもう一度入学できます。",
+            ? t("enroll.err.qr")
+            : t("enroll.err.net"),
       );
       return;
     }
     if (!completeEnroll(result.student)) {
       setBusy(false);
-      setError("この場所の印を残せませんでした。QRを、もう一度読み取ってください。");
+      setError(t("enroll.err.stamp"));
     }
   }
 
   return (
     <main className="welcome welcome--scroll welcome--enroll">
       <div className="welcome-card">
-        <div className="welcome-lead">五高</div>
-        <h1 className="welcome-title">入学手続き</h1>
-        <p className="join-copy prologue-lead">
-          <span className="u-nowrap">スタンプを記録する</span>
-          <span className="u-nowrap">スタンプ帖を作ります。</span>
-          <span className="u-nowrap">ニックネームを決めてください。</span>
-          <span className="u-nowrap">本名は不要です。</span>
-          <span className="u-nowrap enroll-lock">入学したあとは変更できません。</span>
-        </p>
+        <div className="welcome-lead">{t("app.name")}</div>
+        <h1 className="welcome-title">{t("enroll.title")}</h1>
+        <p className="join-copy prologue-lead">{t("enroll.explain")}</p>
+        <p className="join-copy">{t("enroll.body")}</p>
         <label className="welcome-label" htmlFor="student-nickname">
-          ニックネーム（10文字まで）
+          {t("enroll.field")}
         </label>
         <input
           id="student-nickname"
           className="welcome-name"
           type="text"
           maxLength={NICKNAME_MAX}
-          placeholder="例：そうせき"
+          placeholder={t("enroll.example")}
           autoComplete="nickname"
           value={input}
           onChange={(event) => setInput(event.target.value)}
         />
-        <p className="welcome-sub">
-          <span className="u-nowrap">入学すると、別の画面でも続けられる</span>
-          <span className="u-nowrap">4つの合言葉が発行されます。</span>
-        </p>
+        <p className="welcome-sub">{t("enroll.info")}</p>
         {error ? <p className="join-error">{error}</p> : null}
         <button className="welcome-start" type="button" disabled={!ready} onClick={() => void submit()}>
-          入学する
+          {t("enroll.submit")}
         </button>
         <button className="join-back" type="button" onClick={onBack} disabled={busy}>
-          戻る
+          {t("enroll.back")}
         </button>
       </div>
     </main>

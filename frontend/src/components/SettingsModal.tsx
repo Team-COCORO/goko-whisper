@@ -1,14 +1,19 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { openSurveyPage, restoreStudent } from "../api";
 import { useApp } from "../context/AppContext";
 import { TELEGRAM_FRAMES } from "../data/telegram";
+import { telegramFrameHint, telegramFrameLabel } from "../i18n/telegramLabels";
+import { LanguageSwitcher } from "./LanguageSwitcher";
 import { TelegramIcon } from "./TelegramIcon";
+import { TelegramWordLabel } from "./TelegramWordLabel";
 
 const NICKNAME_MAX = 10;
 
 type View = "menu" | "restore" | "staff";
 
 export function SettingsModal() {
+  const { t, i18n } = useTranslation();
   const {
     settingsOpen,
     settingsStartView,
@@ -25,6 +30,7 @@ export function SettingsModal() {
   const [picks, setPicks] = useState<(number | null)[]>([null, null, null, null]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const isJa = i18n.language === "ja" || i18n.language.startsWith("ja");
 
   useEffect(() => {
     if (!settingsOpen) return;
@@ -51,6 +57,7 @@ export function SettingsModal() {
   const name = input.trim();
   const chosen = picks.every((pick) => pick !== null);
   const restoreReady = name.length > 0 && name.length <= NICKNAME_MAX && chosen && !busy;
+  const selectedCount = picks.filter((pick) => pick !== null).length;
 
   const runSync = async () => {
     setSyncing(true);
@@ -62,27 +69,24 @@ export function SettingsModal() {
         ok: false,
         text:
           result.error === "not_joined"
-            ? "先に入学するか、記録を復元してください。"
+            ? t("set.restoreHint")
             : result.error === "missing"
-              ? "サーバに記録がありません。合言葉で復元してください。"
+              ? t("set.restoreHint")
               : result.error === "forbidden"
-                ? "ニックネームが合いません。"
-                : "通信できませんでした。もう一度お試しください。",
+                ? t("merge.err")
+                : t("enroll.err.net"),
       });
       return;
     }
     setNotice({
       ok: true,
-      text: `最新の状態に更新しました（印 ${result.stampCount}/3）`,
+      text: t("set.toast.refreshed", { n: result.stampCount }),
     });
   };
 
   const runRestore = async () => {
     if (!restoreReady) return;
-    if (
-      hasJoined &&
-      !window.confirm("この端末の記録を、合言葉の記録で上書きします。よろしいですか？")
-    ) {
+    if (hasJoined && !window.confirm(t("set.restoreConfirm"))) {
       return;
     }
     setBusy(true);
@@ -94,27 +98,30 @@ export function SettingsModal() {
       setBusy(false);
       setError(
         result.error === "mismatch"
-          ? "ニックネームと4つの合言葉が合いません。入れ直してください。"
+          ? t("merge.err")
           : result.error === "invalid"
-            ? "名前を確認してください。"
+            ? t("enroll.err.name")
             : result.error === "locked"
-              ? "合わせるのを、しばらく待ってください。"
-              : "通信できませんでした。もう一度お試しください。",
+              ? t("merge.err")
+              : t("enroll.err.net"),
       );
       return;
     }
     if (!completeRestore(result.student, result.redeemed)) {
       setBusy(false);
-      setError("記録を残せませんでした。もう一度お試しください。");
+      setError(t("enroll.err.net"));
       return;
     }
     setBusy(false);
     setView("menu");
     setNotice({
       ok: true,
-      text: `記録を復元しました（印 ${result.student.stamps.length}/3）`,
+      text: t("set.toast.restored", { n: result.student.stamps.length }),
     });
   };
+
+  const title =
+    view === "menu" ? t("set.title") : view === "restore" ? t("set.tab.restore") : t("set.tab.staff");
 
   return (
     <div
@@ -132,14 +139,12 @@ export function SettingsModal() {
         <header className="settings-modal__head">
           <h2 id="settings-modal-title">
             <span aria-hidden="true">❖</span>
-            {view === "menu" && "設定と手引き"}
-            {view === "restore" && "記録の復元"}
-            {view === "staff" && "スタッフのご案内"}
+            {title}
           </h2>
           <button
             className="settings-modal__close"
             type="button"
-            aria-label="閉じる"
+            aria-label={t("set.close")}
             disabled={syncing || busy}
             onClick={closeSettings}
           >
@@ -156,6 +161,11 @@ export function SettingsModal() {
 
           {view === "menu" && (
             <div className="settings-modal__actions">
+              <div className="lang-switcher-field">
+                <span className="lang-switcher-field__label">{t("lang.label")}</span>
+                <LanguageSwitcher variant="block" />
+                <p className="lang-switcher-field__note">{t("lang.note")}</p>
+              </div>
               <button
                 className="settings-card"
                 type="button"
@@ -166,9 +176,9 @@ export function SettingsModal() {
                   <img src="/settings/sync.svg" alt="" />
                 </span>
                 <span className="settings-card__text">
-                  <span className="settings-card__title">最新の記録に更新する</span>
+                  <span className="settings-card__title">{t("set.refresh")}</span>
                   <span className="settings-card__desc">
-                    {syncing ? "更新しています…" : "電波が途切れた時・スタンプが反映されない時"}
+                    {syncing ? t("set.refreshing") : t("set.refreshHint")}
                   </span>
                 </span>
               </button>
@@ -177,10 +187,8 @@ export function SettingsModal() {
                   <img src="/settings/restoration.svg" alt="" />
                 </span>
                 <span className="settings-card__text">
-                  <span className="settings-card__title">記録を復元する</span>
-                  <span className="settings-card__desc">
-                    別のブラウザで開いた方・画面を閉じた方（ニックネームと4つの合言葉が必要です）
-                  </span>
+                  <span className="settings-card__title">{t("set.restore")}</span>
+                  <span className="settings-card__desc">{t("set.restoreHint")}</span>
                 </span>
               </button>
               <button className="settings-card" type="button" onClick={() => setView("staff")}>
@@ -188,43 +196,41 @@ export function SettingsModal() {
                   <img src="/settings/cocoro.svg" alt="" />
                 </span>
                 <span className="settings-card__text">
-                  <span className="settings-card__title">困ったときは</span>
-                  <span className="settings-card__desc">赤いビブスのスタッフ案内・操作手引</span>
+                  <span className="settings-card__title">{t("set.help")}</span>
+                  <span className="settings-card__desc">{t("set.helpSub")}</span>
                 </span>
               </button>
-              <button className="settings-card" type="button" onClick={openSurveyPage}>
-                <span className="settings-card__text">
-                  <span className="settings-card__title">アンケート</span>
-                  <span className="settings-card__desc">別の画面で開きます（氏名・連絡先は不要）</span>
-                </span>
-              </button>
+              {isJa ? (
+                <button className="settings-card" type="button" onClick={openSurveyPage}>
+                  <span className="settings-card__text">
+                    <span className="settings-card__title">アンケート</span>
+                    <span className="settings-card__desc">別の画面で開きます（氏名・連絡先は不要）</span>
+                  </span>
+                </button>
+              ) : null}
             </div>
           )}
 
           {view === "restore" && (
             <div className="settings-restore">
-              <p className="settings-restore__lead">
-                入学時に登録したニックネームと、4つの合言葉を選んでください。
-              </p>
+              <p className="settings-restore__lead">{t("set.restoreBody")}</p>
               <label className="welcome-label" htmlFor="settings-restore-nickname">
-                登録したニックネーム
+                {t("merge.nick")}
               </label>
               <input
                 id="settings-restore-nickname"
                 className="welcome-name"
                 type="text"
                 maxLength={NICKNAME_MAX}
-                placeholder="例：そうせき"
+                placeholder={t("enroll.example")}
                 autoComplete="nickname"
                 value={input}
                 onChange={(event) => setInput(event.target.value)}
               />
-              <p className="join-codes-label">
-                控えた合言葉（{picks.filter((pick) => pick !== null).length} / 4）
-              </p>
+              <p className="join-codes-label">{t("merge.words", { n: selectedCount })}</p>
               <div className="merge-preview">
                 {picks.every((pick) => pick === null) ? (
-                  <span className="merge-preview-empty">未選択</span>
+                  <span className="merge-preview-empty">{t("merge.unselected")}</span>
                 ) : (
                   TELEGRAM_FRAMES.map((frame, index) => {
                     const pick = picks[index];
@@ -233,7 +239,7 @@ export function SettingsModal() {
                     return (
                       <span className="merge-tag" key={frame.label}>
                         <TelegramIcon word={word} />
-                        <span>{word}</span>
+                        <TelegramWordLabel frameIndex={index} wordIndex={pick} />
                       </span>
                     );
                   })
@@ -242,8 +248,8 @@ export function SettingsModal() {
               {TELEGRAM_FRAMES.map((frame, index) => (
                 <fieldset className="merge-frame" key={frame.label}>
                   <legend className="merge-frame-title">
-                    {index + 1}. {frame.label}
-                    <span> {frame.hint}から1つ</span>
+                    {index + 1}. {telegramFrameLabel(t, index)}
+                    <span> {telegramFrameHint(t, index)}</span>
                   </legend>
                   <div className="merge-grid">
                     {frame.words.map((word, choice) => (
@@ -259,7 +265,7 @@ export function SettingsModal() {
                         }
                       >
                         <TelegramIcon word={word} />
-                        <span>{word}</span>
+                        <TelegramWordLabel frameIndex={index} wordIndex={choice} />
                       </button>
                     ))}
                   </div>
@@ -272,7 +278,7 @@ export function SettingsModal() {
                 disabled={!restoreReady}
                 onClick={() => void runRestore()}
               >
-                {busy ? "復元しています…" : "記録を復元する"}
+                {busy ? t("set.refreshing") : t("set.restore")}
               </button>
               <button
                 className="settings-modal__back"
@@ -283,7 +289,7 @@ export function SettingsModal() {
                   setError("");
                 }}
               >
-                ← 戻る
+                ← {t("consent.back")}
               </button>
             </div>
           )}
@@ -293,27 +299,22 @@ export function SettingsModal() {
               <img
                 className="settings-staff__pinnie"
                 src="/settings/cocoro.svg"
-                alt="赤いビブスを着たスタッフのイラスト（正面と背面）"
+                alt=""
               />
-              <p className="settings-staff__title">赤いビブスのスタッフがお手伝いします</p>
-              <p className="settings-staff__body">
-                五高記念館、化学実験場におりますので、
-                <br />
-                お気軽にお声がけください。
-              </p>
+              <p className="settings-staff__title">{t("set.staff.t")}</p>
+              <p className="settings-staff__body">{t("set.staff.b")}</p>
               <button className="welcome-start" type="button" onClick={replayGuide}>
-                操作案内（チュートリアル）を見る
+                {t("set.tutorial")}
               </button>
               <button className="settings-modal__back" type="button" onClick={() => setView("menu")}>
-                ← 戻る
+                ← {t("consent.back")}
               </button>
             </div>
           )}
         </div>
 
         <footer className="settings-modal__foot">
-          <span>主催：熊本大学キャンパスミュージアム推進機構</span>
-          <span>運営：学生アンバサダーチーム COCORO</span>
+          <span>{t("set.credit")}</span>
         </footer>
       </div>
     </div>

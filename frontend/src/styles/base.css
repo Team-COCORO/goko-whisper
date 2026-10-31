@@ -57,8 +57,8 @@ body {
 }
 
 .map-layer {
+  /* z-index を付けない（スタッキングコンテキスト化すると .mz がシートの下に閉じ込められる） */
   position: absolute;
-  z-index: 1;
   inset: 0;
 }
 
@@ -88,6 +88,28 @@ body {
   text-decoration: none;
   letter-spacing: 0.18em;
   pointer-events: auto;
+}
+
+/* 英語など長いアプリ名でもロゴと重ならない */
+html:not([lang="ja"]) .home-brand {
+  letter-spacing: 0.04em;
+  font-size: 15px;
+  line-height: 1.25;
+  max-width: 100%;
+}
+
+html:not([lang="ja"]) .map-cardinals__n {
+  top: calc(12px + env(safe-area-inset-top, 0px) + 64px);
+}
+
+html:not([lang="ja"]) .mz {
+  top: calc(12px + env(safe-area-inset-top, 0px) + 64px);
+}
+
+html:not([lang="ja"]) .mz button.fit {
+  font-size: 12px;
+  letter-spacing: 0;
+  padding: 0 2px;
 }
 
 .home-brand:focus-visible {
@@ -283,6 +305,46 @@ body {
   color: var(--ink);
 }
 
+.place-story--i18n .place-story__head {
+  flex-wrap: wrap;
+  align-items: flex-start;
+  row-gap: 6px;
+}
+
+.place-story--i18n .place-story__name {
+  flex: 1 1 12rem;
+  min-width: 0;
+  letter-spacing: 0.03em;
+  line-height: 1.3;
+  text-wrap: balance;
+}
+
+.place-story--i18n .place-story__name-paren {
+  display: inline-block;
+  white-space: nowrap;
+  font-size: 0.92em;
+  font-weight: 600;
+}
+
+.place-story--i18n .place-story__badge {
+  flex: 0 1 auto;
+  max-width: 100%;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  font-size: 10px;
+}
+
+.place-story--i18n .place-story__title {
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+}
+
+.place-story--i18n .place-story__body {
+  letter-spacing: 0.01em;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+}
+
 .app-shell:has(.stamp-fab) .stage:not(.stage--home) .menu-page h1 {
   min-height: 0;
   display: block;
@@ -346,6 +408,7 @@ body {
   padding: 1px 7px;
   letter-spacing: 0.04em;
   line-height: 1.4;
+  white-space: nowrap;
 }
 
 .menu-shop__name {
@@ -355,6 +418,21 @@ body {
   text-indent: 0.15em;
   line-height: 1.3;
   color: #1f3144;
+}
+
+html:not([lang="ja"]) .menu-shop__name {
+  letter-spacing: 0.04em;
+  text-indent: 0;
+  font-size: 22px;
+  text-align: left;
+}
+
+.menu-shop__name-sub {
+  display: inline-block;
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: #5c554e;
 }
 
 .menu-place {
@@ -491,10 +569,13 @@ body {
   left: 50%;
   transform: translate(-50%, -50%);
   width: min(88%, 330px);
+  max-height: min(92vh, 720px);
   padding: 18px 16px 16px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  overflow-x: hidden;
+  overflow-y: auto;
   background: radial-gradient(ellipse at center, #fbf9f4 0%, #f4ede1 100%);
   border: 2px solid var(--brass);
   border-radius: 6px;
@@ -521,6 +602,7 @@ body {
 
 .menu-detail h2 {
   width: 100%;
+  min-width: 0;
   margin: 0 0 8px;
   padding-bottom: 4px;
   border-bottom: 1.5px solid var(--brick);
@@ -529,15 +611,33 @@ body {
   letter-spacing: 0.08em;
   text-align: center;
   color: var(--ink);
+  line-height: 1.35;
+}
+
+.menu-detail__title-paren {
+  display: inline-block;
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+  font-size: 0.92em;
+  font-weight: 600;
 }
 
 .menu-detail p {
+  width: 100%;
+  min-width: 0;
   margin: 0 0 14px;
   font-size: 14px;
   line-height: 1.65;
   letter-spacing: 0.03em;
   text-align: left;
   color: #5c554e;
+}
+
+/* 中国語・韓国語は keep-all だと一文がはみ出すため、モーダル内は通常折り返し */
+html:not([lang="ja"]) .menu-detail p {
+  word-break: normal;
+  line-break: auto;
+  overflow-wrap: anywhere;
 }
 
 .menu-detail__close {
@@ -879,6 +979,37 @@ h1 {
   font-size: 14px;
   white-space: nowrap;
   cursor: pointer;
+}
+
+html:not([lang="ja"]) .literary-card__source {
+  flex: 1 1 12rem;
+  min-width: 0;
+  white-space: normal;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+}
+
+html:not([lang="ja"]) .literary-card__body {
+  word-break: normal;
+  line-break: auto;
+  letter-spacing: 0.02em;
+}
+
+html:not([lang="ja"]) .literary-card__body .u-nowrap {
+  white-space: normal;
+}
+
+html:not([lang="ja"]) .stage--home .card p.sheet-pending,
+html:not([lang="ja"]) .stage--home .card p.sheet-line,
+html:not([lang="ja"]) .stage--home .card p.sheet-hint,
+html:not([lang="ja"]) .stage--home .card p.sub {
+  word-break: normal;
+  line-break: auto;
+  white-space: normal;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
 }
 
 .stage--home .card .sheet-name {
@@ -1801,6 +1932,11 @@ input.pin {
   user-select: none;
 }
 
+html:not([lang="ja"]) .map-label {
+  font-size: 5.25px;
+  letter-spacing: 0;
+}
+
 .building-illust.locked {
   filter: sepia(0.8) hue-rotate(340deg) saturate(0.3) opacity(0.85);
 }
@@ -1842,7 +1978,7 @@ input.pin {
 /* シートより手前・可視マップ帯（bottom = --map-inset）の四辺に固定 */
 .map-cardinals {
   position: absolute;
-  z-index: 3;
+  z-index: 4;
   left: 0;
   right: 0;
   top: 0;
@@ -1891,17 +2027,19 @@ input.pin {
 
 .map-cardinals__w {
   top: 50%;
-  left: 10px;
+  /* 左のズーム列（44px + 余白）と重ならないよう少し右へ */
+  left: 56px;
   transform: translateY(-50%);
 }
 
+/* シート高さに依存せず、ヘッダー直下に固定（高いシートに埋もれない） */
 .mz {
   position: absolute;
   left: 8px;
   right: auto;
-  top: auto;
-  bottom: calc(var(--map-inset, 45%) + 12px);
-  z-index: 2;
+  top: calc(12px + env(safe-area-inset-top, 0px) + 56px);
+  bottom: auto;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -2254,6 +2392,26 @@ input.pin {
   font-weight: 700;
   letter-spacing: 0.15em;
   color: #f7f1e3;
+  white-space: nowrap;
+}
+
+.stamp-fab--i18n .stamp-fab__label {
+  writing-mode: horizontal-tb;
+  margin-left: 0;
+  padding: 0 4px;
+  font-size: 9px;
+  letter-spacing: 0.02em;
+  line-height: 1.15;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+html[lang="ko"] .stamp-fab--i18n .stamp-fab__label {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  overflow-wrap: normal;
+  word-break: keep-all;
 }
 
 .stamp-fab__badge {
@@ -2578,6 +2736,19 @@ input.pin {
   text-align: center;
 }
 
+html:not([lang="ja"]) .orihon-spot {
+  letter-spacing: 0.04em;
+  font-size: 18px;
+  line-height: 1.25;
+  text-wrap: balance;
+  padding-inline: 4px;
+}
+
+html[lang="ko"] .orihon-spot {
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 .orihon-spot--slip {
   letter-spacing: 0.06em;
 }
@@ -2847,6 +3018,69 @@ input.pin {
   white-space: nowrap;
 }
 
+.present-page h1.present-catch--i18n {
+  flex-wrap: wrap;
+  white-space: normal;
+  line-height: 1.25;
+  letter-spacing: 0.02em;
+  font-size: clamp(17px, 5.2vw, 22px);
+  padding-inline: 4px;
+  text-wrap: balance;
+}
+
+.present-lead--i18n {
+  white-space: normal !important;
+  overflow-wrap: break-word;
+  padding-inline: 8px;
+  text-wrap: pretty;
+}
+
+.present-note--i18n {
+  white-space: normal !important;
+  text-align: center;
+  line-height: 1.35;
+  padding-inline: 4px;
+  text-wrap: pretty;
+}
+
+html:not([lang="ja"]) .present-ticket h2 {
+  text-wrap: balance;
+}
+
+.present-badge--i18n {
+  width: 82px;
+  height: 82px;
+  font-size: 10px;
+}
+
+.present-badge--i18n span {
+  white-space: normal;
+  text-align: center;
+}
+
+.present-badge--i18n span:nth-child(1) {
+  font-size: 8px;
+}
+
+.present-badge--i18n span:nth-child(2) {
+  font-size: 11px;
+}
+
+.present-badge--i18n span:nth-child(3) {
+  font-size: 12px;
+}
+
+.present-place__spot--i18n {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.present-place__spot--i18n .menu-shop__booth {
+  white-space: nowrap;
+}
+
 .present-header {
   text-align: center;
   margin-bottom: 8px;
@@ -3069,6 +3303,21 @@ input.pin {
   font-weight: bold;
   letter-spacing: 0.08em;
   cursor: not-allowed;
+}
+
+html:not([lang="ja"]) .present-go {
+  letter-spacing: 0.02em;
+  font-size: 14.5px;
+  line-height: 1.3;
+  white-space: normal;
+}
+
+html:not([lang="ja"]) .present-ticket h2 {
+  letter-spacing: 0.02em;
+  font-size: 18px;
+  text-align: center;
+  line-height: 1.3;
+  padding-inline: 4px;
 }
 
 .present-go.is-ready {
@@ -3296,6 +3545,17 @@ input.pin {
   color: #3b322c;
   font-size: 15px;
   line-height: 1.75;
+}
+
+html:not([lang="ja"]) .home-guide__title {
+  letter-spacing: 0.02em;
+  text-wrap: balance;
+}
+
+html:not([lang="ja"]) .home-guide__body {
+  letter-spacing: 0.01em;
+  text-wrap: pretty;
+  overflow-wrap: break-word;
 }
 
 .home-guide__body .u-nowrap {
