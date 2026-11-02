@@ -7,13 +7,13 @@ import { HomeGuide } from "./components/HomeGuide";
 import { HomeStatus } from "./components/HomeStatus";
 import { StampBook, StampBookButton } from "./components/StampBook";
 import { CelebrationModal } from "./components/CelebrationModal";
+import { CoachTips } from "./components/CoachTips";
 import { SettingsModal } from "./components/SettingsModal";
 import { StampNotice } from "./components/StampNotice";
 import { TelegramSlip } from "./components/TelegramSlip";
 import { AppProvider, useApp } from "./context/AppContext";
 import { placeById, type PlaceId } from "./data/places";
 import { AdminPage } from "./pages/AdminPage";
-import { ConsentPage } from "./pages/ConsentPage";
 import { EnrollPage } from "./pages/EnrollPage";
 import { FoodPage } from "./pages/FoodPage";
 import { MergePage } from "./pages/MergePage";
@@ -251,40 +251,22 @@ function TabContent() {
 }
 
 function StampJoinGate({ pendingStamp }: { pendingStamp: 1 | 2 | 3 }) {
-  const { t } = useTranslation();
-  const [mode, setMode] = useState<"landing" | "consent" | "enroll" | "merge">("landing");
-  if (mode === "consent") {
-    return (
-      <ConsentPage
-        onAgree={() => setMode("enroll")}
-        onBack={() => setMode("landing")}
-        backLabel={t("consent.back")}
-      />
-    );
-  }
-  if (mode === "enroll") return <EnrollPage withStamp onBack={() => setMode("consent")} />;
+  const [mode, setMode] = useState<"landing" | "enroll" | "merge">("landing");
+  if (mode === "enroll") return <EnrollPage withStamp onBack={() => setMode("landing")} />;
   if (mode === "merge") return <MergePage onBack={() => setMode("landing")} />;
   return (
     <StampLandingPage
       pendingStamp={pendingStamp}
-      onEnroll={() => setMode("consent")}
+      onEnroll={() => setMode("enroll")}
       onMerge={() => setMode("merge")}
     />
   );
 }
 
 function JoinGate() {
-  const [mode, setMode] = useState<"prologue" | "consent" | "enroll">("prologue");
-  if (mode === "consent") {
-    return (
-      <ConsentPage
-        onAgree={() => setMode("enroll")}
-        onBack={() => setMode("prologue")}
-      />
-    );
-  }
-  if (mode === "enroll") return <EnrollPage onBack={() => setMode("consent")} />;
-  return <ProloguePage onEnroll={() => setMode("consent")} />;
+  const [mode, setMode] = useState<"prologue" | "enroll">("prologue");
+  if (mode === "enroll") return <EnrollPage onBack={() => setMode("prologue")} />;
+  return <ProloguePage onEnroll={() => setMode("enroll")} />;
 }
 
 function AppShell() {
@@ -293,6 +275,7 @@ function AppShell() {
     storageBlocked,
     screen,
     activeTab,
+    setActiveTab,
     hasJoined,
     pendingStamp,
     slipVisible,
@@ -300,6 +283,19 @@ function AppShell() {
     telegramCode,
     acknowledgeSlip,
   } = useApp();
+
+  const joinOverlay = !hasJoined;
+  const slipOverlay = hasJoined && slipVisible && Boolean(telegramCode);
+  const mapBackdrop = joinOverlay || slipOverlay;
+  const coachPreview =
+    typeof window !== "undefined" &&
+    ["stampbook", "nextspot", "food", "all"].includes(
+      new URLSearchParams(window.location.search).get("coachTip") ?? "",
+    );
+
+  useEffect(() => {
+    if (mapBackdrop && activeTab !== "home") setActiveTab("home");
+  }, [mapBackdrop, activeTab, setActiveTab]);
 
   if (screen === "admin") {
     return (
@@ -322,36 +318,34 @@ function AppShell() {
     );
   }
 
-  if (!hasJoined) {
-    return (
-      <div className="app-shell">
-        {pendingStamp ? <StampJoinGate pendingStamp={pendingStamp} /> : <JoinGate />}
-        <SettingsModal />
-      </div>
-    );
-  }
-
-  if (slipVisible && telegramCode) {
-    return (
-      <div className="app-shell">
-        <TelegramSlip
-          nickname={nickname}
-          telegramCode={telegramCode}
-          onConfirm={acknowledgeSlip}
-        />
-      </div>
-    );
-  }
-
   return (
-    <div className="app-shell">
+    <div className={mapBackdrop && !coachPreview ? "app-shell is-join-locked" : "app-shell"}>
       <TabContent />
-      <StampBookButton />
-      <StampBook />
-      <BottomNav />
-      {activeTab === "home" && <HomeGuide />}
+      {!mapBackdrop || coachPreview ? (
+        <>
+          <StampBookButton />
+          <StampBook />
+          <BottomNav />
+          {activeTab === "home" && !coachPreview ? <HomeGuide /> : null}
+          <CoachTips />
+          <CelebrationModal />
+        </>
+      ) : null}
+      {joinOverlay && !coachPreview ? (
+        <div className="join-overlay">
+          {pendingStamp ? <StampJoinGate pendingStamp={pendingStamp} /> : <JoinGate />}
+        </div>
+      ) : null}
+      {slipOverlay && telegramCode && !coachPreview ? (
+        <div className="join-overlay">
+          <TelegramSlip
+            nickname={nickname}
+            telegramCode={telegramCode}
+            onConfirm={acknowledgeSlip}
+          />
+        </div>
+      ) : null}
       <SettingsModal />
-      <CelebrationModal />
     </div>
   );
 }

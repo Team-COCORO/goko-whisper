@@ -3,6 +3,7 @@ import { openSurveyPage } from "../api";
 import { useApp } from "../context/AppContext";
 import { getNextSpot, spotNameKey, type NextSpotResult } from "../data/nextSpot";
 import type { WhisperId } from "../types";
+import { ArrowGlyph, BalloonGlyph, PinGlyph } from "./UiGlyph";
 
 export function StampMarks() {
   const { t } = useTranslation();
@@ -29,15 +30,16 @@ export function StampMarks() {
 
 function ProgressPill({ count }: { count: number }) {
   const { t } = useTranslation();
-  if (count >= 3) {
-    return <span className="nav-pill">{t("home.nav.pillDone")}</span>;
-  }
-  if (count === 2) {
-    return <span className="nav-pill">{t("home.nav.pillLast", { n: count })}</span>;
-  }
+  const label =
+    count >= 3
+      ? t("home.nav.pillDone")
+      : count === 2
+        ? t("home.nav.pillLast", { n: count })
+        : t("home.nav.pill", { n: count, remain: 3 - count });
   return (
     <span className="nav-pill">
-      {t("home.nav.pill", { n: count, remain: 3 - count })}
+      <BalloonGlyph className="nav-pill__glyph" />
+      <span>{label}</span>
     </span>
   );
 }
@@ -97,25 +99,36 @@ function NavSheet({
 
       {next.kind === "done" ? (
         <div className="next-spot-card">
-          <div className="next-spot-card__label">{t("home.nav.nextLabel")}</div>
+          <div className="next-spot-card__label">
+            <ArrowGlyph className="next-spot-card__glyph" />
+            <span>{t("home.nav.nextLabel")}</span>
+          </div>
           <p className="next-spot-card__title">{t("home.nav.doneTitle")}</p>
           <p className="next-spot-card__body">{t("home.nav.doneBody")}</p>
           <button className="b next-spot-card__btn" type="button" onClick={actions.openPresent}>
-            {t("home.nav.openPresent")}
+            <BalloonGlyph className="btn-glyph" />
+            <span>{t("home.nav.openPresent")}</span>
           </button>
         </div>
       ) : next.kind === "choice" ? (
         <div className="next-spot-card">
-          <div className="next-spot-card__label">{t("home.nav.nextLabel")}</div>
+          <div className="next-spot-card__label">
+            <ArrowGlyph className="next-spot-card__glyph" />
+            <span>{t("home.nav.nextLabel")}</span>
+          </div>
           <p className="next-spot-card__title">{t("home.nav.choiceTitle")}</p>
           <p className="next-spot-card__body">{t("home.nav.choiceBody")}</p>
           <button className="b alt next-spot-card__btn" type="button" onClick={actions.peekMap}>
-            {t("home.nav.focusMap")}
+            <PinGlyph className="btn-glyph" />
+            <span>{t("home.nav.focusMap")}</span>
           </button>
         </div>
       ) : (
         <div className="next-spot-card">
-          <div className="next-spot-card__label">{t("home.nav.nextLabel")}</div>
+          <div className="next-spot-card__label">
+            <ArrowGlyph className="next-spot-card__glyph" />
+            <span>{t("home.nav.nextLabel")}</span>
+          </div>
           <p className="next-spot-card__title">{nextTitle(t, next)}</p>
           <p className="next-spot-card__body">{nextBody(t, next)}</p>
           {(next.returnForPrize || memorialStart) && (
@@ -126,7 +139,8 @@ function NavSheet({
             type="button"
             onClick={() => actions.focusSpot(next.id)}
           >
-            {t("home.nav.focusMapSpot", { place: t(spotNameKey(next.id)) })}
+            <PinGlyph className="btn-glyph" />
+            <span>{t("home.nav.focusMapSpot", { place: t(spotNameKey(next.id)) })}</span>
           </button>
         </div>
       )}
@@ -165,15 +179,23 @@ function AcquiredNav({
         </div>
         {next.kind === "spot" && (
           <div className="next-spot-card next-spot-card--embedded">
-            <div className="next-spot-card__label">{t("home.acquired.nextLabel")}</div>
+            <div className="next-spot-card__label">
+              <ArrowGlyph className="next-spot-card__glyph" />
+              <span>{t("home.acquired.nextLabel")}</span>
+            </div>
             <p className="next-spot-card__title">{nextTitle(t, next)}</p>
             <p className="next-spot-card__body">{nextBody(t, next)}</p>
           </div>
         )}
         <button className="b" type="button" onClick={acknowledgeAcquired}>
-          {next.kind === "spot"
-            ? t("home.acquired.continueNext", { place: t(spotNameKey(next.id)) })
-            : t("home.continue")}
+          {next.kind === "spot" ? (
+            <>
+              <span>{t("home.acquired.continueNext", { place: t(spotNameKey(next.id)) })}</span>
+              <ArrowGlyph className="btn-glyph" />
+            </>
+          ) : (
+            t("home.continue")
+          )}
         </button>
       </div>
     );

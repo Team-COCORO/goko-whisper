@@ -1,7 +1,7 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { TELEGRAM_FRAMES, telegramWords } from "../data/telegram";
 import { telegramFrameLabel } from "../i18n/telegramLabels";
+import { CameraGlyph } from "./UiGlyph";
 import { TelegramIcon } from "./TelegramIcon";
 import { TelegramWordLabel } from "./TelegramWordLabel";
 
@@ -15,13 +15,13 @@ export function TelegramCard({ telegramCode }: { telegramCode: string }) {
   const { t } = useTranslation();
   const words = telegramWords(telegramCode);
   if (!words) return null;
-  const [decoLeft, decoRight] = t("slip.deco").split(" / ");
+  const decoRight = t("slip.deco");
   const choices = telegramCode.split("-").map((part) => Number(part));
 
   return (
     <div className="telegram-card">
       <div className="telegram-header">
-        <span className="telegram-title">{decoLeft}</span>
+        <span className="telegram-title">{t("slip.cardTitle")}</span>
         <span className="telegram-stamp">{decoRight}</span>
       </div>
       <ul className="join-codes">
@@ -40,6 +40,7 @@ export function TelegramCard({ telegramCode }: { telegramCode: string }) {
           );
         })}
       </ul>
+      <p className="telegram-card__foot">{t("slip.cardFoot")}</p>
     </div>
   );
 }
@@ -47,7 +48,6 @@ export function TelegramCard({ telegramCode }: { telegramCode: string }) {
 export function TelegramSlip({ nickname, telegramCode, onConfirm }: TelegramSlipProps) {
   const { t } = useTranslation();
   const words = telegramWords(telegramCode);
-  const [saved, setSaved] = useState(false);
   if (!words) return null;
 
   return (
@@ -56,21 +56,23 @@ export function TelegramSlip({ nickname, telegramCode, onConfirm }: TelegramSlip
         <div className="welcome-lead">{t("slip.reading")}</div>
         <h1 className="welcome-title">{t("slip.title")}</h1>
         <p className="slip-name">{t("slip.for", { nickname })}</p>
-        <p className="join-copy">{t("slip.body")}</p>
+
+        <div className="slip-shot-note" role="note">
+          <div className="slip-shot-note__label">
+            <CameraGlyph className="slip-shot-note__glyph" />
+            <span>{t("slip.banner.title")}</span>
+          </div>
+          <p className="slip-shot-note__body">{t("slip.banner.body")}</p>
+        </div>
+
         <TelegramCard telegramCode={telegramCode} />
+
         <div className="slip-actions">
-          <label className="join-check">
-            <input
-              type="checkbox"
-              checked={saved}
-              onChange={(event) => setSaved(event.target.checked)}
-            />
-            <span>{t("slip.shot")}</span>
-          </label>
-          <p className="welcome-sub">{t("slip.noshot")}</p>
-          <button className="welcome-start" type="button" disabled={!saved} onClick={onConfirm}>
-            {t("slip.next")}
+          <button className="welcome-start" type="button" onClick={onConfirm}>
+            <CameraGlyph className="btn-glyph" />
+            <span>{t("slip.next")}</span>
           </button>
+          <p className="slip-howto">{t("slip.howto")}</p>
         </div>
       </div>
     </main>

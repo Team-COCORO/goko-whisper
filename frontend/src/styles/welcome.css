@@ -14,6 +14,86 @@
   overflow: hidden;
 }
 
+/* 入学案内〜合言葉控え：地図の上にモーダル表示 */
+.join-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 0;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  background: rgba(28, 25, 23, 0.48);
+  backdrop-filter: blur(2.5px);
+}
+
+.join-overlay .welcome,
+.join-overlay .welcome.welcome--prologue,
+.join-overlay .welcome.welcome--enroll,
+.join-overlay .welcome.welcome--slip {
+  flex: 1 0 auto;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 100%;
+  background: transparent;
+  justify-content: flex-start;
+  overflow-x: clip;
+  overflow-y: visible;
+  box-sizing: border-box;
+}
+
+.join-overlay .welcome-card,
+.join-overlay .welcome--prologue .welcome-card,
+.join-overlay .welcome--enroll .welcome-card,
+.join-overlay .welcome--slip .welcome-card {
+  width: min(400px, calc(100% - 32px));
+  max-width: calc(100% - 32px);
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.28);
+}
+
+.join-overlay .join-copy,
+.join-overlay .welcome-sub,
+.join-overlay .welcome-label,
+.join-overlay .welcome-title,
+.join-overlay .welcome-lead {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.join-overlay .join-copy {
+  line-break: auto;
+}
+
+.join-overlay .join-copy.prologue-lead {
+  text-wrap: unset;
+}
+
+.join-overlay .welcome-start {
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.join-overlay .welcome-card > * {
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.app-shell.is-join-locked .bottom-sheet,
+.app-shell.is-join-locked .mz,
+.app-shell.is-join-locked .map-layer {
+  pointer-events: none;
+}
+
 .welcome-card {
   width: 90%;
   max-width: 380px;
@@ -241,6 +321,42 @@ html[lang="en"] .welcome-lead--place .welcome-lead__paren {
   line-height: 1.55;
 }
 
+.welcome--slip .slip-shot-note {
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 2px solid #f59e0b;
+  background: #fffbeb;
+  color: #78350f;
+  text-align: left;
+  box-shadow: 0 1px 2px rgba(43, 38, 35, 0.05);
+}
+
+.welcome--slip .slip-shot-note__label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #92400e;
+}
+
+.welcome--slip .slip-shot-note__glyph {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: #92400e;
+}
+
+.welcome--slip .slip-shot-note__body {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: #451a03;
+}
+
 .welcome--slip .telegram-card {
   margin-bottom: 8px;
   padding: 10px 8px 12px;
@@ -291,7 +407,29 @@ html[lang="en"] .welcome-lead--place .welcome-lead__paren {
 }
 
 .welcome--slip .welcome-start {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   margin-top: 8px;
+  white-space: normal;
+  line-height: 1.35;
+}
+
+.welcome--slip .slip-howto {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--welcome-sub);
+  text-align: center;
+}
+
+.telegram-card__foot {
+  margin: 10px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #6b5f52;
+  text-align: center;
 }
 
 @media (max-height: 760px) {
@@ -704,7 +842,7 @@ svg.goko-icon .mark {
 .welcome--consent .welcome-card {
   max-width: 440px;
   background: var(--card);
-  padding-bottom: 28px;
+  padding: 24px 20px 28px;
 }
 
 .welcome--consent .welcome-lead {
@@ -816,6 +954,26 @@ svg.goko-icon .mark {
   line-height: 1.5;
   letter-spacing: 0.04em;
   text-align: center;
+  overflow-wrap: anywhere;
+  word-break: normal;
+  text-wrap: balance;
+}
+
+html:not([lang="ja"]) .prologue-host {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  padding-inline: 4px;
+}
+
+html:not([lang="ja"]) .prologue-title-row {
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+
+html:not([lang="ja"]) .prologue-title-row .welcome-title {
+  font-size: clamp(22px, 6.2vw, 28px);
+  line-height: 1.2;
+  text-wrap: balance;
 }
 
 .prologue-title-row .welcome-title {
@@ -978,8 +1136,183 @@ svg.goko-icon .mark {
   margin-top: 10px;
 }
 
+.welcome--prologue .prologue-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: min(420px, calc(100% - 24px));
+  margin: 0 auto 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #f59e0b;
+  color: #1c1917;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.4;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(120, 53, 15, 0.18);
+}
+
+.welcome--prologue .prologue-banner__glyph {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  color: #1c1917;
+}
+
+.welcome--enroll .enroll-stamp-note {
+  width: 100%;
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(140, 56, 38, 0.28);
+  background: #faf0ee;
+  text-align: center;
+}
+
+.welcome--enroll .enroll-stamp-note__badge {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--brick);
+}
+
+.welcome--enroll .enroll-stamp-note__mark {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--nav);
+}
+
+.welcome--enroll .enroll-stamp-note__body {
+  margin: 4px 0 0;
+  font-size: 11.5px;
+  line-height: 1.45;
+  color: var(--welcome-sub);
+}
+
+.welcome--enroll .enroll-consent {
+  width: 100%;
+  margin: 4px 0 4px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--welcome-border);
+  background: rgba(255, 255, 255, 0.72);
+  text-align: left;
+}
+
+.welcome--enroll .enroll-consent__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+  cursor: pointer;
+  text-align: left;
+}
+
+.welcome--enroll .enroll-consent__check input {
+  width: 18px;
+  height: 18px;
+  flex: none;
+  margin-top: 0.15em;
+  accent-color: var(--brick);
+}
+
+.welcome--enroll .enroll-consent__link {
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--brick);
+  font: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.welcome--enroll .enroll-terms-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: rgba(28, 25, 23, 0.55);
+  backdrop-filter: blur(2px);
+}
+
+.welcome--enroll .enroll-terms-sheet {
+  display: flex;
+  flex-direction: column;
+  max-height: 78%;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--welcome-border);
+  box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.18);
+  outline: none;
+}
+
+.welcome--enroll .enroll-terms-sheet__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--welcome-border);
+}
+
+.welcome--enroll .enroll-terms-sheet__eyebrow {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--brick);
+}
+
+.welcome--enroll .enroll-terms-sheet__title {
+  margin: 2px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--nav);
+}
+
+.welcome--enroll .enroll-terms-sheet__close {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  border: none;
+  border-radius: 999px;
+  background: #f3f0ea;
+  color: #5c554e;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.welcome--enroll .enroll-terms-sheet__body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 14px 16px 8px;
+  text-align: left;
+  -webkit-overflow-scrolling: touch;
+}
+
+.welcome--enroll .enroll-terms-sheet__ok {
+  width: calc(100% - 32px);
+  margin: 8px 16px 18px;
+}
+
+.welcome--enroll .enroll-note {
+  margin: -4px 0 14px;
+  color: var(--welcome-sub);
+}
+
 .welcome--enroll .welcome-name {
   margin-top: 4px;
+  margin-bottom: 12px;
   border: 1px solid #d4c8b6;
   border-radius: 4px;
 }
@@ -997,6 +1330,30 @@ svg.goko-icon .mark {
 .welcome--enroll .welcome-start:disabled {
   background: #c9bfb5;
   color: #fff;
+}
+
+/* 入学カード内の日本語折り返し（keep-all / nowrap のはみ出し防止） */
+.welcome--enroll .join-copy,
+.welcome--enroll .welcome-sub,
+.welcome--enroll .welcome-label,
+.welcome--enroll .enroll-consent,
+.welcome--enroll .enroll-consent__check,
+.welcome--enroll .enroll-consent__check span {
+  white-space: normal;
+  word-break: normal;
+  overflow-wrap: anywhere;
+  line-break: auto;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.welcome--enroll .join-copy.prologue-lead {
+  text-wrap: unset;
+}
+
+.welcome--enroll .welcome-start {
+  white-space: normal;
+  line-height: 1.35;
 }
 
 /* 本体アプリは body overflow:hidden。アンケートだけ文書スクロールを許可する */

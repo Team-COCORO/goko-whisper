@@ -24,7 +24,7 @@ const FIT_PAD = 0.86;
 const STAMP_FOCUS: Record<WhisperId, { x: number; y: number }> = {
   1: { x: 226, y: 36 },
   /** ハーンのレリーフ（旧・五高喫茶ピン位置から移設） */
-  2: { x: 148, y: 109 },
+  2: { x: 148, y: 107 },
   3: { x: 167, y: 30 },
 };
 
@@ -622,7 +622,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
           />
           <Spot
             x={148}
-            y={109}
+            y={105}
             label={t("map.place.cafe")}
             labelX={0}
             labelY={20}
@@ -659,7 +659,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
               {t("map.place.mainstage")}
             </MapLabelText>
           </g>
-          <g transform="translate(132 137)">
+          <g transform="translate(132 140)">
             <circle r={3} fill="#4a3f35" stroke="#efe6da" strokeWidth={1} />
             <MapLabelText y={-5} textAnchor="middle" style={{ fontSize: 6 }}>
               {t("map.place.coop")}
