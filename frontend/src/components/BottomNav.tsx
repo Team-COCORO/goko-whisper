@@ -37,6 +37,7 @@ export function BottomNav() {
           type="button"
           className={activeTab === id ? "on" : undefined}
           aria-current={activeTab === id ? "page" : undefined}
+          data-coach-tip={id === "food" ? "food" : undefined}
           onClick={() => setActiveTab(id)}
         >
           <svg viewBox="0 0 26 26" aria-hidden="true">

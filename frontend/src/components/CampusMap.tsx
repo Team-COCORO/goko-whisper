@@ -23,7 +23,8 @@ const FIT_PAD = 0.86;
 
 const STAMP_FOCUS: Record<WhisperId, { x: number; y: number }> = {
   1: { x: 226, y: 36 },
-  2: { x: 159, y: 97 },
+  /** ハーンのレリーフ（旧・五高喫茶ピン位置から移設） */
+  2: { x: 148, y: 107 },
   3: { x: 167, y: 30 },
 };
 
@@ -131,6 +132,55 @@ function Spot({
   );
 }
 
+/** 印なしの建物・模擬店表示（金ピン／パルスなし） */
+function MapLandmark({
+  x,
+  y,
+  label,
+  labelX = 0,
+  labelY,
+  href,
+  imageX,
+  imageY,
+  imageW,
+  imageH,
+  plate,
+}: {
+  x: number;
+  y: number;
+  label: string;
+  labelX?: number;
+  labelY: number;
+  href: string;
+  imageX: number;
+  imageY: number;
+  imageW: number;
+  imageH: number;
+  plate: BuildingPlate;
+}) {
+  return (
+    <g transform={`translate(${x} ${y})`}>
+      <path
+        d={plate.d}
+        transform={`translate(${imageX} ${imageY}) scale(${imageW / plate.srcW} ${imageH / plate.srcH})`}
+        fill="#efe6da"
+        pointerEvents="none"
+      />
+      <image
+        className="building-illust locked"
+        href={href}
+        x={imageX}
+        y={imageY}
+        width={imageW}
+        height={imageH}
+      />
+      <MapLabelText x={labelX} y={labelY} textAnchor="middle">
+        {label}
+      </MapLabelText>
+    </g>
+  );
+}
+
 function MapLabelText({
   x = 0,
   y = 0,
@@ -204,6 +254,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
     heldStamp,
     brushStamp,
     mapFocusStamp,
+    mapFocusToken,
     finishBrush,
     openSettings,
   } = useApp();
@@ -373,6 +424,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
       const unitPx = ratio * view.k;
       let best: { id: PlaceId; distance: number } | null = null;
       for (const place of MAP_PLACES) {
+        if (place.half <= 0) continue;
         const radius = Math.max(FINGER_PX / unitPx, place.half);
         const distance = Math.hypot(cx - place.x, cy - place.y);
         if (distance <= radius && (!best || distance < best.distance)) {
@@ -490,10 +542,11 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
     };
   }, [insetRef, refitRef]);
 
+  // 配色モーション（revealStamp）と同じ経路。mapFocusToken で同地点の再フォーカスも発火。
   useEffect(() => {
     if (mapFocusStamp == null) return;
     apiRef.current.focusStamp(mapFocusStamp);
-  }, [mapFocusStamp]);
+  }, [mapFocusStamp, mapFocusToken]);
 
   return (
     <div className="mapw" ref={wrapRef} aria-label={t("map.aria")}>
@@ -554,18 +607,31 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             showColor={colorOf(3, stamp3Done)}
             onPaintDone={finishBrush}
           />
-          <Spot
+          <MapLandmark
             x={159}
             y={97}
-            label={t("map.place.cafe")}
+            label={t("map.place.booth")}
             labelX={30}
             labelY={17}
             href="/maps/goko-cafe.svg"
-            colorHref="/maps/goko-cafe-color.svg"
             imageX={2}
             imageY={-35}
             imageW={48}
             imageH={48}
+            plate={BUILDING_PLATES.cafe}
+          />
+          <Spot
+            x={148}
+            y={105}
+            label={t("map.place.cafe")}
+            labelX={0}
+            labelY={20}
+            href="/maps/heam-relief.svg"
+            colorHref="/maps/heam-relief.svg"
+            imageX={-14}
+            imageY={-14}
+            imageW={28}
+            imageH={28}
             plate={BUILDING_PLATES.cafe}
             stampId={2}
             done={stamp2Done}
@@ -575,7 +641,6 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
             hideLineWhenColored
           />
           <Mystery x={133} y={207} href="/maps/akamon.svg" />
-          <Mystery x={148} y={109} href="/maps/heam-relief.svg" />
           <PlaceName x={219} y={219}>
             {t("map.place.route57")}
           </PlaceName>
@@ -594,7 +659,7 @@ export function CampusMap({ insetRef, refitRef, onPick }: Props) {
               {t("map.place.mainstage")}
             </MapLabelText>
           </g>
-          <g transform="translate(132 137)">
+          <g transform="translate(132 140)">
             <circle r={3} fill="#4a3f35" stroke="#efe6da" strokeWidth={1} />
             <MapLabelText y={-5} textAnchor="middle" style={{ fontSize: 6 }}>
               {t("map.place.coop")}

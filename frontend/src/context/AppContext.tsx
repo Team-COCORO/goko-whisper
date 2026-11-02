@@ -70,6 +70,10 @@ type AppContextValue = {
   heldStamp: WhisperId | null;
   brushStamp: WhisperId | null;
   mapFocusStamp: WhisperId | null;
+  mapFocusToken: number;
+  focusMapStamp: (id: WhisperId | null) => void;
+  sheetMinimizeToken: number;
+  minimizeSheet: () => void;
   acquiredStamp: WhisperId | null;
   holdBrush: (id: WhisperId) => void;
   playBrush: (id: WhisperId) => void;
@@ -438,6 +442,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [heldStamp, setHeldStamp] = useState<WhisperId | null>(null);
   const [brushStamp, setBrushStamp] = useState<WhisperId | null>(null);
   const [mapFocusStamp, setMapFocusStamp] = useState<WhisperId | null>(null);
+  const [mapFocusToken, setMapFocusToken] = useState(0);
+  const [sheetMinimizeToken, setSheetMinimizeToken] = useState(0);
   const [acquiredStamp, setAcquiredStamp] = useState<WhisperId | null>(null);
   const [whisperId, setWhisperId] = useState<WhisperId | null>(null);
   const [, setWhisperOpensGoal] = useState(false);
@@ -632,7 +638,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const revealStamp = useCallback((id: WhisperId, animate: boolean) => {
     window.clearTimeout(revealTimerRef.current);
     setActiveTab("home");
+    // 配色と同じ: mapFocusStamp を立て、CampusMap の useEffect が focusStamp する
     setMapFocusStamp(id);
+    setMapFocusToken((value) => value + 1);
     if (!animate) {
       setBrushStamp(null);
       setHeldStamp(null);
@@ -642,6 +650,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     revealTimerRef.current = window.setTimeout(() => {
       setBrushStamp(id);
     }, REVEAL_FOCUS_MS);
+  }, []);
+
+  /** ナビ用。配色モーションと同じ mapFocusStamp 経路。 */
+  const focusMapStamp = useCallback((id: WhisperId | null) => {
+    setActiveTab("home");
+    if (id == null) {
+      setMapFocusStamp(null);
+      return;
+    }
+    setMapFocusStamp(id);
+    setMapFocusToken((value) => value + 1);
+  }, []);
+
+  const minimizeSheet = useCallback(() => {
+    setSheetMinimizeToken((value) => value + 1);
   }, []);
 
   const finishBrush = useCallback(() => {
@@ -1049,6 +1072,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       heldStamp,
       brushStamp,
       mapFocusStamp,
+      mapFocusToken,
+      focusMapStamp,
+      sheetMinimizeToken,
+      minimizeSheet,
       acquiredStamp,
       holdBrush,
       playBrush,
@@ -1106,6 +1133,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       heldStamp,
       brushStamp,
       mapFocusStamp,
+      mapFocusToken,
+      focusMapStamp,
+      sheetMinimizeToken,
+      minimizeSheet,
       acquiredStamp,
       holdBrush,
       playBrush,

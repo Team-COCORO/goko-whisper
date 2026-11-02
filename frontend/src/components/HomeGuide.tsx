@@ -29,14 +29,6 @@ type Layout = {
   tail: { left: number; top: number; side: Side };
 };
 
-function guideSeen(): boolean {
-  try {
-    return localStorage.getItem(GUIDE_KEY) === "seen";
-  } catch {
-    return true;
-  }
-}
-
 /** 帳合わせ成功時など、既に説明済みとみなすときに使う */
 export function markHomeGuideSeen() {
   try {
@@ -163,13 +155,7 @@ export function HomeGuide() {
     showCelebration,
   );
 
-  useEffect(() => {
-    // 押印〜配色〜囁きが終わるまで待つ。待ち中は started を立てない。
-    if (activeTab !== "home" || started.current || guideSeen() || ceremonyBusy) return;
-    started.current = true;
-    setOpen(true);
-  }, [activeTab, ceremonyBusy]);
-
+  // 初回の自動表示はしない（2日目UX）。設定からの再表示のみ。
   useEffect(() => {
     if (guideReplayToken === 0 || guideReplayToken === seenReplay.current) return;
     if (activeTab !== "home" || ceremonyBusy) return;
