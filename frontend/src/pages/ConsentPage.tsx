@@ -1,15 +1,8 @@
-import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 const CONTACT_EMAIL = "museum@jimu-kumamoto-u.ac.jp";
 
-type ConsentPageProps = {
-  onAgree: () => void;
-  onBack: () => void;
-  backLabel?: string;
-};
-
-function JapaneseTermsBody() {
+export function JapaneseTermsBody() {
   return (
     <>
       <p className="consent-intro">
@@ -73,56 +66,26 @@ function JapaneseTermsBody() {
   );
 }
 
-export function ConsentPage({ onAgree, onBack, backLabel }: ConsentPageProps) {
+export function TermsDocument() {
   const { t, i18n } = useTranslation();
-  const [agreed, setAgreed] = useState(false);
   const isJa = i18n.language === "ja";
 
+  if (isJa) return <JapaneseTermsBody />;
+
   return (
-    <main className="welcome welcome--scroll welcome--consent">
-      <div className="welcome-card">
-        <div className="welcome-lead">{t("consent.title")}</div>
-        <h1 className="welcome-title">{t("consent.sub")}</h1>
-        <p className="join-copy prologue-lead">{t("consent.intro")}</p>
-
-        <section className="consent-scroll" aria-label={t("consent.doc.title")}>
-          <h2 className="consent-doc-title">{t("consent.doc.title")}</h2>
-          {isJa ? (
-            <JapaneseTermsBody />
-          ) : (
-            <div className="consent-summary">
-              {t("consent.doc.body")
-                .split("\n")
-                .filter(Boolean)
-                .map((line) => (
-                  <p key={line}>{line}</p>
-                ))}
-              <p>
-                <strong>{t("consent.contact")}:</strong>{" "}
-                <a className="consent-mail" href={`mailto:${CONTACT_EMAIL}`}>
-                  {CONTACT_EMAIL}
-                </a>
-              </p>
-            </div>
-          )}
-        </section>
-
-        <label className="join-check consent-check">
-          <input
-            type="checkbox"
-            checked={agreed}
-            onChange={(event) => setAgreed(event.target.checked)}
-          />
-          <span>{t("consent.check")}</span>
-        </label>
-
-        <button className="welcome-start" type="button" disabled={!agreed} onClick={onAgree}>
-          {t("consent.next")}
-        </button>
-        <button className="join-back" type="button" onClick={onBack}>
-          {backLabel ?? t("consent.backTop")}
-        </button>
-      </div>
-    </main>
+    <div className="consent-summary">
+      {t("consent.doc.body")
+        .split("\n")
+        .filter(Boolean)
+        .map((line) => (
+          <p key={line}>{line}</p>
+        ))}
+      <p>
+        <strong>{t("consent.contact")}:</strong>{" "}
+        <a className="consent-mail" href={`mailto:${CONTACT_EMAIL}`}>
+          {CONTACT_EMAIL}
+        </a>
+      </p>
+    </div>
   );
 }

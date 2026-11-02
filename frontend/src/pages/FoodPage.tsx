@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
+import { NoticeGlyph } from "../components/UiGlyph";
 
 const BREAK_AFTER =
   /[、。，！？；）)]|(?:から|まで|より|は|が|を|に|で(?!す)|と|も|へ|の|な|て(?!い))/g;
@@ -136,10 +137,14 @@ export function FoodPage() {
           {t("food.mapBtn")}
         </button>
       </div>
+      <div className="menu-stamp-note" role="note">
+        <div className="menu-stamp-note__label">
+          <NoticeGlyph className="menu-stamp-note__glyph" />
+          <span>{t("food.stampNote.title")}</span>
+        </div>
+        <p className="menu-stamp-note__body">{t("food.hint")}</p>
+      </div>
       <h1>{t("food.menu")}</h1>
-      <p className="sub">
-        <Phrased text={t("food.hint")} />
-      </p>
       <div className="menu-list">
         {ITEM_IDS.map((id) => (
           <button key={id} className="menu-card" type="button" onClick={() => setOpenId(id)}>

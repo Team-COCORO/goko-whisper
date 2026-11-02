@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { StampNotice } from "../components/StampNotice";
+import { NoticeGlyph } from "../components/UiGlyph";
 import { useApp } from "../context/AppContext";
 
 type ProloguePageProps = {
@@ -76,6 +77,10 @@ export function ProloguePage({ onEnroll }: ProloguePageProps) {
 
   return (
     <main className="welcome welcome--scroll welcome--prologue">
+      <div className="prologue-banner" role="note">
+        <NoticeGlyph className="prologue-banner__glyph" />
+        <span>{t("prologue.banner")}</span>
+      </div>
       <div className="welcome-card">
         <StampNotice />
         <div className="prologue-lead-row">

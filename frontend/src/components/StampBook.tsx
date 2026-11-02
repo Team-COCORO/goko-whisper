@@ -8,7 +8,7 @@ import { TelegramIcon } from "./TelegramIcon";
 import { TelegramWordLabel } from "./TelegramWordLabel";
 import { useApp } from "../context/AppContext";
 
-const HERALD_MS = 3000;
+const HERALD_MS = 1000;
 const BOOK_OUT_MS = 1000;
 const BOOK_IN_MS = 2000;
 const BEAT_MS = 1000;

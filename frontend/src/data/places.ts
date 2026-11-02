@@ -55,7 +55,7 @@ export const MAP_PLACES: MapPlace[] = [
     name: "五高喫茶",
     x: 159,
     y: 97,
-    half: 28,
+    half: 16,
     action: "food",
     summary: "",
   },
@@ -64,7 +64,7 @@ export const MAP_PLACES: MapPlace[] = [
     name: "レリーフ",
     x: 148,
     y: 109,
-    half: 14,
+    half: 16,
     action: "sheet",
     summary: "壁に残されたレリーフ。",
     story: {

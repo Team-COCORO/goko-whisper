@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { mergeStudent } from "../api";
 import { useApp } from "../context/AppContext";
+import { markCoachTipSeen } from "../components/CoachTips";
 import { markHomeGuideSeen } from "../components/HomeGuide";
 import { TelegramIcon } from "../components/TelegramIcon";
 import { TELEGRAM_FRAMES } from "../data/telegram";
@@ -59,6 +60,7 @@ export function MergePage({ onBack }: MergePageProps) {
       return;
     }
     markHomeGuideSeen();
+    markCoachTipSeen("stampbook");
   }
 
   return (
