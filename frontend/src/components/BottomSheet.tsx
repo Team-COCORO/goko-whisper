@@ -1,4 +1,5 @@
 import {
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -7,6 +8,7 @@ import {
 } from "react";
 
 const SNAPS = [0.18, 0.45, 0.6];
+const MIN_RATIO = SNAPS[0];
 
 function nearestSnap(value: number): number {
   return SNAPS.reduce((best, snap) =>
@@ -25,6 +27,8 @@ type Props = {
   preferredRatio: number;
   contentKey: string;
   expandToContent?: boolean;
+  /** 増えるたびにシートを最小スナップへ畳む（ナビの地図確認用） */
+  minimizeToken?: number;
   onHeightChange: (height: number) => void;
   children: ReactNode;
 };
@@ -34,6 +38,7 @@ export function BottomSheet({
   preferredRatio,
   contentKey,
   expandToContent = false,
+  minimizeToken = 0,
   onHeightChange,
   children,
 }: Props) {
@@ -84,6 +89,16 @@ export function BottomSheet({
   }, [preferredRatio, contentKey, expandToContent]);
 
   useLayoutEffect(() => () => stopDragRef.current?.(), []);
+
+  useEffect(() => {
+    if (minimizeToken === 0) return;
+    // expandToContent の再計算より後に畳む（layout 効果とぶつからないよう rAF）
+    const frame = window.requestAnimationFrame(() => {
+      ratioRef.current = MIN_RATIO;
+      setRatio(MIN_RATIO);
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [minimizeToken]);
 
   useLayoutEffect(() => {
     writeHeight(ratio);

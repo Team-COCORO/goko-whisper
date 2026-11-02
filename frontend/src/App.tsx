@@ -4,7 +4,7 @@ import { BottomNav } from "./components/BottomNav";
 import { BottomSheet } from "./components/BottomSheet";
 import { CampusMap } from "./components/CampusMap";
 import { HomeGuide } from "./components/HomeGuide";
-import { HomeStatus, StampMarks } from "./components/HomeStatus";
+import { HomeStatus } from "./components/HomeStatus";
 import { StampBook, StampBookButton } from "./components/StampBook";
 import { CelebrationModal } from "./components/CelebrationModal";
 import { SettingsModal } from "./components/SettingsModal";
@@ -119,14 +119,13 @@ function PlaceStoryCard({ placeId }: { placeId: PlaceId }) {
 
 function HomeStage() {
   const { t } = useTranslation();
-  const { screen, setActiveTab, stamp1Done, stamp2Done, stamp3Done } = useApp();
+  const { screen, setActiveTab, stamp1Done, stamp2Done, stamp3Done, sheetMinimizeToken } = useApp();
   const insetRef = useRef(0);
   const refitRef = useRef<() => void>(() => {});
   const [placeId, setPlaceId] = useState<PlaceId | null>(null);
   const browsing = screen === "top" || screen === "guide";
   const place = browsing && placeId ? placeById(placeId) : null;
   const stampCount = [stamp1Done, stamp2Done, stamp3Done].filter(Boolean).length;
-  const showMarks = !place && (screen === "top" || screen === "guide");
   const placeLabel = place
     ? place.id === "kagaku"
       ? t("place.chem.name")
@@ -191,6 +190,7 @@ function HomeStage() {
         preferredRatio={sheetRatio(screen, placeLabel)}
         contentKey={place ? `${screen}:${place.id}` : `${screen}:${stampCount}`}
         expandToContent={sheetHugsContent(screen, place !== null)}
+        minimizeToken={sheetMinimizeToken}
         onHeightChange={(height) => {
           insetRef.current = height;
           refitRef.current();
@@ -215,10 +215,7 @@ function HomeStage() {
             </p>
           </div>
         ) : (
-          <>
-            {showMarks && <StampMarks />}
-            <HomeStatus />
-          </>
+          <HomeStatus />
         )}
       </BottomSheet>
       <div className="map-cardinals" aria-hidden="true">

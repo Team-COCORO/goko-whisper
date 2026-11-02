@@ -254,6 +254,179 @@ html:not([lang="ja"]) .mz button.fit {
   clip: rect(0 0 0 0);
 }
 
+.stamp-marks--nav {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.stamp-marks--nav li {
+  gap: 0;
+}
+
+.stamp-marks--nav .stamp-marks__name {
+  display: none;
+}
+
+.stamp-marks--nav .stamp-marks__seal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #9a9084;
+  border: 1.5px dashed #c4b9a8;
+  background: #f3efe6;
+  box-shadow: none;
+}
+
+.stamp-marks--nav li.is-done .stamp-marks__seal {
+  color: #fff;
+  border-style: solid;
+  border-color: var(--brick);
+  background: var(--brick);
+  box-shadow: 0 1px 2px rgba(43, 38, 35, 0.18);
+}
+
+.nav-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 2px 0 4px;
+}
+
+.nav-sheet__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(139, 58, 43, 0.12);
+}
+
+.nav-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(140, 56, 38, 0.1);
+  color: var(--brick);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.next-spot-card {
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(140, 56, 38, 0.2);
+  background: #faf6ed;
+  box-shadow: 0 1px 2px rgba(43, 38, 35, 0.04);
+}
+
+.next-spot-card--embedded {
+  margin: 8px 0 12px;
+}
+
+.next-spot-card__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--brick);
+}
+
+.next-spot-card__title {
+  margin: 4px 0 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #2b2623;
+}
+
+.next-spot-card__body {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #6b6258;
+}
+
+.next-spot-card__note {
+  margin: 8px 0 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1.5px solid #f59e0b;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.next-spot-card__btn {
+  width: 100%;
+  margin-top: 12px;
+}
+
+.acquired-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 2px 0 4px;
+}
+
+.acquired-nav__top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.acquired-nav__badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(140, 56, 38, 0.1);
+  color: var(--brick);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.acquired-nav__count {
+  font-size: 12px;
+  color: #9a9084;
+}
+
+.acquired-nav__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: #2b2623;
+}
+
+.acquired-nav__notice {
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 2px solid #fcd34d;
+  background: #fffbeb;
+  color: #78350f;
+}
+
+.acquired-nav__notice-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.acquired-nav__notice-body {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
 .place-story {
   margin: 4px 0 8px;
   padding: 12px 14px 14px;

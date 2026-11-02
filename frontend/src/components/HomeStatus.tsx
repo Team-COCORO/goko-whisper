@@ -1,34 +1,24 @@
 import { useTranslation } from "react-i18next";
 import { openSurveyPage } from "../api";
 import { useApp } from "../context/AppContext";
-
-function inAppBrowser(): boolean {
-  return /Line\/|Instagram|FBAN|FBAV|Twitter|MicroMessenger/i.test(navigator.userAgent);
-}
-
-function BrowserNote() {
-  const { t } = useTranslation();
-  const inApp = inAppBrowser();
-  return (
-    <p className={inApp ? "sheet-caution is-in-app" : "sheet-caution"}>
-      {inApp ? t("home.lineWarn") : t("home.lineWarnNormal")}
-    </p>
-  );
-}
+import { getNextSpot, spotNameKey, type NextSpotResult } from "../data/nextSpot";
+import type { WhisperId } from "../types";
 
 export function StampMarks() {
   const { t } = useTranslation();
   const { stamp1Done, stamp2Done, stamp3Done } = useApp();
   const marks = [
-    { name: t("place.chem.name"), done: stamp1Done },
-    { name: t("place.cafe.name"), done: stamp2Done },
-    { name: t("place.goko.name"), done: stamp3Done },
+    { label: t("book.stamp.1"), empty: "1", name: t("place.chem.name"), done: stamp1Done },
+    { label: t("book.stamp.2"), empty: "2", name: t("place.cafe.name"), done: stamp2Done },
+    { label: t("book.stamp.3"), empty: "3", name: t("place.goko.name"), done: stamp3Done },
   ];
   return (
-    <ul className="stamp-marks">
+    <ul className="stamp-marks stamp-marks--nav">
       {marks.map((mark) => (
-        <li key={mark.name} className={mark.done ? "is-done" : undefined}>
-          <span className="stamp-marks__seal" aria-hidden="true" />
+        <li key={mark.name} className={mark.done ? "is-done" : undefined} title={mark.name}>
+          <span className="stamp-marks__seal" aria-hidden="true">
+            {mark.done ? mark.label : mark.empty}
+          </span>
           <span className="stamp-marks__name">{mark.name}</span>
           <span className="stamp-marks__state">{mark.done ? t("home.got") : t("home.notyet")}</span>
         </li>
@@ -37,12 +27,53 @@ export function StampMarks() {
   );
 }
 
-function MapTapHint() {
+function ProgressPill({ count }: { count: number }) {
   const { t } = useTranslation();
-  return <p className="sheet-hint">{t("home.guide.buildings")}</p>;
+  if (count >= 3) {
+    return <span className="nav-pill">{t("home.nav.pillDone")}</span>;
+  }
+  if (count === 2) {
+    return <span className="nav-pill">{t("home.nav.pillLast", { n: count })}</span>;
+  }
+  return (
+    <span className="nav-pill">
+      {t("home.nav.pill", { n: count, remain: 3 - count })}
+    </span>
+  );
 }
 
-function GuideContent({
+function nextTitle(t: (key: string, opts?: Record<string, string | number>) => string, next: Extract<NextSpotResult, { kind: "spot" }>) {
+  const place = t(spotNameKey(next.id));
+  if (next.goal) return t("home.nav.spotTitleGoal", { place });
+  if (next.nearMemorial) return t("home.nav.spotTitleNear", { place, m: next.walkMin });
+  return t("home.nav.spotTitle", { place, m: next.walkMin });
+}
+
+function nextBody(t: (key: string) => string, next: Extract<NextSpotResult, { kind: "spot" }>) {
+  if (next.id === 1) return t("home.nav.spotBodyChem");
+  if (next.id === 2) return t("home.nav.spotBodyRelief");
+  if (next.goal) return t("home.nav.spotBodyGokoLast");
+  return t("home.nav.spotBodyGoko");
+}
+
+function useNavActions() {
+  const { focusMapStamp, minimizeSheet, setActiveTab } = useApp();
+  return {
+    focusSpot(id: WhisperId) {
+      // 配色と同じく先にフォーカス（userAdjusted=true）。その後に畳むと fit() で打ち消されない。
+      focusMapStamp(id);
+      window.setTimeout(() => minimizeSheet(), 80);
+    },
+    openPresent() {
+      setActiveTab("present");
+    },
+    peekMap() {
+      minimizeSheet();
+    },
+  };
+}
+
+function NavSheet({
   stamp1Done,
   stamp2Done,
   stamp3Done,
@@ -51,35 +82,129 @@ function GuideContent({
   stamp2Done: boolean;
   stamp3Done: boolean;
 }) {
-  const { t, i18n } = useTranslation();
-  const spots = [
-    { id: 1 as const, name: t("place.chem.name"), done: stamp1Done },
-    { id: 2 as const, name: t("place.cafe.name"), done: stamp2Done },
-    { id: 3 as const, name: t("place.goko.name"), done: stamp3Done },
-  ];
-  const remaining = spots.filter((spot) => !spot.done);
-  const names = remaining.map((spot) => spot.name);
-  const isJa = i18n.language === "ja" || i18n.language.startsWith("ja");
+  const { t } = useTranslation();
+  const actions = useNavActions();
+  const count = [stamp1Done, stamp2Done, stamp3Done].filter(Boolean).length;
+  const next = getNextSpot({ stamp1Done, stamp2Done, stamp3Done });
+  const memorialStart = stamp3Done && !stamp1Done && !stamp2Done;
 
-  let lead: string;
-  if (remaining.length === 1) {
-    lead = t("home.guide.last", { place: names[0] });
-  } else {
-    const place1 = names[0] ?? "";
-    const rest = names.slice(1);
-    const place2 =
-      rest.length <= 1
-        ? (rest[0] ?? "")
-        : isJa
-          ? rest.join("、")
-          : `${rest.slice(0, -1).join(", ")} and ${rest[rest.length - 1]}`;
-    lead = t("home.guide.remaining", { place1, place2 });
+  return (
+    <div className="nav-sheet">
+      <div className="nav-sheet__head">
+        <ProgressPill count={count} />
+        <StampMarks />
+      </div>
+
+      {next.kind === "done" ? (
+        <div className="next-spot-card">
+          <div className="next-spot-card__label">{t("home.nav.nextLabel")}</div>
+          <p className="next-spot-card__title">{t("home.nav.doneTitle")}</p>
+          <p className="next-spot-card__body">{t("home.nav.doneBody")}</p>
+          <button className="b next-spot-card__btn" type="button" onClick={actions.openPresent}>
+            {t("home.nav.openPresent")}
+          </button>
+        </div>
+      ) : next.kind === "choice" ? (
+        <div className="next-spot-card">
+          <div className="next-spot-card__label">{t("home.nav.nextLabel")}</div>
+          <p className="next-spot-card__title">{t("home.nav.choiceTitle")}</p>
+          <p className="next-spot-card__body">{t("home.nav.choiceBody")}</p>
+          <button className="b alt next-spot-card__btn" type="button" onClick={actions.peekMap}>
+            {t("home.nav.focusMap")}
+          </button>
+        </div>
+      ) : (
+        <div className="next-spot-card">
+          <div className="next-spot-card__label">{t("home.nav.nextLabel")}</div>
+          <p className="next-spot-card__title">{nextTitle(t, next)}</p>
+          <p className="next-spot-card__body">{nextBody(t, next)}</p>
+          {(next.returnForPrize || memorialStart) && (
+            <p className="next-spot-card__note">{t("home.nav.returnNote")}</p>
+          )}
+          <button
+            className="b alt next-spot-card__btn"
+            type="button"
+            onClick={() => actions.focusSpot(next.id)}
+          >
+            {t("home.nav.focusMapSpot", { place: t(spotNameKey(next.id)) })}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AcquiredNav({
+  acquiredStamp,
+  stamp1Done,
+  stamp2Done,
+  stamp3Done,
+}: {
+  acquiredStamp: WhisperId;
+  stamp1Done: boolean;
+  stamp2Done: boolean;
+  stamp3Done: boolean;
+}) {
+  const { t } = useTranslation();
+  const { acknowledgeAcquired } = useApp();
+  const count = [stamp1Done, stamp2Done, stamp3Done].filter(Boolean).length;
+  const memorialFirst = acquiredStamp === 3 && count === 1;
+  const next = getNextSpot({ stamp1Done, stamp2Done, stamp3Done });
+
+  if (memorialFirst) {
+    return (
+      <div className="acquired-nav">
+        <div className="acquired-nav__top">
+          <span className="acquired-nav__badge">{t("home.acquired.memorialFirst.badge")}</span>
+          <span className="acquired-nav__count">1 / 3</span>
+        </div>
+        <h3 className="acquired-nav__title">{t("home.acquired.memorialFirst.title")}</h3>
+        <div className="acquired-nav__notice">
+          <p className="acquired-nav__notice-label">{t("home.acquired.memorialFirst.notice")}</p>
+          <p className="acquired-nav__notice-body">{t("home.acquired.memorialFirst.body")}</p>
+        </div>
+        {next.kind === "spot" && (
+          <div className="next-spot-card next-spot-card--embedded">
+            <div className="next-spot-card__label">{t("home.acquired.nextLabel")}</div>
+            <p className="next-spot-card__title">{nextTitle(t, next)}</p>
+            <p className="next-spot-card__body">{nextBody(t, next)}</p>
+          </div>
+        )}
+        <button className="b" type="button" onClick={acknowledgeAcquired}>
+          {next.kind === "spot"
+            ? t("home.acquired.continueNext", { place: t(spotNameKey(next.id)) })
+            : t("home.continue")}
+        </button>
+      </div>
+    );
   }
 
   return (
-    <div className="card">
-      <p className="sheet-line">{lead}</p>
-      <MapTapHint />
+    <div className="acquired-nav">
+      <p className="acquired-nav__title">
+        {t("home.acquired.title", {
+          place: t(spotNameKey(acquiredStamp)),
+          n: count,
+        })}
+      </p>
+      <ProgressPill count={count} />
+      {next.kind === "spot" && (
+        <div className="next-spot-card next-spot-card--embedded">
+          <div className="next-spot-card__label">{t("home.nav.nextLabel")}</div>
+          <p className="next-spot-card__title">{nextTitle(t, next)}</p>
+          <p className="next-spot-card__body">{nextBody(t, next)}</p>
+          {next.returnForPrize && <p className="next-spot-card__note">{t("home.nav.returnNote")}</p>}
+        </div>
+      )}
+      {next.kind === "done" && (
+        <div className="next-spot-card next-spot-card--embedded">
+          <p className="next-spot-card__title">{t("home.nav.doneTitle")}</p>
+          <p className="next-spot-card__body">{t("home.nav.doneBody")}</p>
+        </div>
+      )}
+      <button className="b" type="button" onClick={acknowledgeAcquired}>
+        {t("home.continue")}
+      </button>
     </div>
   );
 }
@@ -95,10 +220,7 @@ export function HomeStatus() {
     stamp2Done,
     stamp3Done,
     dismissWhisper,
-    acknowledgeAcquired,
   } = useApp();
-  const noneYet = !stamp1Done && !stamp2Done && !stamp3Done;
-  const allDone = stamp1Done && stamp2Done && stamp3Done;
   const isJa = i18n.language === "ja" || i18n.language.startsWith("ja");
 
   if (screen === "whisper" && whisperId) {
@@ -129,21 +251,13 @@ export function HomeStatus() {
   }
 
   if (screen === "acquired" && acquiredStamp) {
-    const placeKey =
-      acquiredStamp === 1 ? "place.chem.name" : acquiredStamp === 2 ? "place.cafe.name" : "place.goko.name";
     return (
-      <div className="card">
-        <p className="sheet-line">{t("home.progress", { place: t(placeKey) })}</p>
-        <button className="b" type="button" onClick={acknowledgeAcquired}>
-          {t("home.continue")}
-        </button>
-      </div>
-    );
-  }
-
-  if (screen === "guide") {
-    return (
-      <GuideContent stamp1Done={stamp1Done} stamp2Done={stamp2Done} stamp3Done={stamp3Done} />
+      <AcquiredNav
+        acquiredStamp={acquiredStamp}
+        stamp1Done={stamp1Done}
+        stamp2Done={stamp2Done}
+        stamp3Done={stamp3Done}
+      />
     );
   }
 
@@ -152,25 +266,6 @@ export function HomeStatus() {
       <div className="card">
         <p className="sheet-line">{t("home.herald.name", { nickname: nickname.trim() })}</p>
         <p className="sheet-pending">{t("home.autoopen")}</p>
-      </div>
-    );
-  }
-
-  if (screen === "top" && noneYet) {
-    return (
-      <div className="card">
-        <p className="sub">{t("home.q")}</p>
-        <p className="sheet-line">{t("home.drift")}</p>
-        <BrowserNote />
-        <p className="sheet-hint">{t("home.tapHint")}</p>
-      </div>
-    );
-  }
-
-  if (screen === "top" && allDone) {
-    return (
-      <div className="card">
-        <p className="sheet-line">{t("home.all3")}</p>
       </div>
     );
   }
@@ -184,6 +279,12 @@ export function HomeStatus() {
           {t("home.survey.open")}
         </button>
       </div>
+    );
+  }
+
+  if (screen === "top" || screen === "guide") {
+    return (
+      <NavSheet stamp1Done={stamp1Done} stamp2Done={stamp2Done} stamp3Done={stamp3Done} />
     );
   }
 
